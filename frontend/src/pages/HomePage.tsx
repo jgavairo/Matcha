@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from 'flowbite-react';
 
 const HomePage: React.FC = () => {
   return (
@@ -11,11 +13,11 @@ const HomePage: React.FC = () => {
         Join the community of millions of people looking for love. Swipe, match, chat and meet new people in your area.
       </p>
       <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-        <div className="rounded-md shadow">
-          <a href="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 md:py-4 md:text-lg md:px-10">
-            Get started
-          </a>
-        </div>
+        <Link to="/register">
+          <Button color="pink">
+            Get Started
+          </Button>
+        </Link>
       </div>
     </div>
   );
