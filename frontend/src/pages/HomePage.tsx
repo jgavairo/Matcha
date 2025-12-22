@@ -12,9 +12,9 @@ const HomePage: React.FC = () => {
       <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
         Join the community of millions of people looking for love. Swipe, match, chat and meet new people in your area.
       </p>
-      <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+      <div className="mt-5 flex justify-center md:mt-8">
         <Link to="/register">
-          <Button color="pink">
+          <Button color="pink" size="lg">
             Get Started
           </Button>
         </Link>

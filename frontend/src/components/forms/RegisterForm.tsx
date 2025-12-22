@@ -1,9 +1,11 @@
 import { Button, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { RegisterFormData } from '../../types/forms';
+import { registerUser } from '../../features/auth/services/authService';
 
 const RegisterForm = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
     username: '',
     firstName: '',
@@ -20,15 +22,14 @@ const RegisterForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Appel API backend
-    console.log('Form submitted:', formData);
+    const response = await registerUser(formData);
+    console.log(response);
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Email */}
       <div>
         <Label htmlFor="email" className="mb-2 block">Email</Label>
         <TextInput
@@ -42,7 +43,6 @@ const RegisterForm = () => {
         />
       </div>
 
-      {/* Username */}
       <div>
         <Label htmlFor="username" className="mb-2 block">Nom d'utilisateur</Label>
         <TextInput
@@ -56,7 +56,6 @@ const RegisterForm = () => {
         />
       </div>
 
-      {/* Nom / Prénom sur la même ligne */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="firstName" className="mb-2 block">Prénom</Label>
@@ -84,7 +83,6 @@ const RegisterForm = () => {
         </div>
       </div>
 
-      {/* Date de naissance */}
       <div>
         <Label htmlFor="birthDate" className="mb-2 block">Date de naissance</Label>
         <TextInput
@@ -97,7 +95,6 @@ const RegisterForm = () => {
         />
       </div>
 
-      {/* Mot de passe */}
       <div>
         <Label htmlFor="password" className="mb-2 block">Mot de passe</Label>
         <TextInput
@@ -110,7 +107,6 @@ const RegisterForm = () => {
         />
       </div>
 
-      {/* Confirmer mot de passe */}
       <div>
         <Label htmlFor="confirmPassword" className="mb-2 block">Confirmer le mot de passe</Label>
         <TextInput
@@ -123,12 +119,10 @@ const RegisterForm = () => {
         />
       </div>
 
-      {/* Bouton submit */}
       <Button type="submit" color="pink" className="mt-4">
         S'inscrire
       </Button>
 
-      {/* Lien vers login */}
       <p className="text-center text-sm text-gray-600">
         Déjà un compte ?{' '}
         <Link to="/login" className="font-medium text-pink-600 hover:text-pink-500">

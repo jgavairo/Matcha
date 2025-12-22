@@ -4,8 +4,10 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { AuthController } from './controllers/authController';
 
 dotenv.config();
+const authController = new AuthController();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,7 +23,12 @@ const io = new Server(httpServer, {
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST"],
+  credentials: true,
+}));
+
 app.use(express.json());
 
 const pool = new Pool({
@@ -32,19 +39,13 @@ const pool = new Pool({
   port: 5432,
 });
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from Backend API!');
-});
+// Routes =====================================================================
 
-app.get('/db-test', async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query('SELECT NOW()');
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Database connection error');
-  }
-});
+// Authentication Routes ---------------------------------
+
+app.post('/auth/register', authController.register);
+
+// =============================================================================
 
 // Socket.io connection handler
 io.on('connection', (socket) => {

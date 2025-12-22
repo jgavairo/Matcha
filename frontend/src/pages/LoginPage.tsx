@@ -1,17 +1,18 @@
 import { Card } from 'flowbite-react';
-import RegisterForm from '../components/forms/RegisterForm';
+import LoginForm from '../components/forms/LoginForm';
 
-const RegisterPage = () => {
+const LoginPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <h2 className="text-center text-2xl font-bold text-white">
-          Créer un compte
+          Se connecter
         </h2>
-        <RegisterForm />
+        <LoginForm />
       </Card>
     </div>
   );
 };
 
-export default RegisterPage;
+export default LoginPage;
+
