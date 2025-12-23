@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
@@ -6,7 +7,9 @@ import LoginPage from './pages/LoginPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <>
+      <Toaster position="top-center" />
+      <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
@@ -17,7 +20,8 @@ function App() {
           <Route path="*" element={<div className="text-center py-10">404 Not Found</div>} />
         </Route>
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </>
   );
 }
 

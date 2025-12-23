@@ -1,9 +1,14 @@
 import { Button, Checkbox, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LoginFormData } from '../../types/forms';
+import { loginUser } from '../../features/auth/services/authService';
+import { Notification } from '../../features/notifications/Notification';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
     remember: false,
@@ -17,10 +22,18 @@ const LoginForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Appel API backend
-    console.log('Login submitted:', formData);
+    try {
+      const response = await loginUser(formData);
+      if (response.message === 'Login successful') {
+        Notification.success('Connection successful');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error logging in user');
+      Notification.error('Wrong email or password');
+    }
   };
 
   return (
@@ -39,7 +52,7 @@ const LoginForm = () => {
         />
       </div>
 
-      {/* Mot de passe */}
+      {/* Password */}
       <div>
         <Label htmlFor="password" className="mb-2 block">Mot de passe</Label>
         <TextInput
@@ -61,23 +74,23 @@ const LoginForm = () => {
             checked={formData.remember}
             onChange={handleChange}
           />
-          <Label htmlFor="remember">Se souvenir de moi</Label>
+          <Label htmlFor="remember">Remember me</Label>
         </div>
         <Link to="/forgot-password" className="text-sm text-pink-600 hover:underline">
-          Mot de passe oublié ?
+          Forgot password ?
         </Link>
       </div>
 
       {/* Bouton submit */}
       <Button type="submit" color="pink" className="mt-4">
-        Se connecter
+        Sign in
       </Button>
 
       {/* Lien vers register */}
       <p className="text-center text-sm text-gray-600">
-        Pas encore de compte ?{' '}
+        Don't have an account ?{' '}
         <Link to="/register" className="font-medium text-pink-600 hover:text-pink-500">
-          S'inscrire
+          Sign up
         </Link>
       </p>
     </form>

@@ -1,5 +1,5 @@
 import { publicApi } from "../../../services/api";
-import { RegisterFormData } from "../../../types/forms";
+import { LoginFormData, RegisterFormData } from "../../../types/forms";
 
 
 // Registration Service =======================================================
@@ -16,7 +16,12 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 // Login Service ===============================================================
 
-// export const loginUser = async (formData: LoginFormData) => {
-//     const response = await publicApi.post('/auth/login', formData);
-//     return response.data;
-// };
+export const loginUser = async (formData: LoginFormData) => {
+    try {
+        const response = await publicApi.post('/auth/login', formData);
+        return response.data;
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        throw error;
+    }
+};
