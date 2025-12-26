@@ -34,10 +34,7 @@ const BottomNav: React.FC = () => {
     `inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group ${active ? 'bg-gray-50 dark:bg-gray-800' : ''}`;
 
   const getIconClass = (active: boolean) => 
-    `w-6 h-6 mb-1 ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`;
-
-  const getTextClass = (active: boolean) => 
-    `text-xs ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`;
+    `w-7 h-7 ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500 transition-colors duration-200`;
 
   return (
       <footer className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600" ref={notificationRef}>
@@ -49,7 +46,6 @@ const BottomNav: React.FC = () => {
           {/* Discover (Home) */}
           <Link to="/" className={getItemClass(isActive('/'))}>
             <HiSparkles className={getIconClass(isActive('/'))} />
-            <span className={getTextClass(isActive('/'))}>Discover</span>
           </Link>
 
           {/* Notifications (With Badge) */}
@@ -58,8 +54,7 @@ const BottomNav: React.FC = () => {
             onClick={toggleNotifications}
             className={`inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group relative ${isNotificationsOpen ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
           >
-            <HiBell className={`w-6 h-6 mb-1 ${isNotificationsOpen ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`} />
-            <span className={`text-xs ${isNotificationsOpen ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`}>Alerts</span>
+            <HiBell className={`w-7 h-7 ${isNotificationsOpen ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500 transition-colors duration-200`} />
             {unreadCount > 0 && (
                 <div className="absolute inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full top-2 right-3 dark:border-gray-900">{unreadCount}</div>
             )}
@@ -68,24 +63,16 @@ const BottomNav: React.FC = () => {
           {/* Chat */}
           <Link to="/chat" className={getItemClass(isActive('/chat'))}>
             <HiChat className={getIconClass(isActive('/chat'))} />
-            <span className={getTextClass(isActive('/chat'))}>Chat</span>
           </Link>
 
-          {/* Search (Matches?) - Keeping as Search for now but linking to matches as placeholder */}
+          {/* Search (Matches?) */}
           <Link to="/matches" className={getItemClass(isActive('/matches'))}>
             <HiSearch className={getIconClass(isActive('/matches'))} />
-            <span className={getTextClass(isActive('/matches'))}>Search</span>
           </Link>
 
           {/* Profile */}
           <Link to="/profile" className={getItemClass(isActive('/profile'))}>
-            {/* Using HiUser as fallback if image fails or just as icon, but keeping image for now if preferred. 
-                Actually, let's use the icon for consistency or the image. 
-                The previous code used an image. I'll switch to HiUser for consistency with the icon set, 
-                or keep the image if the user really wants it. 
-                Let's use HiUser for now to match the style, it's cleaner. */}
             <HiUser className={getIconClass(isActive('/profile'))} />
-            <span className={getTextClass(isActive('/profile'))}>Profile</span>
           </Link>
         </div>
       </footer>
