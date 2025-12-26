@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { HiHome, HiChat, HiSearch, HiBell } from 'react-icons/hi';
+import { Link, useLocation } from 'react-router-dom';
+import { HiSparkles, HiChat, HiSearch, HiBell, HiUser } from 'react-icons/hi';
 import { useNotification } from '@context/NotificationContext';
 import NotificationDropdown from '@features/notifications/components/NotificationDropdown';
 
@@ -7,6 +8,7 @@ const BottomNav: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const { unreadCount } = useNotification();
+  const location = useLocation();
 
   const toggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
@@ -26,6 +28,17 @@ const BottomNav: React.FC = () => {
     };
   }, []);
 
+  const isActive = (path: string) => location.pathname === path;
+
+  const getItemClass = (active: boolean) => 
+    `inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group ${active ? 'bg-gray-50 dark:bg-gray-800' : ''}`;
+
+  const getIconClass = (active: boolean) => 
+    `w-6 h-6 mb-1 ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`;
+
+  const getTextClass = (active: boolean) => 
+    `text-xs ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500`;
+
   return (
       <footer className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600" ref={notificationRef}>
         {/* Notification Dropdown (Dropup) */}
@@ -33,11 +46,11 @@ const BottomNav: React.FC = () => {
 
         <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
           
-          {/* Home (Active) */}
-          <button type="button" className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group">
-            <HiHome className="w-6 h-6 mb-1 text-primary-600 dark:text-primary-500 group-hover:text-primary-600 dark:group-hover:text-primary-500" />
-            <span className="text-xs text-primary-600 dark:text-primary-500 group-hover:text-primary-600 dark:group-hover:text-primary-500">Home</span>
-          </button>
+          {/* Discover (Home) */}
+          <Link to="/" className={getItemClass(isActive('/'))}>
+            <HiSparkles className={getIconClass(isActive('/'))} />
+            <span className={getTextClass(isActive('/'))}>Discover</span>
+          </Link>
 
           {/* Notifications (With Badge) */}
           <button 
@@ -53,22 +66,27 @@ const BottomNav: React.FC = () => {
           </button>
 
           {/* Chat */}
-          <button type="button" className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group">
-            <HiChat className="w-6 h-6 mb-1 text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-500" />
-            <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-500">Chat</span>
-          </button>
+          <Link to="/chat" className={getItemClass(isActive('/chat'))}>
+            <HiChat className={getIconClass(isActive('/chat'))} />
+            <span className={getTextClass(isActive('/chat'))}>Chat</span>
+          </Link>
 
-          {/* Search (Modal Trigger) */}
-          <button type="button" className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group">
-            <HiSearch className="w-6 h-6 mb-1 text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-500" />
-            <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-500">Search</span>
-          </button>
+          {/* Search (Matches?) - Keeping as Search for now but linking to matches as placeholder */}
+          <Link to="/matches" className={getItemClass(isActive('/matches'))}>
+            <HiSearch className={getIconClass(isActive('/matches'))} />
+            <span className={getTextClass(isActive('/matches'))}>Search</span>
+          </Link>
 
-          {/* Profile (Avatar) */}
-          <button type="button" className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group">
-            <img className="w-6 h-6 rounded-full mb-1" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="Profile"/>
-            <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-500">Profile</span>
-          </button>
+          {/* Profile */}
+          <Link to="/profile" className={getItemClass(isActive('/profile'))}>
+            {/* Using HiUser as fallback if image fails or just as icon, but keeping image for now if preferred. 
+                Actually, let's use the icon for consistency or the image. 
+                The previous code used an image. I'll switch to HiUser for consistency with the icon set, 
+                or keep the image if the user really wants it. 
+                Let's use HiUser for now to match the style, it's cleaner. */}
+            <HiUser className={getIconClass(isActive('/profile'))} />
+            <span className={getTextClass(isActive('/profile'))}>Profile</span>
+          </Link>
         </div>
       </footer>
   );

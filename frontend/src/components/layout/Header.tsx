@@ -49,7 +49,7 @@ const Header: React.FC = () => {
                 </Link>
                 
                 <Link to="/register">
-                  <Button gradientDuoTone="purpleToBlue" size="sm">
+                  <Button size="sm">
                     Sign Up
                   </Button>
                 </Link>
