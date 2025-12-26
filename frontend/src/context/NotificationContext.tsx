@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { ToastType, NotificationItem, ToastMessage } from '@app-types/notifications';
+import { ToastType, NotificationItem, ToastMessage, ToastAction } from '@app-types/notifications';
 import { MOCK_NOTIFICATIONS } from '@/data/mockNotifications';
 
 interface NotificationContextType {
   toasts: ToastMessage[];
   notifications: NotificationItem[];
-  addToast: (message: string, type: ToastType, duration?: number) => void;
+  addToast: (message: string, type: ToastType, duration?: number, options?: { title?: string, actions?: ToastAction[] }) => void;
   removeToast: (id: string) => void;
   addNotification: (notification: Omit<NotificationItem, 'id' | 'read' | 'time'>) => void;
   markAsRead: (id: string) => void;
@@ -22,9 +22,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
 
-  const addToast = useCallback((message: string, type: ToastType, duration = 4000) => {
+  const addToast = useCallback((message: string, type: ToastType, duration = 4000, options?: { title?: string, actions?: ToastAction[] }) => {
     const id = uuidv4();
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+    setToasts((prev) => [...prev, { id, message, type, duration, ...options }]);
 
     if (duration > 0) {
       setTimeout(() => {

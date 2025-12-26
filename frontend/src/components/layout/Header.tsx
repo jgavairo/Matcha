@@ -3,16 +3,34 @@ import { Link, useNavigate } from 'react-router-dom';
 import { HiLogout, HiMoon, HiSun } from 'react-icons/hi';
 import { useTheme } from '@context/ThemeContext';
 import { useAuth } from '@context/AuthContext';
+import { useNotification } from '@context/NotificationContext';
 import { Button } from 'flowbite-react';
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated, logout } = useAuth();
+  const { addToast } = useNotification();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    addToast("Are you sure you want to log out?", 'warning', 0, {
+      title: "Confirm Logout",
+      actions: [
+        { 
+          label: "Logout", 
+          onClick: () => { 
+            logout(); 
+            navigate('/'); 
+          }, 
+          color: "failure" 
+        },
+        { 
+          label: "Cancel", 
+          onClick: () => {}, 
+          color: "light" 
+        }
+      ]
+    });
   };
 
   return (

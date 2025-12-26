@@ -1,5 +1,5 @@
 import React from 'react';
-import { Toast, ToastToggle  } from 'flowbite-react';
+import { Toast, ToastToggle, Button } from 'flowbite-react';
 import { HiCheck, HiX, HiExclamation, HiInformationCircle } from 'react-icons/hi';
 import { useNotification } from '@context/NotificationContext';
 import { ToastType } from '@app-types/notifications';
@@ -38,14 +38,30 @@ const ToastContainer: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2">
+    <div className="fixed top-5 right-5 z-[100] flex flex-col gap-2">
       {toasts.map((toast) => (
         <Toast key={toast.id}>
-          <div className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColors(toast.type)}`}>
-            {getIcon(toast.type)}
+          <div className="flex items-start">
+            <div className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColors(toast.type)}`}>
+              {getIcon(toast.type)}
+            </div>
+            <div className="ml-3 text-sm font-normal">
+              {toast.title && <span className="mb-1 text-sm font-semibold text-gray-900 dark:text-white block">{toast.title}</span>}
+              <div className="mb-2 text-sm font-normal">{toast.message}</div>
+              {toast.actions && (
+                <div className="flex gap-2">
+                  {toast.actions.map((action, index) => (
+                    <div className="w-auto" key={index}>
+                      <Button size="xs" color={action.color || 'light'} onClick={() => { action.onClick(); removeToast(toast.id); }}>
+                        {action.label}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <ToastToggle onDismiss={() => removeToast(toast.id)} />
           </div>
-          <div className="ml-3 text-sm font-normal">{toast.message}</div>
-          <ToastToggle  onDismiss={() => removeToast(toast.id)} />
         </Toast>
       ))}
     </div>

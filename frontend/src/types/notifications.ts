@@ -11,11 +11,19 @@ export type NotificationType =
   | 'match'
   | 'unlike';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+  color?: string;
+}
+
 export interface ToastMessage {
   id: string;
   message: string;
   type: ToastType;
   duration?: number;
+  title?: string;
+  actions?: ToastAction[];
 }
 
 export interface NotificationItem {
