@@ -1,17 +1,47 @@
 import React from 'react';
+import UserCard from '../features/matches/components/UserCard';
+import { useMatches } from '../features/matches/hooks/useMatches';
+import { Spinner } from 'flowbite-react';
 
 const DashboardPage: React.FC = () => {
+  const { currentUser, loading, error, isFinished, handleLike, handleDislike } = useMatches();
+
+  if (loading) {
+    return (
+      <div className="flex-grow flex items-center justify-center p-4">
+        <Spinner size="xl" color="pink" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-grow flex items-center justify-center p-4">
+        <div className="text-center text-red-500">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFinished || !currentUser) {
+    return (
+      <div className="flex-grow flex items-center justify-center p-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No more profiles!</h2>
+          <p className="text-gray-500 dark:text-gray-400">Check back later for more matches.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-grow flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 text-center">
-          <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome to Matcha</h5>
-          <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-            This is your main dashboard. Content will appear here.
-          </p>
-          <div className="h-64 bg-gray-200 rounded dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-gray-500 dark:text-gray-400">Content Placeholder</span>
-          </div>
-        </div>
+      <UserCard 
+        user={currentUser} 
+        onLike={handleLike} 
+        onDislike={handleDislike} 
+      />
     </div>
   );
 };
