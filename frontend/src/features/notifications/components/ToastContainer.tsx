@@ -1,7 +1,8 @@
 import React from 'react';
 import { Toast, ToastToggle  } from 'flowbite-react';
 import { HiCheck, HiX, HiExclamation, HiInformationCircle } from 'react-icons/hi';
-import { useNotification, ToastType } from '@context/NotificationContext';
+import { useNotification } from '@context/NotificationContext';
+import { ToastType } from '@app-types/notifications';
 
 const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useNotification();

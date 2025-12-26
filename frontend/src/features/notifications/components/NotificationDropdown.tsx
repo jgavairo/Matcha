@@ -1,14 +1,38 @@
 import React from 'react';
 import { useNotification } from '@context/NotificationContext';
+import { NotificationType } from '@app-types/notifications';
 import NotificationItem from './NotificationItem';
+import { HiPlus } from 'react-icons/hi';
 
 const NotificationDropdown: React.FC = () => {
-  const { notifications, clearNotifications } = useNotification();
+  const { notifications, clearNotifications, addNotification } = useNotification();
+
+  const handleAddTestNotification = () => {
+    const types: NotificationType[] = ['like', 'visit', 'message', 'match', 'unlike', 'success', 'error', 'warning', 'info'];
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    const names = ['Sarah Connor', 'Mike Ross', 'Jessica Pearson', 'Harvey Specter', 'Louis Litt'];
+    const randomName = names[Math.floor(Math.random() * names.length)];
+
+    addNotification({
+      type: randomType,
+      sender: randomName,
+      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+      message: `This is a test notification of type ${randomType}`,
+      title: 'Test Notification'
+    });
+  };
 
   return (
     <div className="absolute bottom-16 left-0 right-0 mx-auto w-full max-w-sm bg-white divide-y divide-gray-100 rounded-t-lg shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-t border-x border-gray-200 dark:border-gray-600">
-      <div className="block px-4 py-2 font-medium text-center text-gray-700 rounded-t-lg bg-gray-50 dark:bg-gray-800 dark:text-white">
-        Notifications
+      <div className="flex items-center justify-between px-4 py-2 font-medium text-gray-700 rounded-t-lg bg-gray-50 dark:bg-gray-800 dark:text-white">
+        <span>Notifications</span>
+        <button 
+          onClick={handleAddTestNotification}
+          className="p-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+          title="Add test notification"
+        >
+          <HiPlus className="w-4 h-4" />
+        </button>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[60vh] overflow-y-auto">
         {notifications.length === 0 ? (

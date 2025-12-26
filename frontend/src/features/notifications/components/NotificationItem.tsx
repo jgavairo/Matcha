@@ -11,7 +11,9 @@ import {
   HiExclamation,
   HiX
 } from 'react-icons/hi';
-import { NotificationItem as NotificationItemType, useNotification } from '@context/NotificationContext';
+import { useNotification } from '@context/NotificationContext';
+import { NotificationItem as NotificationItemType } from '@app-types/notifications';
+import { formatTimeAgo } from '@utils/dateUtils';
 
 interface NotificationItemProps {
   notification: NotificationItemType;
@@ -93,7 +95,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
         <div className="text-gray-500 text-sm mb-1.5 dark:text-gray-400 pr-6">
           <span className="font-semibold text-gray-900 dark:text-white">{title}</span>: {message}
         </div>
-        <div className="text-xs text-blue-600 dark:text-blue-500">{notification.time}</div>
+        <div className="text-xs text-blue-600 dark:text-blue-500">{formatTimeAgo(notification.time)}</div>
       </div>
       <button
         onClick={handleRemove}

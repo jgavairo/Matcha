@@ -1,5 +1,5 @@
 import React from 'react';
-import UserCard from '@features/matches/components/UserCard';
+import CardStack from '@features/matches/components/CardStack';
 import { useMatches } from '@features/matches/hooks/useMatches';
 import { Spinner } from 'flowbite-react';
 
@@ -7,7 +7,6 @@ const DiscoverPage: React.FC = () => {
   const { 
     users,
     currentIndex,
-    currentUser, 
     loading, 
     error, 
     isFinished, 
@@ -56,34 +55,14 @@ const DiscoverPage: React.FC = () => {
 
   return (
     <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full">
-      <div className="w-full max-w-sm 2xl:max-w-md h-[70vh] max-h-[800px] relative">
-        <div 
-          className="flex flex-col h-full transition-transform duration-300 ease-in-out"
-          style={{ transform: `translateY(-${currentIndex * 200}%)` }}
-        >
-          {users.map((user, index) => {
-            // Only render cards around the current index to improve performance
-            // Keep one previous card rendered for smooth transitions/undo
-            const shouldRender = index >= currentIndex - 1 && index < currentIndex + 5;
-            
-            return (
-              <div key={user.id} className="w-full flex-shrink-0" style={{ height: '200%' }}>
-                <div className="w-full h-1/2">
-                  {shouldRender && (
-                    <UserCard 
-                      user={user} 
-                      onLike={handleLike} 
-                      onDislike={handleDislike} 
-                      onUndo={handleUndo}
-                      canUndo={canUndo}
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <CardStack 
+        users={users}
+        currentIndex={currentIndex}
+        onLike={handleLike}
+        onDislike={handleDislike}
+        onUndo={handleUndo}
+        canUndo={canUndo}
+      />
     </div>
   );
 };
