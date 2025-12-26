@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CardStack from '@features/matches/components/CardStack';
 import { useMatches } from '@features/matches/hooks/useMatches';
 import { Spinner } from 'flowbite-react';
+import UserProfileModal from '@/features/matches/components/UserProfileDrawer';
+import { UserProfile } from '@app-types/user';
 
 const DiscoverPage: React.FC = () => {
   const { 
@@ -15,6 +17,22 @@ const DiscoverPage: React.FC = () => {
     handleUndo,
     canUndo
   } = useMatches();
+
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+
+  const handleBlock = () => {
+    if (selectedUser) {
+      console.log('Block user:', selectedUser.id);
+      // Implement block logic here
+    }
+  };
+
+  const handleReport = (reason: string) => {
+    if (selectedUser) {
+      console.log('Report user:', selectedUser.id, reason);
+      // Implement report logic here
+    }
+  };
 
   if (loading) {
     return (
@@ -54,7 +72,7 @@ const DiscoverPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full">
+    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full relative">
       <CardStack 
         users={users}
         currentIndex={currentIndex}
@@ -62,7 +80,20 @@ const DiscoverPage: React.FC = () => {
         onDislike={handleDislike}
         onUndo={handleUndo}
         canUndo={canUndo}
+        onOpenProfile={setSelectedUser}
       />
+
+      {selectedUser && (
+        <UserProfileModal 
+          user={selectedUser}
+          isOpen={!!selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onLike={() => { handleLike(selectedUser.id.toString()); setSelectedUser(null); }}
+          onDislike={() => { handleDislike(selectedUser.id.toString()); setSelectedUser(null); }}
+          onBlock={handleBlock}
+          onReport={handleReport}
+        />
+      )}
     </div>
   );
 };

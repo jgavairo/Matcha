@@ -29,21 +29,31 @@ export const useMatches = () => {
     setCurrentIndex((prev) => prev + 1);
   }, []);
 
-  const handleLike = useCallback(async () => {
-    if (!users[currentIndex]) return;
+  const handleLike = useCallback(async (userId?: string | number) => {
+    const targetId = userId ? Number(userId) : users[currentIndex]?.id;
+    if (!targetId) return;
+
     try {
-      await matchService.likeUser(users[currentIndex].id);
-      nextUser();
+      await matchService.likeUser(targetId);
+      // Only advance index if we liked the current user
+      if (!userId || Number(userId) === users[currentIndex]?.id) {
+        nextUser();
+      }
     } catch (err) {
       console.error('Error liking user:', err);
     }
   }, [users, currentIndex, nextUser]);
 
-  const handleDislike = useCallback(async () => {
-    if (!users[currentIndex]) return;
+  const handleDislike = useCallback(async (userId?: string | number) => {
+    const targetId = userId ? Number(userId) : users[currentIndex]?.id;
+    if (!targetId) return;
+
     try {
-      await matchService.dislikeUser(users[currentIndex].id);
-      nextUser();
+      await matchService.dislikeUser(targetId);
+      // Only advance index if we disliked the current user
+      if (!userId || Number(userId) === users[currentIndex]?.id) {
+        nextUser();
+      }
     } catch (err) {
       console.error('Error disliking user:', err);
     }

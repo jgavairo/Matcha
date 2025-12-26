@@ -9,6 +9,7 @@ interface CardStackProps {
   onDislike: (id: string) => void;
   onUndo: () => void;
   canUndo: boolean;
+  onOpenProfile: (user: UserProfile) => void;
 }
 
 const CardStack: React.FC<CardStackProps> = ({ 
@@ -17,7 +18,8 @@ const CardStack: React.FC<CardStackProps> = ({
   onLike, 
   onDislike, 
   onUndo, 
-  canUndo 
+  canUndo,
+  onOpenProfile
 }) => {
   return (
     <div className="w-full max-w-sm 2xl:max-w-md h-[70vh] max-h-[800px] relative">
@@ -40,6 +42,7 @@ const CardStack: React.FC<CardStackProps> = ({
                     onDislike={() => onDislike(user.id.toString())} 
                     onUndo={onUndo}
                     canUndo={canUndo}
+                    onOpenProfile={() => onOpenProfile(user)}
                   />
                 )}
               </div>
