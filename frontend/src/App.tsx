@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
+import Header from '@components/layout/Header';
 import MainLayout from '@layouts/MainLayout';
 import HomePage from '@pages/HomePage';
 import RegisterPage from '@pages/RegisterPage';
@@ -14,6 +15,7 @@ function App() {
     <NotificationProvider>
       <ToastContainer />
       <BrowserRouter>
+      <Header />
       <Routes>
         <Route element={<ProtectedRoute />}>
           <Route path="/app" element={<AppLayout />}>
