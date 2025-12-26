@@ -1,4 +1,4 @@
-import { UserSummary } from '../types/user';
+import { UserProfile } from '../types/user';
 
 const interests = ['Travel', 'Music', 'Movies', 'Reading', 'Sports', 'Cooking', 'Photography', 'Gaming', 'Art', 'Technology'];
 const bios = [
@@ -14,8 +14,8 @@ const bios = [
   "Cat person."
 ];
 
-const generateUsers = (count: number): UserSummary[] => {
-  const users: UserSummary[] = [];
+const generateUsers = (count: number): UserProfile[] => {
+  const users: UserProfile[] = [];
   for (let i = 1; i <= count; i++) {
     const isMale = i % 2 !== 0;
     const gender = isMale ? 'Male' : 'Female';
@@ -31,16 +31,23 @@ const generateUsers = (count: number): UserSummary[] => {
     users.push({
       id: i,
       username: `User${i}`,
+      firstName: isMale ? `John${i}` : `Jane${i}`,
+      lastName: `Doe${i}`,
       age: 18 + Math.floor(Math.random() * 40),
       gender: gender,
+      sexualPreferences: ['Heterosexual', 'Bisexual'],
       biography: randomBio,
       distance: Math.floor(Math.random() * 100),
       tags: Array.from(new Set([randomInterest1, randomInterest2])), // Unique tags
       images: images,
-      fameRating: Math.floor(Math.random() * 100)
+      fameRating: Math.floor(Math.random() * 100),
+      isOnline: Math.random() > 0.5,
+      lastConnection: '2 hours ago',
+      hasLikedYou: Math.random() > 0.7,
+      isMatch: false
     });
   }
   return users;
 };
 
-export const mockUsers: UserSummary[] = generateUsers(50);
+export const mockUsers: UserProfile[] = generateUsers(50);

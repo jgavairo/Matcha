@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { UserSummary } from '../../../types/user';
+import { UserProfile } from '../../../types/user';
 import { matchService } from '../services/matchService';
 
 export const useMatches = () => {
-  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<number[]>([]); // Store indices of passed users
 
   useEffect(() => {
     loadUsers();

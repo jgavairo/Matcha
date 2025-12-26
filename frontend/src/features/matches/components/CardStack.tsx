@@ -1,9 +1,9 @@
 import React from 'react';
-import { UserSummary } from '@app-types/user';
+import { UserProfile } from '@app-types/user';
 import UserCard from './UserCard';
 
 interface CardStackProps {
-  users: UserSummary[];
+  users: UserProfile[];
   currentIndex: number;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
@@ -36,8 +36,8 @@ const CardStack: React.FC<CardStackProps> = ({
                 {shouldRender && (
                   <UserCard 
                     user={user} 
-                    onLike={onLike} 
-                    onDislike={onDislike} 
+                    onLike={() => onLike(user.id.toString())} 
+                    onDislike={() => onDislike(user.id.toString())} 
                     onUndo={onUndo}
                     canUndo={canUndo}
                   />
