@@ -6,8 +6,10 @@ import { MatchFiltersState } from '../types/match';
 export const DEFAULT_FILTERS: MatchFiltersState = {
   ageRange: [18, 99],
   distanceRange: [0, 100],
-  fameRange: [0, 0],
+  fameRange: [0, 1000],
   minCommonTags: 0,
+  tags: [],
+  location: '',
   sortBy: 'distance',
   sortOrder: 'asc'
 };
@@ -55,13 +57,20 @@ export const useMatches = () => {
 
     // Sort
     filtered.sort((a, b) => {
-      let valA = a[filters.sortBy as keyof UserProfile];
-      let valB = b[filters.sortBy as keyof UserProfile];
+      let valA: number | undefined;
+      let valB: number | undefined;
       
       if (filters.sortBy === 'commonTags') {
         valA = a.tags.length;
         valB = b.tags.length;
+      } else {
+        // Safe cast because we know sortBy is one of the numeric keys if it's not commonTags
+        const key = filters.sortBy as keyof Pick<UserProfile, 'age' | 'distance' | 'fameRating'>;
+        valA = a[key];
+        valB = b[key];
       }
+
+      if (valA === undefined || valB === undefined) return 0;
 
       if (valA < valB) return filters.sortOrder === 'asc' ? -1 : 1;
       if (valA > valB) return filters.sortOrder === 'asc' ? 1 : -1;

@@ -3,13 +3,15 @@ import { Button, Label, RangeSlider, Select, TextInput } from 'flowbite-react';
 import { HiAdjustments, HiSortAscending, HiSortDescending } from 'react-icons/hi';
 import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
+import { INTERESTS } from '../../../data/mockUsers';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;
   onFilterChange: (filters: MatchFiltersState) => void;
+  mode?: 'discover' | 'search';
 }
 
-const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange }) => {
+const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mode = 'discover' }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [localFilters, setLocalFilters] = React.useState<MatchFiltersState>(filters);
 
@@ -33,6 +35,14 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange }) 
 
   const handleChange = (key: keyof MatchFiltersState, value: any) => {
     setLocalFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleTag = (tag: string) => {
+    const currentTags = localFilters.tags || [];
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    handleChange('tags', newTags);
   };
 
   return (
@@ -77,6 +87,20 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange }) 
             </div>
 
             <hr className="border-gray-200 dark:border-gray-700" />
+
+            {mode === 'search' && (
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="location">Location</Label>
+                </div>
+                <TextInput
+                  id="location"
+                  placeholder="e.g. Lyon"
+                  value={localFilters.location || ''}
+                  onChange={(e) => handleChange('location', e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Age Range */}
             <div>
@@ -150,6 +174,29 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange }) 
                 onChange={(e) => handleChange('minCommonTags', parseInt(e.target.value))}
               />
             </div>
+
+            {mode === 'search' && (
+              <div>
+                <div className="mb-2 block">
+                  <Label>Tags</Label>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {INTERESTS.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        (localFilters.tags || []).includes(tag)
+                          ? 'bg-pink-500 text-white border-pink-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-2 mt-4">
               <Button color="gray" className="flex-1" onClick={handleReset}>

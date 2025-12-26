@@ -1,6 +1,6 @@
 import { UserProfile } from '../types/user';
 
-const interests = ['Travel', 'Music', 'Movies', 'Reading', 'Sports', 'Cooking', 'Photography', 'Gaming', 'Art', 'Technology'];
+export const INTERESTS = ['Travel', 'Music', 'Movies', 'Reading', 'Sports', 'Cooking', 'Photography', 'Gaming', 'Art', 'Technology'];
 // max 200 characters
 const bios = [
   "Loves long walks on the beach. Avid reader and coffee enthusiast and above all, a great listener.",
@@ -18,14 +18,23 @@ const bios = [
   "Fitness enthusiast and outdoor lover. Whether it's a morning run or a weekend hike, I enjoy staying active and embracing nature. Looking for someone who shares my passion for adventure and healthy living.",
 ];
 
+const cities = [
+  { name: 'Paris', lat: 48.8566, lng: 2.3522 },
+  { name: 'Lyon', lat: 45.7640, lng: 4.8357 },
+  { name: 'Marseille', lat: 43.2965, lng: 5.3698 },
+  { name: 'Bordeaux', lat: 44.8378, lng: -0.5792 },
+  { name: 'Lille', lat: 50.6292, lng: 3.0573 }
+];
+
 const generateUsers = (count: number): UserProfile[] => {
   const users: UserProfile[] = [];
   for (let i = 1; i <= count; i++) {
     const isMale = i % 2 !== 0;
     const gender = isMale ? 'Male' : 'Female';
-    const randomInterest1 = interests[Math.floor(Math.random() * interests.length)];
-    const randomInterest2 = interests[Math.floor(Math.random() * interests.length)];
+    const randomInterest1 = INTERESTS[Math.floor(Math.random() * INTERESTS.length)];
+    const randomInterest2 = INTERESTS[Math.floor(Math.random() * INTERESTS.length)];
     const randomBio = bios[Math.floor(Math.random() * bios.length)];
+    const randomCity = cities[Math.floor(Math.random() * cities.length)];
     
     // Generate 5 random images
     const images = Array.from({ length: 20 }, (_, index) => 
@@ -42,6 +51,11 @@ const generateUsers = (count: number): UserProfile[] => {
       sexualPreferences: ['Heterosexual', 'Bisexual'],
       biography: randomBio,
       distance: Math.floor(Math.random() * 100),
+      location: {
+        city: randomCity.name,
+        latitude: randomCity.lat + (Math.random() - 0.5) * 0.1, // Add some jitter
+        longitude: randomCity.lng + (Math.random() - 0.5) * 0.1
+      },
       tags: Array.from(new Set([randomInterest1, randomInterest2])), // Unique tags
       images: images,
       fameRating: Math.floor(Math.random() * 100),

@@ -72,9 +72,9 @@ const BottomNav: React.FC = () => {
             <HiChat className={getIconClass(isActive('/chat'))} />
           </Link>
 
-          {/* Search (Matches?) */}
-          <Link to="/matches" className={getItemClass(isActive('/matches'))}>
-            <HiSearch className={getIconClass(isActive('/matches'))} />
+          {/* Search */}
+          <Link to="/search" className={getItemClass(isActive('/search'))}>
+            <HiSearch className={getIconClass(isActive('/search'))} />
           </Link>
 
           {/* Profile */}

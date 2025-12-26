@@ -6,6 +6,11 @@ export interface UserSummary {
   gender: string;
   biography: string;
   distance: number;
+  location?: {
+    city: string;
+    latitude: number;
+    longitude: number;
+  };
   tags: string[];
   images: string[];
   fameRating: number;
