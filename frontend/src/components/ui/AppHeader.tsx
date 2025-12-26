@@ -1,17 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { HiLogout, HiMoon, HiSun } from 'react-icons/hi';
-import { useTheme } from '../../context/ThemeContext';
-import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '@context/ThemeContext';
+import { useAuth } from '@context/AuthContext';
 
-const DashboardHeader: React.FC = () => {
+const AppHeader: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed w-full z-20 top-0 left-0">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
-          <Link to="/dashboard" className="flex items-center">
+          <Link to="/app" className="flex items-center">
             <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white text-primary-600">Matcha</span>
           </Link>
           <div className="flex items-center lg:order-2">
@@ -37,4 +37,4 @@ const DashboardHeader: React.FC = () => {
   );
 };
 
-export default DashboardHeader;
+export default AppHeader;

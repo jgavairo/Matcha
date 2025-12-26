@@ -1,9 +1,9 @@
 import React from 'react';
-import UserCard from '../features/matches/components/UserCard';
-import { useMatches } from '../features/matches/hooks/useMatches';
+import UserCard from '@features/matches/components/UserCard';
+import { useMatches } from '@features/matches/hooks/useMatches';
 import { Spinner } from 'flowbite-react';
 
-const DashboardPage: React.FC = () => {
+const DiscoverPage: React.FC = () => {
   const { 
     users,
     currentIndex,
@@ -88,4 +88,4 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default DiscoverPage;

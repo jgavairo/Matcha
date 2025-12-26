@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import MainLayout from './layouts/MainLayout';
-import HomePage from './pages/HomePage';
-import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import DashboardLayout from './layouts/DashboardLayout';
-import ProtectedRoute from './components/ProtectedRoute';
+import MainLayout from '@layouts/MainLayout';
+import HomePage from '@pages/HomePage';
+import RegisterPage from '@pages/RegisterPage';
+import LoginPage from '@pages/LoginPage';
+import DiscoverPage from '@pages/DiscoverPage';
+import AppLayout from '@layouts/AppLayout';
+import ProtectedRoute from '@components/ProtectedRoute';
 
 function App() {
   return (
@@ -15,8 +15,8 @@ function App() {
       <BrowserRouter>
       <Routes>
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<DashboardPage />} />
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<DiscoverPage />} />
           </Route>
         </Route>
         <Route path="/" element={<MainLayout />}>
