@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { NotificationProvider } from '@context/NotificationContext';
+import ToastContainer from '@ui/ToastContainer';
 import MainLayout from '@layouts/MainLayout';
 import HomePage from '@pages/HomePage';
 import RegisterPage from '@pages/RegisterPage';
@@ -10,8 +11,8 @@ import ProtectedRoute from '@components/ProtectedRoute';
 
 function App() {
   return (
-    <>
-      <Toaster position="top-center" />
+    <NotificationProvider>
+      <ToastContainer />
       <BrowserRouter>
       <Routes>
         <Route element={<ProtectedRoute />}>
@@ -29,7 +30,7 @@ function App() {
         </Route>
       </Routes>
       </BrowserRouter>
-    </>
+    </NotificationProvider>
   );
 }
 

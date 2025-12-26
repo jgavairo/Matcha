@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoginFormData } from '../../types/forms';
 import { loginUser } from '../../features/auth/services/authService';
-import { Notification } from '../../features/notifications/Notification';
+import { useNotification } from '@context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const { addToast } = useNotification();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -27,12 +28,12 @@ const LoginForm = () => {
     try {
       const response = await loginUser(formData);
       if (response.message === 'Login successful') {
-        Notification.success('Connection successful');
+        addToast('Connection successful', 'success');
         navigate('/');
       }
     } catch (error) {
       console.error('Error logging in user');
-      Notification.error('Wrong email or password');
+      addToast('Wrong email or password', 'error');
     }
   };
 
