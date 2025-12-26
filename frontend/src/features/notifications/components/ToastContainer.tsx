@@ -1,14 +1,14 @@
 import React from 'react';
 import { Toast, ToastToggle  } from 'flowbite-react';
 import { HiCheck, HiX, HiExclamation, HiInformationCircle } from 'react-icons/hi';
-import { useNotification, NotificationType } from '@context/NotificationContext';
+import { useNotification, ToastType } from '@context/NotificationContext';
 
 const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useNotification();
 
   if (toasts.length === 0) return null;
 
-  const getIcon = (type: NotificationType) => {
+  const getIcon = (type: ToastType) => {
     switch (type) {
       case 'success':
         return <HiCheck className="h-5 w-5" />;
@@ -22,7 +22,7 @@ const ToastContainer: React.FC = () => {
     }
   };
 
-  const getColors = (type: NotificationType) => {
+  const getColors = (type: ToastType) => {
     switch (type) {
       case 'success':
         return 'text-green-500 bg-green-100 dark:bg-green-800 dark:text-green-200';
