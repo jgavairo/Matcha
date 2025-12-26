@@ -1,24 +1,41 @@
 import React from 'react';
-import { HiX, HiHeart, HiLocationMarker } from 'react-icons/hi';
-import { User } from '../../../types/user';
-import { Badge } from 'flowbite-react';
+import { HiX, HiHeart, HiLocationMarker, HiStar, HiRefresh } from 'react-icons/hi';
+import { UserSummary } from '../../../types/user';
+import { Badge, Button, Card, Tooltip, Carousel } from 'flowbite-react';
 
 interface UserCardProps {
-  user: User;
+  user: UserSummary;
   onLike: () => void;
   onDislike: () => void;
+  onUndo: () => void;
+  canUndo: boolean;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike }) => {
+const customCardTheme = {
+  root: {
+    children: "flex h-full flex-col justify-center gap-0 p-0",
+  }
+};
+
+const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onUndo, canUndo }) => {
   return (
-    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
-      <div className="relative h-96 w-full">
-        <img 
-          className="absolute inset-0 w-full h-full object-cover" 
-          src={user.imageUrl} 
-          alt={user.username} 
-        />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10">
+    <Card 
+      theme={customCardTheme}
+      className="w-full max-w-sm h-full max-h-[600px] overflow-hidden border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
+    >
+      <div className="relative flex-grow min-h-0 w-full">
+        <Carousel slide={false} indicators={true} className="h-full">
+          {user.images.map((img, idx) => (
+            <img 
+              key={idx} 
+              src={img} 
+              alt={`${user.username} - ${idx + 1}`} 
+              className="h-full w-full object-cover" 
+            />
+          ))}
+        </Carousel>
+
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10 pointer-events-none z-10">
           <h5 className="text-2xl font-bold tracking-tight text-white">
             {user.username}, {user.age}
           </h5>
@@ -26,12 +43,16 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike }) => {
             <HiLocationMarker className="w-4 h-4 mr-1" />
             <span className="text-sm">{user.distance} km away</span>
           </div>
+          <div className="flex items-center text-yellow-400 mt-1">
+            <HiStar className="w-4 h-4 mr-1" />
+            <span className="text-sm font-medium text-white">{user.fameRating}</span>
+          </div>
         </div>
       </div>
       
-      <div className="p-5">
-        <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-          {user.bio}
+      <div className="p-5 flex-shrink-0">
+        <p className="mb-3 font-normal text-gray-700 dark:text-gray-400 line-clamp-3">
+          {user.biography}
         </p>
         
         <div className="flex flex-wrap gap-2 mb-4">
@@ -42,22 +63,45 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike }) => {
           ))}
         </div>
 
-        <div className="flex justify-center gap-4 mt-4">
-          <button 
-            onClick={onDislike}
-            className="p-4 rounded-full bg-white border-2 border-gray-200 text-red-500 hover:bg-red-50 hover:border-red-500 transition-colors shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-red-400 dark:hover:bg-gray-600"
+        <div className="flex justify-center items-center gap-6 mt-4">
+          <Tooltip content="Undo last action">
+            <Button 
+              color="yellow" 
+              outline
+              pill 
+              size="lg"
+              onClick={(e) => { e.stopPropagation(); onUndo(); }}
+              disabled={!canUndo}
+              className="!p-2"
+            >
+              <HiRefresh className="w-5 h-5" />
+            </Button>
+          </Tooltip>
+
+          <Button 
+            color="red" 
+            outline
+            pill 
+            size="xl" 
+            onClick={(e) => { e.stopPropagation(); onDislike(); }}
+            className="!p-3"
           >
             <HiX className="w-8 h-8" />
-          </button>
-          <button 
-            onClick={onLike}
-            className="p-4 rounded-full bg-white border-2 border-gray-200 text-green-500 hover:bg-green-50 hover:border-green-500 transition-colors shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-600"
+          </Button>
+
+          <Button 
+            color="primary" 
+            outline
+            pill 
+            size="xl" 
+            onClick={(e) => { e.stopPropagation(); onLike(); }}
+            className="!p-3"
           >
             <HiHeart className="w-8 h-8" />
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

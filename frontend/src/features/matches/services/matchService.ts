@@ -1,9 +1,9 @@
-import { User } from '../../../types/user';
+import { UserSummary } from '../../../types/user';
 import { mockUsers } from '../../../data/mockUsers';
 
 // Simulating API calls
 export const matchService = {
-  getRecommendations: async (): Promise<User[]> => {
+  getRecommendations: async (): Promise<UserSummary[]> => {
     // Simulate network delay
     return new Promise((resolve) => {
       setTimeout(() => {

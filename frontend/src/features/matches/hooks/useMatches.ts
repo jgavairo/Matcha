@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { User } from '../../../types/user';
+import { UserSummary } from '../../../types/user';
 import { matchService } from '../services/matchService';
 
 export const useMatches = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserSummary[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,15 +48,24 @@ export const useMatches = () => {
     }
   }, [users, currentIndex, nextUser]);
 
+  const handleUndo = useCallback(() => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
+  }, []);
+
   const currentUser = users[currentIndex];
   const isFinished = !loading && currentIndex >= users.length;
+  const canUndo = currentIndex > 0;
 
   return {
+    users,
+    currentIndex,
     currentUser,
     loading,
     error,
     isFinished,
     handleLike,
-    handleDislike
+    handleDislike,
+    handleUndo,
+    canUndo
   };
 };
