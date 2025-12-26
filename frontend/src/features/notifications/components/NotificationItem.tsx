@@ -8,15 +8,29 @@ import {
   HiThumbDown, 
   HiCheckCircle, 
   HiXCircle, 
-  HiExclamation 
+  HiExclamation,
+  HiX
 } from 'react-icons/hi';
-import { NotificationItem as NotificationItemType } from '@context/NotificationContext';
+import { NotificationItem as NotificationItemType, useNotification } from '@context/NotificationContext';
 
 interface NotificationItemProps {
   notification: NotificationItemType;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => {
+  const { markAsRead, removeNotification } = useNotification();
+
+  const handleClick = () => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+  };
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeNotification(notification.id);
+  };
+
   const getContent = (n: NotificationItemType) => {
     const senderName = n.sender || 'Someone';
     
@@ -67,18 +81,28 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
   };
 
   return (
-    <a href="#" className="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700">
+    <div 
+      onClick={handleClick}
+      className={`flex px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${!notification.read ? 'bg-blue-50 dark:bg-gray-700/50' : ''} group relative`}
+    >
       <div className="shrink-0 relative">
         <img className="rounded-full w-11 h-11" src={notification.avatar || "https://flowbite.com/docs/images/people/profile-picture-5.jpg"} alt="avatar" />
         {getIcon(notification.type)}
       </div>
       <div className="w-full ps-3">
-        <div className="text-gray-500 text-sm mb-1.5 dark:text-gray-400">
+        <div className="text-gray-500 text-sm mb-1.5 dark:text-gray-400 pr-6">
           <span className="font-semibold text-gray-900 dark:text-white">{title}</span>: {message}
         </div>
         <div className="text-xs text-blue-600 dark:text-blue-500">{notification.time}</div>
       </div>
-    </a>
+      <button
+        onClick={handleRemove}
+        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+        title="Remove notification"
+      >
+        <HiX className="w-4 h-4" />
+      </button>
+    </div>
   );
 };
 

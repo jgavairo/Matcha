@@ -14,6 +14,11 @@ const BottomNav: React.FC = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
   };
 
+  // Close notifications on route change
+  useEffect(() => {
+    setIsNotificationsOpen(false);
+  }, [location.pathname]);
+
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,12 +57,14 @@ const BottomNav: React.FC = () => {
           <button 
             type="button" 
             onClick={toggleNotifications}
-            className={`inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group relative ${isNotificationsOpen ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+            className={getItemClass(isNotificationsOpen)}
           >
-            <HiBell className={`w-7 h-7 ${isNotificationsOpen ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500 transition-colors duration-200`} />
-            {unreadCount > 0 && (
-                <div className="absolute inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full top-2 right-3 dark:border-gray-900">{unreadCount}</div>
-            )}
+            <div className="relative inline-flex items-center">
+              <HiBell className={getIconClass(isNotificationsOpen)} />
+              {unreadCount > 0 && (
+                <div className="absolute block w-3 h-3 bg-red-500 border-2 border-white rounded-full top-0 start-4 dark:border-gray-900"></div>
+              )}
+            </div>
           </button>
 
           {/* Chat */}

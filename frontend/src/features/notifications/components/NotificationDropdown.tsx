@@ -3,7 +3,7 @@ import { useNotification } from '@context/NotificationContext';
 import NotificationItem from './NotificationItem';
 
 const NotificationDropdown: React.FC = () => {
-  const { notifications } = useNotification();
+  const { notifications, clearNotifications } = useNotification();
 
   return (
     <div className="absolute bottom-16 left-0 right-0 mx-auto w-full max-w-sm bg-white divide-y divide-gray-100 rounded-t-lg shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-t border-x border-gray-200 dark:border-gray-600">
@@ -21,14 +21,19 @@ const NotificationDropdown: React.FC = () => {
           ))
         )}
       </div>
-      <a href="#" className="block py-2 text-sm font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white">
-        <div className="inline-flex items-center ">
-          <svg className="w-4 h-4 me-2 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 14">
-            <path d="M10 0C4.612 0 0 5.336 0 7c0 1.742 3.546 7 10 7 6.454 0 10-5.258 10-7 0-1.664-4.612-7-10-7Zm0 10a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
-          </svg>
-          Clear all
-        </div>
-      </a>
+      {notifications.length > 0 && (
+        <button 
+          onClick={clearNotifications}
+          className="w-full block py-2 text-sm font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white rounded-b-lg"
+        >
+          <div className="inline-flex items-center justify-center w-full">
+            <svg className="w-4 h-4 me-2 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 14">
+              <path d="M10 0C4.612 0 0 5.336 0 7c0 1.742 3.546 7 10 7 6.454 0 10-5.258 10-7 0-1.664-4.612-7-10-7Zm0 10a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+            </svg>
+            Clear all
+          </div>
+        </button>
+      )}
     </div>
   );
 };
