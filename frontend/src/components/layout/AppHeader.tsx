@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { HiLogout, HiMoon, HiSun } from 'react-icons/hi';
 import { useTheme } from '@context/ThemeContext';
 import { useAuth } from '@context/AuthContext';
-import NotificationBell from '@ui/NotificationBell';
 
 const AppHeader: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -16,9 +15,6 @@ const AppHeader: React.FC = () => {
             <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white text-primary-600">Matcha</span>
           </Link>
           <div className="flex items-center lg:order-2">
-            <div className="mr-2">
-              <NotificationBell />
-            </div>
             <button 
               onClick={toggleTheme}
               type="button" 

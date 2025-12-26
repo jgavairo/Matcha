@@ -1,5 +1,5 @@
-import { publicApi } from "../../../services/api";
-import { LoginFormData, RegisterFormData } from "../../../types/forms";
+import { publicApi } from "@services/api";
+import { LoginFormData, RegisterFormData } from "@app-types/forms";
 
 
 // Registration Service =======================================================

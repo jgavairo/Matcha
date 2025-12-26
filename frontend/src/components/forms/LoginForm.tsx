@@ -1,8 +1,8 @@
 import { Button, Checkbox, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LoginFormData } from '../../types/forms';
-import { loginUser } from '../../features/auth/services/authService';
+import { LoginFormData } from '@app-types/forms';
+import { loginUser } from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 

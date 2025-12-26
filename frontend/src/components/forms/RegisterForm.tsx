@@ -1,8 +1,8 @@
 import { Button, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RegisterFormData } from '../../types/forms';
-import { registerUser } from '../../features/auth/services/authService';
+import { RegisterFormData } from '@app-types/forms';
+import { registerUser } from '@features/auth/services/authService';
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState<RegisterFormData>({

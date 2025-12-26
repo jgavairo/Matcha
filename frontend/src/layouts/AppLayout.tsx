@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import AppHeader from '@ui/AppHeader';
-import BottomNav from '@ui/BottomNav';
+import AppHeader from '@components/layout/AppHeader';
+import BottomNav from '@components/layout/BottomNav';
 
 const AppLayout: React.FC = () => {
   return (

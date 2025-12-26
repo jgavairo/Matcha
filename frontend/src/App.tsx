@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
-import ToastContainer from '@ui/ToastContainer';
+import ToastContainer from '@features/notifications/components/ToastContainer';
 import MainLayout from '@layouts/MainLayout';
 import HomePage from '@pages/HomePage';
 import RegisterPage from '@pages/RegisterPage';
