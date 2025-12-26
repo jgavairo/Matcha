@@ -3,9 +3,9 @@ import RegisterForm from '../components/forms/RegisterForm';
 
 const RegisterPage = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+    <div className="flex flex-grow items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
-        <h2 className="text-center text-2xl font-bold text-white">
+        <h2 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
           Create your account
         </h2>
         <RegisterForm />

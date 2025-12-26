@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
+import { useAuth } from '@context/AuthContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
 import Header from '@components/layout/Header';
 import Footer from '@components/layout/Footer';
@@ -12,6 +13,8 @@ import AppLayout from '@layouts/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute';
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <NotificationProvider>
       <ToastContainer />
@@ -21,17 +24,20 @@ function App() {
           <div className="flex-grow overflow-y-auto mt-16 flex flex-col">
             <Routes>
               <Route element={<ProtectedRoute />}>
-                <Route path="/app" element={<AppLayout />}>
-                  <Route index element={<DiscoverPage />} />
+                <Route element={<AppLayout />}>
+                  <Route path="/matches" element={<div className="text-center py-10">Matches Page (Todo)</div>} />
+                  <Route path="/chat" element={<div className="text-center py-10">Chat Page (Todo)</div>} />
                 </Route>
               </Route>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
-                <Route path="matches" element={<div className="text-center py-10">Matches Page (Todo)</div>} />
-                <Route path="chat" element={<div className="text-center py-10">Chat Page (Todo)</div>} />
+              
+              <Route element={<MainLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route path="*" element={<div className="text-center py-10">404 Not Found</div>} />
+              </Route>
+
+              <Route path="/" element={isAuthenticated ? <AppLayout /> : <MainLayout />}>
+                <Route index element={isAuthenticated ? <DiscoverPage /> : <HomePage />} />
               </Route>
             </Routes>
             <Footer />
