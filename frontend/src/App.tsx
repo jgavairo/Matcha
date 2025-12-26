@@ -4,6 +4,8 @@ import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import DashboardLayout from './layouts/DashboardLayout';
 
 function App() {
   return (
@@ -11,6 +13,9 @@ function App() {
       <Toaster position="top-center" />
       <BrowserRouter>
       <Routes>
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardPage />} />
+        </Route>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
