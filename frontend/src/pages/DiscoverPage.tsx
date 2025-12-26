@@ -3,6 +3,7 @@ import CardStack from '@features/matches/components/CardStack';
 import { useMatches } from '@features/matches/hooks/useMatches';
 import { Spinner } from 'flowbite-react';
 import UserProfileModal from '@/features/matches/components/UserProfileDrawer';
+import MatchFilters from '@/features/matches/components/MatchFilters';
 import { UserProfile } from '@app-types/user';
 
 const DiscoverPage: React.FC = () => {
@@ -15,7 +16,9 @@ const DiscoverPage: React.FC = () => {
     handleLike, 
     handleDislike,
     handleUndo,
-    canUndo
+    canUndo,
+    filters,
+    updateFilters
   } = useMatches();
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -34,27 +37,19 @@ const DiscoverPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-grow flex items-center justify-center p-4">
-        <Spinner size="xl" color="pink" />
-      </div>
-    );
-  }
+  return (
+    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full relative">
+      <MatchFilters filters={filters} onFilterChange={updateFilters} />
 
-  if (error) {
-    return (
-      <div className="flex-grow flex items-center justify-center p-4">
+      {loading ? (
+        <div className="flex items-center justify-center">
+          <Spinner size="xl" color="pink" />
+        </div>
+      ) : error ? (
         <div className="text-center text-red-500">
           <p>{error}</p>
         </div>
-      </div>
-    );
-  }
-
-  if (isFinished) {
-    return (
-      <div className="flex-grow flex items-center justify-center p-4">
+      ) : isFinished ? (
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No more profiles!</h2>
           <p className="text-gray-500 dark:text-gray-400">Check back later for more matches.</p>
@@ -67,32 +62,28 @@ const DiscoverPage: React.FC = () => {
             </button>
           )}
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <>
+          <CardStack 
+            users={users}
+            currentIndex={currentIndex}
+            onLike={handleLike}
+            onDislike={handleDislike}
+            onUndo={handleUndo}
+            canUndo={canUndo}
+            onOpenProfile={setSelectedUser}
+          />
 
-  return (
-    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full relative">
-      <CardStack 
-        users={users}
-        currentIndex={currentIndex}
-        onLike={handleLike}
-        onDislike={handleDislike}
-        onUndo={handleUndo}
-        canUndo={canUndo}
-        onOpenProfile={setSelectedUser}
-      />
-
-      {selectedUser && (
-        <UserProfileModal 
-          user={selectedUser}
-          isOpen={!!selectedUser}
-          onClose={() => setSelectedUser(null)}
-          onLike={() => { handleLike(selectedUser.id.toString()); setSelectedUser(null); }}
-          onDislike={() => { handleDislike(selectedUser.id.toString()); setSelectedUser(null); }}
-          onBlock={handleBlock}
-          onReport={handleReport}
-        />
+          <UserProfileModal 
+            user={selectedUser}
+            isOpen={!!selectedUser}
+            onClose={() => setSelectedUser(null)}
+            onLike={() => { if (selectedUser) { handleLike(selectedUser.id.toString()); setSelectedUser(null); } }}
+            onDislike={() => { if (selectedUser) { handleDislike(selectedUser.id.toString()); setSelectedUser(null); } }}
+            onBlock={handleBlock}
+            onReport={handleReport}
+          />
+        </>
       )}
     </div>
   );

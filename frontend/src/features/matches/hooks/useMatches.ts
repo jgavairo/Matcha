@@ -1,14 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserProfile } from '../../../types/user';
 import { matchService } from '../services/matchService';
+import { MatchFiltersState } from '../types/match';
+
+export const DEFAULT_FILTERS: MatchFiltersState = {
+  ageRange: [18, 99],
+  distanceRange: [0, 100],
+  fameRange: [0, 0],
+  minCommonTags: 0,
+  sortBy: 'distance',
+  sortOrder: 'asc'
+};
 
 export const useMatches = () => {
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<number[]>([]); // Store indices of passed users
+  const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
 
+  // Initial load
   useEffect(() => {
     loadUsers();
   }, []);
@@ -17,12 +29,51 @@ export const useMatches = () => {
     try {
       setLoading(true);
       const data = await matchService.getRecommendations();
-      setUsers(data);
+      setAllUsers(data);
     } catch (err) {
       setError('Failed to load recommendations');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Apply filters and sort whenever filters or allUsers change
+  useEffect(() => {
+    if (allUsers.length === 0) return;
+
+    let filtered = [...allUsers];
+
+    // Filter
+    filtered = filtered.filter(user => 
+      user.age >= filters.ageRange[0] && 
+      user.age <= filters.ageRange[1] &&
+      user.distance <= filters.distanceRange[1] &&
+      user.fameRating >= filters.fameRange[0] &&
+      // Mock common tags check (using length for now as we don't have current user tags here yet)
+      user.tags.length >= filters.minCommonTags
+    );
+
+    // Sort
+    filtered.sort((a, b) => {
+      let valA = a[filters.sortBy as keyof UserProfile];
+      let valB = b[filters.sortBy as keyof UserProfile];
+      
+      if (filters.sortBy === 'commonTags') {
+        valA = a.tags.length;
+        valB = b.tags.length;
+      }
+
+      if (valA < valB) return filters.sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return filters.sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    setUsers(filtered);
+    setCurrentIndex(0); // Reset stack when filters change
+  }, [filters, allUsers]);
+
+  const updateFilters = (newFilters: MatchFiltersState) => {
+    setFilters(newFilters);
   };
 
   const nextUser = useCallback(() => {
@@ -77,6 +128,8 @@ export const useMatches = () => {
     handleLike,
     handleDislike,
     handleUndo,
-    canUndo
+    canUndo,
+    filters,
+    updateFilters
   };
 };

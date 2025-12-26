@@ -7,7 +7,7 @@ import ProfileInfo from './ProfileInfo';
 import ProfileFooter from './ProfileFooter';
 
 interface UserProfileModalProps {
-  user: UserProfile;
+  user: UserProfile | null;
   isOpen: boolean;
   onClose: () => void;
   onLike: () => void;
@@ -38,21 +38,23 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         open={isOpen} 
         onClose={onClose} 
         position="right" 
-        className="w-full md:w-[600px] p-0 fixed top-16 bottom-16 h-auto !z-40 shadow-xl border-l border-gray-200 dark:border-gray-700"
+        className="w-full md:w-[600px] p-0 fixed top-16 bottom-16 h-auto !z-40 shadow-xl border-l border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out"
         backdrop={false}
       >
-        <div className="h-full flex flex-col bg-white dark:bg-gray-800">
-          <ProfileHeader 
-            user={user} 
-            onClose={onClose} 
-            onBlock={onBlock} 
-            onReportClick={() => setIsReportModalOpen(true)} 
-          />
+        {user && (
+          <div className="h-full flex flex-col bg-white dark:bg-gray-800">
+            <ProfileHeader 
+              user={user} 
+              onClose={onClose} 
+              onBlock={onBlock} 
+              onReportClick={() => setIsReportModalOpen(true)} 
+            />
 
-          <ProfileInfo user={user} />
+            <ProfileInfo user={user} />
 
-          <ProfileFooter onLike={onLike} onDislike={onDislike} />
-        </div>
+            <ProfileFooter onLike={onLike} onDislike={onDislike} />
+          </div>
+        )}
       </Drawer>
 
       <ReportModal 

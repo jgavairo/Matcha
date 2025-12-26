@@ -1,5 +1,6 @@
 import { UserProfile } from '../../../types/user';
 import { mockUsers } from '../../../data/mockUsers';
+import { MatchFiltersState } from '../types/match';
 
 // Simulating API calls
 export const matchService = {
@@ -7,7 +8,7 @@ export const matchService = {
     // Simulate network delay
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(mockUsers);
+        resolve([...mockUsers]);
       }, 500);
     });
   },

@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Custom Range Slider Styles to fix missing handle */
+  input[type='range'] {
+    @apply h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 bg-pink-600 rounded-full cursor-pointer;
+  }
+
+  input[type='range']::-moz-range-thumb {
+    @apply w-4 h-4 bg-pink-600 rounded-full border-none cursor-pointer;
+  }
+}
