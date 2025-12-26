@@ -9,7 +9,7 @@ const HomePage: React.FC = () => {
 
   const handleDebugLogin = () => {
     login();
-    navigate('/dashboard');
+    navigate('/app');
   };
 
   return (
