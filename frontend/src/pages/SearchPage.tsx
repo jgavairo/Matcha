@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Spinner } from 'flowbite-react';
 import { UserProfile } from '@app-types/user';
 import { matchService } from '@features/matches/services/matchService';
@@ -11,27 +11,81 @@ import { DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
 const SearchPage: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
+    if (isNewFilter) {
       setLoading(true);
-      setError(null);
-      try {
-        const results = await matchService.searchUsers(filters);
-        setUsers(results);
-      } catch (err) {
-        setError('Failed to load search results');
-        console.error(err);
-      } finally {
-        setLoading(false);
+    } else {
+      setLoadingMore(true);
+    }
+    setError(null);
+    
+    try {
+      const { data, total } = await matchService.searchUsers(filters, pageNum);
+      
+      if (isNewFilter) {
+        setUsers(data);
+      } else {
+        setUsers(prev => [...prev, ...data]);
+      }
+      
+      setHasMore(users.length + data.length < total);
+      // Correction: The above check is slightly wrong because 'users' is stale in the closure if not careful, 
+      // but since we use functional update for setUsers, we are good for the state update.
+      // However, for hasMore, we need the updated count.
+      // A safer check for hasMore:
+      // If we received fewer items than the limit (12), we are done.
+      // Or if (pageNum * 12) >= total.
+      setHasMore((pageNum * 12) < total);
+
+    } catch (err) {
+      setError('Failed to load search results');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filters]);
+
+  // Reset and fetch when filters change
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchUsers(1, true);
+  }, [filters]); // fetchUsers is dependent on filters, so this is correct
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          setPage(prev => {
+            const nextPage = prev + 1;
+            fetchUsers(nextPage, false);
+            return nextPage;
+          });
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
       }
     };
-
-    fetchUsers();
-  }, [filters]);
+  }, [hasMore, loading, loadingMore, fetchUsers]);
 
   const handleBlock = () => {
     if (selectedUser) {
@@ -101,15 +155,25 @@ const SearchPage: React.FC = () => {
           <p className="mt-2">Try adjusting your filters.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {users.map((user) => (
-            <SearchUserCard 
-              key={user.id} 
-              user={user} 
-              onOpenProfile={() => setSelectedUser(user)} 
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {users.map((user) => (
+              <SearchUserCard 
+                key={user.id} 
+                user={user} 
+                onOpenProfile={() => setSelectedUser(user)} 
+              />
+            ))}
+          </div>
+          
+          {/* Sentinel element for infinite scroll */}
+          <div ref={observerTarget} className="h-10 flex justify-center items-center mt-4">
+            {loadingMore && <Spinner size="md" color="pink" />}
+            {!hasMore && users.length > 0 && (
+              <p className="text-gray-500 text-sm">No more results</p>
+            )}
+          </div>
+        </>
       )}
 
       <UserProfileDrawer 

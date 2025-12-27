@@ -23,7 +23,7 @@ export const matchService = {
     return Promise.resolve();
   },
 
-  searchUsers: async (filters: MatchFiltersState): Promise<UserProfile[]> => {
+  searchUsers: async (filters: MatchFiltersState, page: number = 1, limit: number = 12): Promise<{ data: UserProfile[], total: number }> => {
     // Simulate network delay and server-side filtering
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -121,7 +121,11 @@ export const matchService = {
           return 0;
         });
 
-        resolve(results);
+        const total = results.length;
+        const start = (page - 1) * limit;
+        const paginatedResults = results.slice(start, start + limit);
+
+        resolve({ data: paginatedResults, total });
       }, 800);
     });
   }
