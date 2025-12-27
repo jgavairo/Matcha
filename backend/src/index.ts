@@ -1,10 +1,11 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
+
+// initializing ================================================================
 
 dotenv.config();
 const authController = new AuthController();
@@ -16,12 +17,7 @@ const port = process.env.PORT || 5000;
 const httpServer = createServer(app);
 
 // Initialize Socket.io
-const io = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
-});
+const io = initializeSocket(httpServer);
 
 app.use(cors({
   origin: "http://localhost:3000",
@@ -31,37 +27,19 @@ app.use(cors({
 
 app.use(express.json());
 
-const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
-  database: process.env.POSTGRES_DB,
-  password: process.env.POSTGRES_PASSWORD,
-  port: 5432,
-});
-
 // Routes =====================================================================
 
-// Authentication Routes ---------------------------------
+
+// Authentication Routes ------------------------------------------------------
 
 app.post('/auth/register', authController.register);
 
+app.post('/auth/login', authController.login);
+
+
+
 // =============================================================================
 
-// Socket.io connection handler
-io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-
-  socket.on('chat_message', (msg) => {
-    console.log('message: ' + msg);
-    io.emit('chat_message', msg);
-  });
-});
-
-// Use httpServer.listen instead of app.listen
 httpServer.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

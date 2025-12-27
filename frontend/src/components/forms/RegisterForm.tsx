@@ -1,10 +1,12 @@
 import { Button, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
 import { registerUser } from '@features/auth/services/authService';
+import { Notification } from '@features/notifications/Notification';
 
 const RegisterForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
     username: '',
@@ -24,8 +26,20 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await registerUser(formData);
-    console.log(response);
+    try {
+      const response = await registerUser(formData);
+      if (response.status === 201) {
+        Notification.success('User created successfully');
+        navigate('/login');
+      }
+    } catch (error: any) {
+      const status = error.response?.status;
+      const errorCode = error.response?.data?.error;
+
+      if (status === 400)
+        Notification.error(errorCode);
+    
+    }
   };
 
   return (
