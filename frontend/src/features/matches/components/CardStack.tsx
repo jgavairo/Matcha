@@ -22,7 +22,7 @@ const CardStack: React.FC<CardStackProps> = ({
   onOpenProfile
 }) => {
   return (
-    <div className="w-full max-w-sm 2xl:max-w-md h-[70vh] max-h-[800px] relative">
+    <div className="w-full max-w-sm 2xl:max-w-md h-[66vh] md:h-[70vh] max-h-[800px] relative">
       <div 
         className="flex flex-col h-full transition-transform duration-300 ease-in-out"
         style={{ transform: `translateY(-${currentIndex * 200}%)` }}

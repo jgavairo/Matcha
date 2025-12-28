@@ -162,9 +162,6 @@ const SearchPage: React.FC = () => {
 
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Search Users</h1>
-        <div className="relative h-10 w-40">
-           {/* Placeholder for layout balance if needed */}
-        </div>
       </div>
 
       {loading ? (

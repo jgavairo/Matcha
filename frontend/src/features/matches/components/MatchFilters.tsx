@@ -80,7 +80,8 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
     <>
       {/* Filter Bar */}
       <div 
-        className={`fixed top-16 left-0 right-0 z-filters bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm h-12 transition-transform duration-300 ${
+        onClick={() => setIsOpen(!isOpen)}
+        className={`fixed top-16 left-0 right-0 z-filters bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm h-12 transition-all duration-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 ${
           !isVisible && mode === 'search' ? '-translate-y-full' : 'translate-y-0'
         }`}
       >
@@ -97,23 +98,25 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
             )}
           </div>
           
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
+          <div 
             className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               isOpen 
-                ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+                ? 'text-pink-600 dark:text-pink-400' 
+                : 'text-gray-700 dark:text-gray-200'
             }`}
           >
             <HiAdjustments className="w-5 h-5" />
             <span>Filters & Sort</span>
             {isOpen ? <HiSortAscending className="w-4 h-4 rotate-180" /> : <HiSortDescending className="w-4 h-4" />}
-          </button>
+          </div>
         </div>
 
         {/* Dropdown Content */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <div 
+            className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="max-w-7xl mx-auto p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Sort Column */}
@@ -278,7 +281,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
         )}
       </div>
       {/* Spacer to prevent content overlap */}
-      <div className="h-12" />
+      <div className="h-12 flex-none w-full" />
     </>
   );
 };
