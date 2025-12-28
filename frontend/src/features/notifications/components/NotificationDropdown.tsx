@@ -4,7 +4,11 @@ import { NotificationType } from '@app-types/notifications';
 import NotificationItem from './NotificationItem';
 import { HiPlus } from 'react-icons/hi';
 
-const NotificationDropdown: React.FC = () => {
+interface NotificationDropdownProps {
+  isOpen: boolean;
+}
+
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen }) => {
   const { notifications, clearNotifications, addNotification } = useNotification();
 
   const handleAddTestNotification = () => {
@@ -23,7 +27,11 @@ const NotificationDropdown: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-16 bottom-16 left-0 right-0 z-notification mx-auto flex flex-col w-full sm:max-w-sm bg-white divide-y divide-gray-100 shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-x border-gray-200 dark:border-gray-600 sm:absolute sm:top-auto sm:bottom-16 sm:h-auto sm:max-h-[60vh] sm:rounded-t-lg sm:border-t animate-slideUp">
+    <div 
+      className={`fixed top-16 bottom-16 left-0 right-0 z-notification mx-auto flex flex-col w-full sm:max-w-sm bg-white divide-y divide-gray-100 shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-x border-gray-200 dark:border-gray-600 sm:fixed sm:top-auto sm:bottom-16 sm:h-auto sm:max-h-[60vh] sm:rounded-t-lg sm:border-t transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-y-0' : 'translate-y-[100%]'
+      }`}
+    >
       <div className="flex-none flex items-center justify-between px-4 py-2 font-medium text-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white sm:rounded-t-lg">
         <span>Notifications</span>
         <button 

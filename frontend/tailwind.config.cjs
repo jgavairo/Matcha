@@ -27,10 +27,15 @@ module.exports = {
         slideUp: {
           '0%': { transform: 'translateY(100%)'},
           '100%': { transform: 'translateY(0)'},
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)'},
+          '100%': { transform: 'translateY(0)'},
         }
       },
       animation: {
         slideUp: 'slideUp 0.3s ease-out forwards',
+        slideDown: 'slideDown 0.3s ease-out forwards',
       },
       zIndex: {
         // Global Layout Stacking
@@ -44,6 +49,7 @@ module.exports = {
         'card-content': '20', // Interactive content areas
         'card-ui': '30',      // Buttons, badges on top of content
         'scroll-top': '35',   // Scroll to top button (Between cards and filters)
+        'filter-dropdown': '38', // Dropdown menu (Behind filter bar, above content)
       }
     },
   },

@@ -44,7 +44,7 @@ const BottomNav: React.FC = () => {
   return (
       <footer className="z-bottom-nav w-full h-16 flex-none" ref={notificationRef}>
         {/* Notification Dropdown (Dropup) */}
-        {isNotificationsOpen && <NotificationDropdown />}
+        <NotificationDropdown isOpen={isNotificationsOpen} />
 
         <div className="relative z-bottom-nav w-full h-full bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
           <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
