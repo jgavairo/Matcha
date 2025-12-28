@@ -9,9 +9,10 @@ interface MatchFiltersProps {
   filters: MatchFiltersState;
   onFilterChange: (filters: MatchFiltersState) => void;
   mode?: 'discover' | 'search';
+  className?: string;
 }
 
-const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mode = 'discover' }) => {
+const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mode = 'discover', className }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [localFilters, setLocalFilters] = React.useState<MatchFiltersState>(filters);
 
@@ -46,7 +47,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
   };
 
   return (
-    <div className="absolute top-4 left-4 z-30">
+    <div className={className || "absolute top-4 left-4 z-30"}>
       <Button color="light" pill onClick={() => setIsOpen(!isOpen)} className="relative">
         <HiAdjustments className="mr-2 h-5 w-5" />
         Filters & Sort
@@ -59,7 +60,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
       </Button>
 
       {isOpen && (
-        <div className="absolute top-12 left-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="absolute top-12 left-0 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="space-y-4">
             {/* Sort */}
             <div>

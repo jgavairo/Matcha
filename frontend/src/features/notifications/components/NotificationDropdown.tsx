@@ -23,8 +23,8 @@ const NotificationDropdown: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-16 left-0 right-0 mx-auto w-full max-w-sm bg-white divide-y divide-gray-100 rounded-t-lg shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-t border-x border-gray-200 dark:border-gray-600">
-      <div className="flex items-center justify-between px-4 py-2 font-medium text-gray-700 rounded-t-lg bg-gray-50 dark:bg-gray-800 dark:text-white">
+    <div className="fixed top-16 bottom-16 left-0 right-0 z-40 mx-auto flex flex-col w-full sm:max-w-sm bg-white divide-y divide-gray-100 shadow-lg dark:bg-gray-800 dark:divide-gray-700 border-x border-gray-200 dark:border-gray-600 sm:absolute sm:top-auto sm:bottom-16 sm:h-auto sm:max-h-[60vh] sm:rounded-t-lg sm:border-t animate-slideUp">
+      <div className="flex-none flex items-center justify-between px-4 py-2 font-medium text-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white sm:rounded-t-lg">
         <span>Notifications</span>
         <button 
           onClick={handleAddTestNotification}
@@ -34,7 +34,7 @@ const NotificationDropdown: React.FC = () => {
           <HiPlus className="w-4 h-4" />
         </button>
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[60vh] overflow-y-auto">
+      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
         {notifications.length === 0 ? (
           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
             No notifications
@@ -48,7 +48,7 @@ const NotificationDropdown: React.FC = () => {
       {notifications.length > 0 && (
         <button 
           onClick={clearNotifications}
-          className="w-full block py-2 text-sm font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white rounded-b-lg"
+          className="flex-none w-full block py-2 text-sm font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white sm:rounded-b-lg"
         >
           <div className="inline-flex items-center justify-center w-full">
             <svg className="w-4 h-4 me-2 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 14">

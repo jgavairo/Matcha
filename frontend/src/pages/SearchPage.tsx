@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Spinner } from 'flowbite-react';
+import { Spinner, Button } from 'flowbite-react';
+import { HiArrowUp } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import { matchService } from '@features/matches/services/matchService';
 import { MatchFiltersState } from '@features/matches/types/match';
@@ -17,6 +18,7 @@ const SearchPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const observerTarget = useRef(null);
 
   const fetchUsers = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
@@ -63,6 +65,8 @@ const SearchPage: React.FC = () => {
 
   // Infinite scroll observer
   useEffect(() => {
+    const scrollContainer = document.getElementById('app-scroll-container');
+    
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
@@ -73,7 +77,10 @@ const SearchPage: React.FC = () => {
           });
         }
       },
-      { threshold: 1.0 }
+      { 
+        root: scrollContainer,
+        threshold: 0.1 
+      }
     );
 
     if (observerTarget.current) {
@@ -86,6 +93,26 @@ const SearchPage: React.FC = () => {
       }
     };
   }, [hasMore, loading, loadingMore, fetchUsers]);
+
+  // Scroll to top logic
+  useEffect(() => {
+    const scrollContainer = document.getElementById('app-scroll-container');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setShowScrollTop(scrollContainer.scrollTop > 300);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    const scrollContainer = document.getElementById('app-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleBlock = () => {
     if (selectedUser) {
@@ -133,13 +160,13 @@ const SearchPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Component - Positioned absolutely or relatively depending on design preference. 
-          The MatchFilters component is designed with absolute positioning. 
-          We might need to wrap it or adjust it. For now, let's place it and see. 
-      */}
-      <div className="relative mb-8 h-12">
-         <MatchFilters filters={filters} onFilterChange={setFilters} mode="search" />
-      </div>
+      {/* Floating Filter Button */}
+      <MatchFilters 
+        filters={filters} 
+        onFilterChange={setFilters} 
+        mode="search" 
+        className="fixed top-20 left-4 z-30"
+      />
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -185,6 +212,18 @@ const SearchPage: React.FC = () => {
         onBlock={handleBlock}
         onReport={handleReport}
       />
+
+      {/* Back to Top Button */}
+      {showScrollTop && (
+        <Button
+          className="fixed bottom-20 right-6 z-40 rounded-full shadow-lg"
+          color="pink"
+          size="lg"
+          onClick={scrollToTop}
+        >
+          <HiArrowUp className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 import { ThemeProvider as AppThemeProvider } from './context/ThemeContext'
@@ -22,7 +23,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <FlowbiteThemeProvider theme={theme}>
       <AppThemeProvider>
         <AuthProvider>
-          <App />
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
         </AuthProvider>
       </AppThemeProvider>
     </FlowbiteThemeProvider>
