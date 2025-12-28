@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { LoginFormData, RegisterFormData } from '../types/forms';
 import { createUser, loginUser } from '../models/userModel';
+import { generateToken } from '../utils/jwt';
 
 export class AuthController {
 
@@ -24,10 +25,23 @@ export class AuthController {
         const loginData: LoginFormData = req.body;
         try {
             const user = await loginUser(loginData);
-            if (user === false) {
+            if (!user) {
                 res.status(401).json({ error: 'Invalid email or password' });
                 return;
             }
+            const token = generateToken({ id: user.id }, loginData.remember);
+            
+            const maxAge = loginData.remember 
+                ? 30 * 24 * 60 * 60 * 1000
+                : 1 * 60 * 60 * 1000;
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge
+            });
+
             res.status(200).json({ message: 'Login successful' });
         } catch (error) {
             res.status(500).json({ error: 'Failed to login user' });

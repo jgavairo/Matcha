@@ -1,5 +1,6 @@
 import { LoginFormData, RegisterFormData } from '../types/forms';
 import { pool } from '../config/database';
+import bcrypt from 'bcrypt';
 
 export const createUser = async (user: RegisterFormData) => {
     const query = `
@@ -7,7 +8,8 @@ export const createUser = async (user: RegisterFormData) => {
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
     `;
-    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, user.password];
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword];
     try {
         const result = await pool.query(query, values);
         return result.rows[0];
@@ -20,19 +22,20 @@ export const createUser = async (user: RegisterFormData) => {
 export const loginUser = async (user: LoginFormData) => {
     try {
     const query = `
-    SELECT email, password FROM users WHERE email = $1
+    SELECT id, email, password FROM users WHERE email = $1
     `;
         const values = [user.email];
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
             console.error('Invalid email');
-            return false;
+            return null;
         }
-        if (result.rows[0].password !== user.password) {
+        const isValidPassword = await bcrypt.compare(user.password, result.rows[0].password);
+        if (!isValidPassword) {
             console.error('Invalid password');
-            return false;
+            return null;
         }
-        return true;
+        return { id: result.rows[0].id };
     } catch (error) {
         console.error('Error logging in user:', error);
         throw error;
