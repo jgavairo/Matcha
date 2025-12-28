@@ -215,7 +215,7 @@ const SearchPage: React.FC = () => {
       {/* Back to Top Button */}
       {showScrollTop && (
         <Button
-          className="fixed bottom-20 right-6 z-40 rounded-full shadow-lg"
+          className="fixed bottom-20 right-6 z-scroll-top rounded-full shadow-lg"
           color="pink"
           size="lg"
           onClick={scrollToTop}

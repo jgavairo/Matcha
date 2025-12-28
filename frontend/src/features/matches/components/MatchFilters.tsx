@@ -14,7 +14,37 @@ interface MatchFiltersProps {
 
 const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mode = 'discover', className }) => {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(true);
   const [localFilters, setLocalFilters] = React.useState<MatchFiltersState>(filters);
+  const lastScrollY = React.useRef(0);
+
+  // Scroll handling for search mode
+  React.useEffect(() => {
+    if (mode !== 'search') return;
+    
+    const container = document.getElementById('app-scroll-container');
+    if (!container) return;
+
+    const handleScroll = () => {
+      const currentScrollY = container.scrollTop;
+      
+      // Always show if at top or if dropdown is open
+      if (currentScrollY < 10 || isOpen) {
+        setIsVisible(true);
+      } else {
+        // Hide on scroll down, show on scroll up
+        if (currentScrollY > lastScrollY.current) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [mode, isOpen]);
 
   // Check if current filters are different from defaults (ignoring sort)
   const hasActiveFilters = React.useMemo(() => {
@@ -49,7 +79,11 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
   return (
     <>
       {/* Filter Bar */}
-      <div className="fixed top-16 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm h-12">
+      <div 
+        className={`fixed top-16 left-0 right-0 z-filters bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm h-12 transition-transform duration-300 ${
+          !isVisible && mode === 'search' ? '-translate-y-full' : 'translate-y-0'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             {hasActiveFilters && (
