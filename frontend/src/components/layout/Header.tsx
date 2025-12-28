@@ -34,8 +34,8 @@ const Header: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed w-full z-20 top-0 left-0">
-        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
+    <nav className="bg-white border-b border-gray-200 px-4 dark:bg-gray-800 dark:border-gray-700 w-full z-20 h-16 flex-none flex items-center">
+        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl w-full">
           <Link to="/" className="flex items-center">
             <span className="text-2xl font-bold text-primary-500">Matcha</span>
           </Link>

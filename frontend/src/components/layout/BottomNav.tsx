@@ -42,7 +42,7 @@ const BottomNav: React.FC = () => {
     `w-7 h-7 ${active ? 'text-primary-600 dark:text-primary-500' : 'text-gray-500 dark:text-gray-400'} group-hover:text-primary-600 dark:group-hover:text-primary-500 transition-colors duration-200`;
 
   return (
-      <footer className="fixed bottom-0 left-0 z-50 w-full h-16" ref={notificationRef}>
+      <footer className="z-50 w-full h-16 flex-none" ref={notificationRef}>
         {/* Notification Dropdown (Dropup) */}
         {isNotificationsOpen && <NotificationDropdown />}
 

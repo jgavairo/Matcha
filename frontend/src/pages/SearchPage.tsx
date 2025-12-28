@@ -153,20 +153,19 @@ const SearchPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen relative">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Search Users</h1>
-        <div className="relative h-10 w-40">
-           {/* Placeholder for layout balance if needed, or we can put the filter button here relatively */}
-        </div>
-      </div>
-
-      {/* Floating Filter Button */}
+      {/* Filter Bar */}
       <MatchFilters 
         filters={filters} 
         onFilterChange={setFilters} 
         mode="search" 
-        className="fixed top-20 left-4 z-30"
       />
+
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Search Users</h1>
+        <div className="relative h-10 w-40">
+           {/* Placeholder for layout balance if needed */}
+        </div>
+      </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
