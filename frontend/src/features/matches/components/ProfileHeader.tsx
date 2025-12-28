@@ -25,7 +25,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onClose, onBlock, o
         )}
       </div>
       <div className="flex items-center gap-2">
-        <div className="relative z-50">
+        <div className="relative z-modal">
           <Dropdown label="" renderTrigger={() => <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"><HiDotsVertical className="w-6 h-6 text-gray-500 dark:text-gray-400" /></button>}>
             <DropdownItem onClick={onBlock} icon={HiBan} className="text-red-600 dark:text-red-500">
               Block User

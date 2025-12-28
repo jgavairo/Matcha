@@ -32,7 +32,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onUndo, ca
           distance={user.distance} 
           fameRating={user.fameRating} 
         />
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-40">
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-card-ui">
           <div className="bg-black/50 p-2 rounded-full text-white backdrop-blur-sm">
             <HiInformationCircle className="w-6 h-6" />
           </div>

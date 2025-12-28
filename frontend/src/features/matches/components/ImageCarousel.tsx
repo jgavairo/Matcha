@@ -30,7 +30,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt }) => {
       />
 
       {/* Indicators (Story style) */}
-      <div className="absolute top-4 left-0 right-0 flex w-full px-4 gap-1 z-30">
+      <div className="absolute top-4 left-0 right-0 flex w-full px-4 gap-1 z-card-ui">
         {images.map((_, idx) => (
           <div 
             key={idx}
@@ -42,7 +42,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt }) => {
       </div>
 
       {/* Navigation Zones */}
-      <div className="absolute inset-0 flex z-20">
+      <div className="absolute inset-0 flex z-card-content">
         {/* Left Zone (Previous) */}
         <div 
           className="w-1/2 h-full cursor-pointer" 

@@ -38,7 +38,7 @@ const DiscoverPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-grow flex items-center justify-center p-4 overflow-hidden w-full relative">
+    <div className="flex-grow flex flex-col items-center justify-start md:justify-center p-4 overflow-hidden w-full relative">
       <MatchFilters filters={filters} onFilterChange={updateFilters} />
 
       {loading ? (

@@ -27,7 +27,7 @@ const SearchUserCard: React.FC<SearchUserCardProps> = ({ user, onOpenProfile }) 
           distance={user.distance} 
           fameRating={user.fameRating} 
         />
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-40">
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-card-ui">
           <div className="bg-black/50 p-1.5 rounded-full text-white backdrop-blur-sm">
             <HiInformationCircle className="w-5 h-5" />
           </div>

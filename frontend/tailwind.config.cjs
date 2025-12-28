@@ -27,10 +27,29 @@ module.exports = {
         slideUp: {
           '0%': { transform: 'translateY(100%)'},
           '100%': { transform: 'translateY(0)'},
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)'},
+          '100%': { transform: 'translateY(0)'},
         }
       },
       animation: {
         slideUp: 'slideUp 0.3s ease-out forwards',
+        slideDown: 'slideDown 0.3s ease-out forwards',
+      },
+      zIndex: {
+        // Global Layout Stacking
+        'filters': '40',      // Sticky filters bar (Must be above card-ui)
+        'header': '50',       // Top navigation
+        'notification': '55', // Notification dropdown
+        'bottom-nav': '60',   // Bottom navigation
+        'modal': '70',        // Modals, Drawers, Overlays
+        'toast': '80',        // Toast notifications (Always on top)
+        'card-overlay': '10', // Gradient overlays
+        'card-content': '20', // Interactive content areas
+        'card-ui': '30',      // Buttons, badges on top of content
+        'scroll-top': '35',   // Scroll to top button (Between cards and filters)
+        'filter-dropdown': '38', // Dropdown menu (Behind filter bar, above content)
       }
     },
   },
