@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
 import { registerUser } from '@features/auth/services/authService';
-import { Notification } from '@features/notifications/Notification';
+import { useNotification } from '@context/NotificationContext';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
+  const { addToast } = useNotification();
   const [formData, setFormData] = useState<RegisterFormData>({
     email: '',
     username: '',
@@ -29,7 +30,7 @@ const RegisterForm = () => {
     try {
       const response = await registerUser(formData);
       if (response.status === 201) {
-        Notification.success('User created successfully');
+        addToast('User created successfully', 'success');
         navigate('/login');
       }
     } catch (error: any) {
@@ -37,7 +38,7 @@ const RegisterForm = () => {
       const errorCode = error.response?.data?.error;
 
       if (status === 400)
-        Notification.error(errorCode);
+        addToast(errorCode, 'error');
     
     }
   };

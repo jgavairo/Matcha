@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
 import { useAuth } from '@context/AuthContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
@@ -19,11 +19,10 @@ function App() {
   return (
     <NotificationProvider>
       <ToastContainer />
-      <BrowserRouter>
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-          <Header />
-          <div className="flex-grow overflow-y-auto mt-16 flex flex-col">
-            <Routes>
+      <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <Header />
+        <div id="main-content" className="flex-grow mt-16 flex flex-col overflow-hidden">
+          <Routes>
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/search" element={<SearchPage />} />
@@ -45,7 +44,6 @@ function App() {
             <Footer />
           </div>
         </div>
-      </BrowserRouter>
     </NotificationProvider>
   );
 }
