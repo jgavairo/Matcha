@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
+import cookieParser from 'cookie-parser';
 
 // initializing ================================================================
 
@@ -26,6 +27,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 // Routes =====================================================================
 
