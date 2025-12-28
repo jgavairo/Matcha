@@ -1,27 +1,43 @@
 import { api } from "@services/api";
 import { LoginFormData, RegisterFormData } from "@app-types/forms";
 
-
-// Registration Service =======================================================
-
-export const registerUser = async (formData: RegisterFormData) => {
-    try {
-        const response = await api.post('/auth/register', formData);
-        return response
-    } catch (error) {
-        console.error('Error registering user:', error);
-        throw error;
-    }
-};
-
-// Login Service ===============================================================
-
-export const loginUser = async (formData: LoginFormData) => {
+const authService = {
+    async login(formData: LoginFormData) {
     try {
         const response = await api.post('/auth/login', formData);
-        return response.data;
-    } catch (error) {
-        console.error('Error logging in user:', error);
-        throw error;
+            return response.data;
+        } catch (error) {
+            console.error('Error logging in user:', error);
+            throw error;
+        }
+    },
+    async register(formData: RegisterFormData) {
+        try {
+            const response = await api.post('/auth/register', formData);
+            return response.data;
+        } catch (error) {
+            console.error('Error registering user:', error);
+            throw error;
+        }
+    },
+    async logout() {
+        try {
+            const response = await api.post('/auth/logout');
+            return response.data;
+        } catch (error) {
+            console.error('Error logging out user:', error);
+            throw error;
+        }
+    },
+    async checkAuth() {
+        try {
+            const response = await api.get('/auth/me');
+            return response.data;
+        } catch (error) {
+            console.error('Error checking auth:', error);
+            throw error;
+        }
     }
 };
+
+export default authService;

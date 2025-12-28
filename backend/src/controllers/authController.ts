@@ -38,7 +38,7 @@ export class AuthController {
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
                 maxAge
             });
 
@@ -47,5 +47,14 @@ export class AuthController {
             res.status(500).json({ error: 'Failed to login user' });
             console.error('Error logging in user:', error);
         }   
+    }
+
+    async logout(req: Request, res: Response) {
+        res.clearCookie('token');
+        res.status(200).json({ message: 'Logout successful' });
+    }
+
+    async me(req: Request, res: Response) {
+        res.status(200).json({ message: 'User authenticated' });
     }
 }

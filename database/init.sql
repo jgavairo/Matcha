@@ -37,3 +37,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+
+-- INSERT DEBUG USER --------------------------------------------------------------
+
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id) VALUES ('test@test.com', 'Sarko', 'Nicolas', 'Sarkozy', 'Test', '1990-01-01', 1);

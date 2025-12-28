@@ -2,7 +2,7 @@ import { Button, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
-import { registerUser } from '@features/auth/services/authService';
+import authService from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
 
 const RegisterForm = () => {
@@ -28,7 +28,7 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await registerUser(formData);
+      const response = await authService.register(formData);
       if (response.status === 201) {
         addToast('User created successfully', 'success');
         navigate('/login');

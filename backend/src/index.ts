@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
 import cookieParser from 'cookie-parser';
+import { authMiddleware } from './middlewares/authMiddleware';
 
 // initializing ================================================================
 
@@ -39,6 +40,9 @@ app.post('/auth/register', authController.register);
 
 app.post('/auth/login', authController.login);
 
+app.get('/auth/me', authMiddleware, authController.me);
+
+app.post('/auth/logout', authMiddleware, authController.logout);
 
 
 // =============================================================================

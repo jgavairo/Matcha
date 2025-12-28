@@ -2,13 +2,15 @@ import { Button, Checkbox, Label, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoginFormData } from '@app-types/forms';
-import { loginUser } from '@features/auth/services/authService';
+import authService from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
+import { useAuth } from '@context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const { addToast } = useNotification();
+  const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -26,8 +28,9 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await loginUser(formData);
+      const response = await authService.login(formData);
       if (response.message === 'Login successful') {
+        login(); 
         addToast('Connection successful', 'success');
         navigate('/');
       }
