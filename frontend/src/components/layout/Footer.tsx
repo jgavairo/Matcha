@@ -17,10 +17,7 @@ const Footer: React.FC = () => {
 
   if (isAuthenticated) {
     return (
-      <>
-        <div className="h-16" /> {/* Spacer for fixed BottomNav */}
         <BottomNav />
-      </>
     );
   }
 
