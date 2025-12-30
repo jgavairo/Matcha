@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Card, Tabs, TabItem } from 'flowbite-react';
-import { HiUser, HiPhotograph, HiChartBar, HiBan } from 'react-icons/hi';
+import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart } from 'react-icons/hi';
 import EditProfileForm from '../features/profile/components/EditProfileForm';
 import PhotoUpload from '../features/profile/components/PhotoUpload';
 import StatsDisplay from '../features/profile/components/StatsDisplay';
 import UserList from '../features/profile/components/UserList';
-import { CurrentUser } from '@app-types/user';
+import UserProfileModal from '../features/matches/components/UserProfileDrawer';
+import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 
 // Mock data - replace with actual data fetching
 const mockCurrentUser: CurrentUser = {
@@ -33,11 +34,16 @@ const mockCurrentUser: CurrentUser = {
     viewedBy: [
         { id: 3, username: "bob", age: 30, gender: "male", biography: "Hello", distance: 10, tags: [], images: ["https://i.pravatar.cc/300?img=3"], fameRating: 50 }
     ],
+    matches: [
+        { id: 4, username: "alice", age: 26, gender: "female", biography: "Wonderland", distance: 2, tags: [], images: ["https://i.pravatar.cc/300?img=9"], fameRating: 200 }
+    ],
     blockedUsers: []
 };
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser>(mockCurrentUser);
+    const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleProfileUpdate = (data: Partial<CurrentUser>) => {
         setUser({ ...user, ...data });
@@ -56,9 +62,34 @@ const ProfilePage: React.FC = () => {
         setUser({ ...user, images: newImages });
     };
 
+    const handleSetProfilePic = (index: number) => {
+        if (index === 0) return;
+        const newImages = [...user.images];
+        const [selectedImage] = newImages.splice(index, 1);
+        newImages.unshift(selectedImage);
+        setUser({ ...user, images: newImages });
+    };
+
     const handleUnblock = (blockedUser: any) => {
         // TODO: Unblock user
         console.log("Unblock", blockedUser);
+    };
+
+    const handleUserClick = (summary: UserSummary) => {
+        // In a real app, we would fetch the full profile here
+        // For now, we'll mock the missing fields
+        const fullProfile: UserProfile = {
+            ...summary,
+            firstName: "Unknown",
+            lastName: "User",
+            sexualPreferences: "bi",
+            isOnline: false,
+            lastConnection: "Recently",
+            hasLikedYou: true,
+            isMatch: false
+        };
+        setSelectedUser(fullProfile);
+        setIsModalOpen(true);
     };
 
     return (
@@ -100,14 +131,19 @@ const ProfilePage: React.FC = () => {
                                     images={user.images}
                                     onUpload={handlePhotoUpload}
                                     onDelete={handlePhotoDelete}
+                                    onSetProfile={handleSetProfilePic}
                                 />
                             </div>
                         </TabItem>
 
+                        <TabItem title="Matches" icon={HiHeart}>
+                            <UserList title="My Matches" users={user.matches} onUserClick={handleUserClick} />
+                        </TabItem>
+
                         <TabItem title="Activity" icon={HiChartBar}>
                             <div className="space-y-8">
-                                <UserList title="Liked By" users={user.likedBy} />
-                                <UserList title="Viewed By" users={user.viewedBy} />
+                                <UserList title="Liked By" users={user.likedBy} onUserClick={handleUserClick} />
+                                <UserList title="Viewed By" users={user.viewedBy} onUserClick={handleUserClick} />
                             </div>
                         </TabItem>
 
@@ -125,6 +161,16 @@ const ProfilePage: React.FC = () => {
                     </Tabs>
                 </Card>
             </div>
+
+            <UserProfileModal
+                user={selectedUser}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onLike={() => console.log("Like")}
+                onDislike={() => console.log("Dislike")}
+                onBlock={() => console.log("Block")}
+                onReport={(reason) => console.log("Report", reason)}
+            />
         </div>
     );
 };

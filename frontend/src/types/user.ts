@@ -31,5 +31,6 @@ export interface CurrentUser extends UserProfile {
   email: string;
   likedBy: UserSummary[];
   viewedBy: UserSummary[];
+  matches: UserSummary[];
   blockedUsers: UserSummary[];
 }

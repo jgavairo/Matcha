@@ -7,9 +7,10 @@ interface UserListProps {
     title: string;
     actionLabel?: string;
     onAction?: (user: UserSummary) => void;
+    onUserClick?: (user: UserSummary) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction }) => {
+const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction, onUserClick }) => {
     if (users.length === 0) return null;
 
     return (
@@ -18,7 +19,10 @@ const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction
             <div className="space-y-3">
                 {users.map((user) => (
                     <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
+                        <div
+                            className={`flex items-center gap-3 ${onUserClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                            onClick={() => onUserClick && onUserClick(user)}
+                        >
                             <Avatar img={user.images[0]} rounded />
                             <div>
                                 <p className="font-medium text-gray-900 dark:text-white">{user.username}</p>
