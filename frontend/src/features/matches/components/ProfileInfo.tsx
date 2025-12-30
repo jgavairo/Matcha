@@ -41,7 +41,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
                 </div>
               )}
             </div>
-            
+
             {/* Status Badges */}
             <div className="flex flex-col gap-2 items-end">
               {user.isMatch && (

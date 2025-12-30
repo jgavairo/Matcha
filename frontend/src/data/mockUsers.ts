@@ -35,9 +35,9 @@ const generateUsers = (count: number): UserProfile[] => {
     const randomInterest2 = INTERESTS[Math.floor(Math.random() * INTERESTS.length)];
     const randomBio = bios[Math.floor(Math.random() * bios.length)];
     const randomCity = cities[Math.floor(Math.random() * cities.length)];
-    
+
     // Generate 5 random images
-    const images = Array.from({ length: 20 }, (_, index) => 
+    const images = Array.from({ length: 20 }, (_, index) =>
       `https://randomuser.me/api/portraits/${isMale ? 'men' : 'women'}/${(i + index) % 99}.jpg`
     );
 
