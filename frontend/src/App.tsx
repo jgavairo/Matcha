@@ -8,6 +8,7 @@ import RegisterPage from '@pages/RegisterPage';
 import LoginPage from '@pages/LoginPage';
 import DiscoverPage from '@pages/DiscoverPage';
 import SearchPage from '@pages/SearchPage';
+import ProfilePage from '@pages/ProfilePage';
 import AppLayout from '@layouts/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute';
 
@@ -21,11 +22,12 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/matches" element={<div className="text-center py-10">Matches Page (Todo)</div>} />
             <Route path="/chat" element={<div className="text-center py-10">Chat Page (Todo)</div>} />
           </Route>
         </Route>
-        
+
         <Route element={<MainLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

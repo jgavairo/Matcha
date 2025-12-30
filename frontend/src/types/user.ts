@@ -26,3 +26,10 @@ export interface UserProfile extends UserSummary {
   hasLikedYou: boolean;
   isMatch: boolean;
 }
+
+export interface CurrentUser extends UserProfile {
+  email: string;
+  likedBy: UserSummary[];
+  viewedBy: UserSummary[];
+  blockedUsers: UserSummary[];
+}
