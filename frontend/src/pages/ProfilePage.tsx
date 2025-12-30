@@ -7,6 +7,7 @@ import StatsDisplay from '../features/profile/components/StatsDisplay';
 import UserList from '../features/profile/components/UserList';
 import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
+import { mockUsers } from '../data/mockUsers';
 
 // Mock data - replace with actual data fetching
 const mockCurrentUser: CurrentUser = {
@@ -28,16 +29,10 @@ const mockCurrentUser: CurrentUser = {
     lastConnection: "Now",
     hasLikedYou: false,
     isMatch: false,
-    likedBy: [
-        { id: 2, username: "jane", age: 25, gender: "female", biography: "Hi", distance: 5, tags: [], images: ["https://i.pravatar.cc/300?img=5"], fameRating: 100 }
-    ],
-    viewedBy: [
-        { id: 3, username: "bob", age: 30, gender: "male", biography: "Hello", distance: 10, tags: [], images: ["https://i.pravatar.cc/300?img=3"], fameRating: 50 }
-    ],
-    matches: [
-        { id: 4, username: "alice", age: 26, gender: "female", biography: "Wonderland", distance: 2, tags: [], images: ["https://i.pravatar.cc/300?img=9"], fameRating: 200 }
-    ],
-    blockedUsers: []
+    likedBy: mockUsers.slice(0, 5),
+    viewedBy: mockUsers.slice(5, 15),
+    matches: mockUsers.slice(15, 20),
+    blockedUsers: mockUsers.slice(20, 23)
 };
 
 const ProfilePage: React.FC = () => {
@@ -77,8 +72,10 @@ const ProfilePage: React.FC = () => {
 
     const handleUserClick = (summary: UserSummary) => {
         // In a real app, we would fetch the full profile here
-        // For now, we'll mock the missing fields
-        const fullProfile: UserProfile = {
+        // For now, we'll find the user in our mock data or mock the missing fields
+        const foundUser = mockUsers.find(u => u.id === summary.id);
+
+        const fullProfile: UserProfile = foundUser || {
             ...summary,
             firstName: "Unknown",
             lastName: "User",
@@ -125,8 +122,8 @@ const ProfilePage: React.FC = () => {
 
                         <TabItem title="Photos" icon={HiPhotograph}>
                             <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Manage Photos</h3>
-                                <p className="text-sm text-gray-500">Add up to 5 photos to your profile.</p>
+                                <h3 className="text-lg font-semibold dark:text-white">Manage Photos</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Add up to 5 photos to your profile.</p>
                                 <PhotoUpload
                                     images={user.images}
                                     onUpload={handlePhotoUpload}

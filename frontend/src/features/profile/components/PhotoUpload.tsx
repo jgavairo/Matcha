@@ -18,7 +18,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {images.map((img, index) => (
-                <div key={index} className={`relative group aspect-square rounded-lg overflow-hidden bg-gray-100 ${index === 0 ? 'ring-4 ring-green-500' : ''}`}>
+                <div key={index} className={`relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 ${index === 0 ? 'ring-4 ring-green-500' : ''}`}>
                     <img src={img} alt={`Profile ${index + 1}`} className="w-full h-full object-cover" />
 
                     {/* Actions Overlay */}
@@ -50,14 +50,14 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
                 </div>
             ))}
             {images.length < 5 && (
-                <div className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative">
+                <div className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer relative">
                     <input
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                    <div className="flex flex-col items-center text-gray-500">
+                    <div className="flex flex-col items-center text-gray-500 dark:text-gray-400">
                         <HiUpload className="w-8 h-8 mb-2" />
                         <span className="text-sm">Upload Photo</span>
                     </div>
