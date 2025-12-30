@@ -69,7 +69,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Orientation</h4>
-                <p className="text-gray-900 dark:text-white capitalize">{user.sexualPreferences.join(', ')}</p>
+                <p className="text-gray-900 dark:text-white capitalize">{user.sexualPreferences}</p>
               </div>
             </div>
 

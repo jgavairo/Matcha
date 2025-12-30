@@ -25,7 +25,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         const processedData = {
             ...data,
             tags: data.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t),
-            sexualPreferences: Array.isArray(data.sexualPreferences) ? data.sexualPreferences : [data.sexualPreferences]
         };
         onSubmit(processedData);
     };
@@ -81,12 +80,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     <div className="mb-2 block">
                         <Label htmlFor="sexualPreferences">Sexual Preferences</Label>
                     </div>
-                    <Select id="sexualPreferences" {...register("sexualPreferences")} multiple>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                    <Select id="sexualPreferences" {...register("sexualPreferences")}>
+                        <option value="hetero">Heterosexual</option>
+                        <option value="bi">Bisexual</option>
+                        <option value="homo">Homosexual</option>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                 </div>
             </div>
 

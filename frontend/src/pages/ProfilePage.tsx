@@ -16,7 +16,7 @@ const mockCurrentUser: CurrentUser = {
     email: "john@example.com",
     age: 28,
     gender: "male",
-    sexualPreferences: ["female"],
+    sexualPreferences: "hetero",
     biography: "Lover of coffee and code.",
     tags: ["geek", "coffee", "coding"],
     images: ["https://i.pravatar.cc/300?img=11", "https://i.pravatar.cc/300?img=12"],
