@@ -33,8 +33,12 @@ const ChangePasswordForm: React.FC = () => {
                         minLength: { value: 6, message: "Password must be at least 6 characters" }
                     })} 
                     color={errors.newPassword ? "failure" : "gray"}
-                    helperText={errors.newPassword?.message as string}
                 />
+                {errors.newPassword && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {errors.newPassword.message as string}
+                    </p>
+                )}
             </div>
 
             <div>
@@ -49,8 +53,12 @@ const ChangePasswordForm: React.FC = () => {
                         validate: value => value === newPassword || "Passwords do not match"
                     })} 
                     color={errors.confirmPassword ? "failure" : "gray"}
-                    helperText={errors.confirmPassword?.message as string}
                 />
+                {errors.confirmPassword && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {errors.confirmPassword.message as string}
+                    </p>
+                )}
             </div>
 
             <Button type="submit" color="dark">Change Password</Button>
