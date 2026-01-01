@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Tabs, TabItem } from 'flowbite-react';
-import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart } from 'react-icons/hi';
+import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart, HiLockClosed } from 'react-icons/hi';
 import EditProfileForm from '../features/profile/components/EditProfileForm';
 import PhotoUpload from '../features/profile/components/PhotoUpload';
 import StatsDisplay from '../features/profile/components/StatsDisplay';
 import UserList from '../features/profile/components/UserList';
+import ChangePasswordForm from '../features/profile/components/ChangePasswordForm';
 import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { mockUsers } from '../data/mockUsers';
 import { api } from '../services/api';
+import toast from 'react-hot-toast';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -23,6 +25,7 @@ const ProfilePage: React.FC = () => {
                 setUser(response.data);
             } catch (error) {
                 console.error("Failed to fetch profile", error);
+                toast.error("Failed to load profile");
             } finally {
                 setLoading(false);
             }
@@ -30,10 +33,16 @@ const ProfilePage: React.FC = () => {
         fetchProfile();
     }, []);
 
-    const handleProfileUpdate = (data: Partial<CurrentUser>) => {
+    const handleProfileUpdate = async (data: Partial<CurrentUser>) => {
         if (!user) return;
-        setUser({ ...user, ...data });
-        // TODO: API call to update profile
+        try {
+            await api.put('/users/profile', data);
+            setUser({ ...user, ...data });
+            toast.success("Profile updated successfully");
+        } catch (error) {
+            console.error("Failed to update profile", error);
+            toast.error("Failed to update profile");
+        }
     };
 
     const handlePhotoUpload = (file: File) => {
@@ -127,6 +136,13 @@ const ProfilePage: React.FC = () => {
                                     onDelete={handlePhotoDelete}
                                     onSetProfile={handleSetProfilePic}
                                 />
+                            </div>
+                        </TabItem>
+
+                        <TabItem title="Security" icon={HiLockClosed}>
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold dark:text-white">Change Password</h3>
+                                <ChangePasswordForm />
                             </div>
                         </TabItem>
 
