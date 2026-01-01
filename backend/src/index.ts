@@ -7,6 +7,7 @@ import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
 import { authMiddleware } from './middlewares/authMiddleware';
 import chatRoutes from './routes/chatRoutes';
+import tagRoutes from './routes/tagRoutes';
 
 // initializing ================================================================
 
@@ -47,6 +48,10 @@ app.post('/auth/logout', authMiddleware, authController.logout);
 
 // Chat Routes ----------------------------------------------------------------
 
+
+// Tag Routes -----------------------------------------------------------------
+
+app.use('/tags', tagRoutes);
 app.use('/chat', chatRoutes);
 
 
