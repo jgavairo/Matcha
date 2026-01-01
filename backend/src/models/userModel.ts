@@ -41,3 +41,31 @@ export const loginUser = async (user: LoginFormData) => {
         throw error;
     }
 };
+
+export const getUserById = async (id: number) => {
+    const query = `
+        SELECT 
+            u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
+            u.latitude, u.longitude,
+            EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+            g.gender,
+            u.sexual_preferences,
+            COALESCE(array_agg(DISTINCT i.url) FILTER (WHERE i.url IS NOT NULL), '{}') as images,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
+        FROM users u
+        LEFT JOIN genders g ON u.gender_id = g.id
+        LEFT JOIN images i ON u.id = i.user_id
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE u.id = $1
+        GROUP BY u.id, g.gender
+    `;
+    const values = [id];
+    try {
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error getting user by id:', error);
+        throw error;
+    }
+};

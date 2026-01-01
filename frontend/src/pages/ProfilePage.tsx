@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Tabs, TabItem } from 'flowbite-react';
 import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart } from 'react-icons/hi';
 import EditProfileForm from '../features/profile/components/EditProfileForm';
@@ -8,56 +8,50 @@ import UserList from '../features/profile/components/UserList';
 import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { mockUsers } from '../data/mockUsers';
-
-// Mock data - replace with actual data fetching
-const mockCurrentUser: CurrentUser = {
-    id: 1,
-    username: "jdoe",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-    age: 28,
-    gender: "male",
-    sexualPreferences: "hetero",
-    biography: "Lover of coffee and code.",
-    tags: ["geek", "coffee", "coding"],
-    images: ["https://i.pravatar.cc/300?img=11", "https://i.pravatar.cc/300?img=12"],
-    fameRating: 450,
-    distance: 0,
-    location: { city: "Paris", latitude: 48.8566, longitude: 2.3522 },
-    isOnline: true,
-    lastConnection: "Now",
-    hasLikedYou: false,
-    isMatch: false,
-    likedBy: mockUsers.slice(0, 5),
-    viewedBy: mockUsers.slice(5, 15),
-    matches: mockUsers.slice(15, 20),
-    blockedUsers: mockUsers.slice(20, 23)
-};
+import { api } from '../services/api';
 
 const ProfilePage: React.FC = () => {
-    const [user, setUser] = useState<CurrentUser>(mockCurrentUser);
+    const [user, setUser] = useState<CurrentUser | null>(null);
+    const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await api.get('/auth/me');
+                setUser(response.data);
+            } catch (error) {
+                console.error("Failed to fetch profile", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
+    }, []);
+
     const handleProfileUpdate = (data: Partial<CurrentUser>) => {
+        if (!user) return;
         setUser({ ...user, ...data });
         // TODO: API call to update profile
     };
 
     const handlePhotoUpload = (file: File) => {
+        if (!user) return;
         // TODO: Handle file upload
         const newUrl = URL.createObjectURL(file);
         setUser({ ...user, images: [...user.images, newUrl] });
     };
 
     const handlePhotoDelete = (index: number) => {
+        if (!user) return;
         const newImages = [...user.images];
         newImages.splice(index, 1);
         setUser({ ...user, images: newImages });
     };
 
     const handleSetProfilePic = (index: number) => {
+        if (!user) return;
         if (index === 0) return;
         const newImages = [...user.images];
         const [selectedImage] = newImages.splice(index, 1);
@@ -88,6 +82,9 @@ const ProfilePage: React.FC = () => {
         setSelectedUser(fullProfile);
         setIsModalOpen(true);
     };
+
+    if (loading) return <div className="flex justify-center items-center h-screen dark:text-white">Loading...</div>;
+    if (!user) return <div className="flex justify-center items-center h-screen dark:text-white">Error loading profile</div>;
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-4xl">

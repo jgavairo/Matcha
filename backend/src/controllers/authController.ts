@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { LoginFormData, RegisterFormData } from '../types/forms';
-import { createUser, loginUser } from '../models/userModel';
+import { createUser, loginUser, getUserById } from '../models/userModel';
 import { generateToken } from '../utils/jwt';
+
 
 export class AuthController {
 
@@ -55,6 +56,53 @@ export class AuthController {
     }
 
     async me(req: Request, res: Response) {
-        res.status(200).json({ message: 'User authenticated' });
+        try {
+            // @ts-ignore
+            const userId = req.user?.id;
+            if (!userId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+            const user = await getUserById(userId);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            // Map database fields to frontend CurrentUser interface
+            const formattedUser = {
+                id: user.id,
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                email: user.email,
+                age: user.age,
+                gender: user.gender,
+                sexualPreferences: "bi", // TODO: Map from user.sexual_preferences
+                biography: user.biography || "",
+                tags: user.tags || [],
+                images: user.images || [],
+                fameRating: 100, // TODO: Implement fame rating
+                distance: 0,
+                location: {
+                    city: "Unknown", // TODO: Reverse geocoding
+                    latitude: user.latitude,
+                    longitude: user.longitude
+                },
+                isOnline: true,
+                lastConnection: "Now",
+                hasLikedYou: false,
+                isMatch: false,
+                likedBy: [],
+                viewedBy: [],
+                matches: [],
+                blockedUsers: []
+            };
+
+            res.status(200).json(formattedUser);
+        } catch (error) {
+            console.error('Error in me:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 }
