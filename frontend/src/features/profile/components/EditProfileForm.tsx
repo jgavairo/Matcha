@@ -177,7 +177,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 </div>
             </div>
 
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" color="pink">Save Changes</Button>
         </form>
     );
 };
