@@ -1,9 +1,9 @@
 import React from 'react';
-import { Button, Label, RangeSlider, Select, TextInput } from 'flowbite-react';
-import { HiAdjustments, HiSortAscending, HiSortDescending } from 'react-icons/hi';
+import { Button, Label, RangeSlider, Select, TextInput, Badge } from 'flowbite-react';
+import { HiAdjustments, HiSortAscending, HiSortDescending, HiX } from 'react-icons/hi';
 import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
-import { INTERESTS } from '../../../data/mockUsers';
+import { api } from '../../../services/api';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;
@@ -16,7 +16,22 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
   const [isOpen, setIsOpen] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(true);
   const [localFilters, setLocalFilters] = React.useState<MatchFiltersState>(filters);
+  const [availableTags, setAvailableTags] = React.useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [showDropdown, setShowDropdown] = React.useState(false);
   const lastScrollY = React.useRef(0);
+
+  React.useEffect(() => {
+    const fetchTags = async () => {
+        try {
+            const response = await api.get('/tags');
+            setAvailableTags(response.data);
+        } catch (error) {
+            console.error('Failed to fetch tags:', error);
+        }
+    };
+    fetchTags();
+  }, []);
 
   // Scroll handling for search mode
   React.useEffect(() => {
@@ -68,13 +83,24 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
     setLocalFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const toggleTag = (tag: string) => {
+  const handleAddTag = (tag: string) => {
     const currentTags = localFilters.tags || [];
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
-      : [...currentTags, tag];
-    handleChange('tags', newTags);
+    if (tag && !currentTags.includes(tag)) {
+        handleChange('tags', [...currentTags, tag]);
+    }
+    setSearchTerm("");
+    setShowDropdown(false);
   };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const currentTags = localFilters.tags || [];
+    handleChange('tags', currentTags.filter(tag => tag !== tagToRemove));
+  };
+
+  const filteredTags = availableTags.filter(tag => 
+    tag.toLowerCase().includes(searchTerm.toLowerCase()) && 
+    !(localFilters.tags || []).includes(tag)
+  );
 
   return (
     <>
@@ -225,20 +251,45 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
                       <div className="mb-2 block">
                         <Label>Tags</Label>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {INTERESTS.map(tag => (
-                          <button
-                            key={tag}
-                            onClick={() => toggleTag(tag)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                              (localFilters.tags || []).includes(tag)
-                                ? 'bg-pink-500 text-white border-pink-500'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            {tag}
-                          </button>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {(localFilters.tags || []).map(tag => (
+                          <Badge key={tag} color="info" size="sm" className="px-2 py-1 flex items-center gap-1">
+                              {tag}
+                              <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 ml-1">
+                                  <HiX className="w-3 h-3" />
+                              </button>
+                          </Badge>
                         ))}
+                      </div>
+                      <div className="relative">
+                        <TextInput 
+                            placeholder="Type to search interests..." 
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setShowDropdown(true);
+                            }}
+                            onFocus={() => setShowDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                            autoComplete="off"
+                        />
+                        {showDropdown && (
+                            <ul className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
+                                {filteredTags.length > 0 ? (
+                                    filteredTags.map(tag => (
+                                        <li 
+                                            key={tag} 
+                                            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-gray-700 dark:text-gray-200"
+                                            onClick={() => handleAddTag(tag)}
+                                        >
+                                            {tag}
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="px-4 py-2 text-gray-500 dark:text-gray-400">No matching interests</li>
+                                )}
+                            </ul>
+                        )}
                       </div>
                     </div>
                   )}
