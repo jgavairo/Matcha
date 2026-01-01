@@ -13,6 +13,8 @@ interface EditProfileFormProps {
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => {
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>(user.tags || []);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showDropdown, setShowDropdown] = useState(false);
 
     const { register, handleSubmit } = useForm({
         defaultValues: {
@@ -37,12 +39,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         fetchTags();
     }, []);
 
-    const handleAddTag = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const tag = e.target.value;
+    const handleAddTag = (tag: string) => {
         if (tag && !selectedTags.includes(tag)) {
             setSelectedTags([...selectedTags, tag]);
         }
-        e.target.value = ""; // Reset select
+        setSearchTerm("");
+        setShowDropdown(false);
     };
 
     const handleRemoveTag = (tagToRemove: string) => {
@@ -56,6 +58,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         };
         onSubmit(processedData);
     };
+
+    const filteredTags = availableTags.filter(tag => 
+        tag.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        !selectedTags.includes(tag)
+    );
 
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-4">
@@ -137,14 +144,37 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         </Badge>
                     ))}
                 </div>
-                <Select id="tags" onChange={handleAddTag} value="">
-                    <option value="" disabled>Select an interest to add...</option>
-                    {availableTags
-                        .filter(tag => !selectedTags.includes(tag))
-                        .map(tag => (
-                            <option key={tag} value={tag}>{tag}</option>
-                        ))}
-                </Select>
+                <div className="relative">
+                    <TextInput 
+                        id="tags" 
+                        placeholder="Type to search interests..." 
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setShowDropdown(true);
+                        }}
+                        onFocus={() => setShowDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                        autoComplete="off"
+                    />
+                    {showDropdown && (
+                        <ul className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
+                            {filteredTags.length > 0 ? (
+                                filteredTags.map(tag => (
+                                    <li 
+                                        key={tag} 
+                                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-gray-700 dark:text-gray-200"
+                                        onClick={() => handleAddTag(tag)}
+                                    >
+                                        {tag}
+                                    </li>
+                                ))
+                            ) : (
+                                <li className="px-4 py-2 text-gray-500 dark:text-gray-400">No matching interests</li>
+                            )}
+                        </ul>
+                    )}
+                </div>
             </div>
 
             <Button type="submit">Save Changes</Button>
