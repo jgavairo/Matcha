@@ -16,7 +16,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
 
-    const { register, handleSubmit } = useForm({
+    const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
             firstName: user.firstName,
             lastName: user.lastName,
@@ -71,13 +71,31 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     <div className="mb-2 block">
                         <Label htmlFor="firstName">First Name</Label>
                     </div>
-                    <TextInput id="firstName" {...register("firstName")} />
+                    <TextInput 
+                        id="firstName" 
+                        {...register("firstName", { required: "First name is required" })} 
+                        color={errors.firstName ? "failure" : "gray"}
+                    />
+                    {errors.firstName && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.firstName.message as string}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <div className="mb-2 block">
                         <Label htmlFor="lastName">Last Name</Label>
                     </div>
-                    <TextInput id="lastName" {...register("lastName")} />
+                    <TextInput 
+                        id="lastName" 
+                        {...register("lastName", { required: "Last name is required" })} 
+                        color={errors.lastName ? "failure" : "gray"}
+                    />
+                    {errors.lastName && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.lastName.message as string}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -85,7 +103,23 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 <div className="mb-2 block">
                     <Label htmlFor="email">Email</Label>
                 </div>
-                <TextInput id="email" type="email" {...register("email")} />
+                <TextInput 
+                    id="email" 
+                    type="email" 
+                    {...register("email", { 
+                        required: "Email is required",
+                        pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "Invalid email address"
+                        }
+                    })} 
+                    color={errors.email ? "failure" : "gray"}
+                />
+                {errors.email && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {errors.email.message as string}
+                    </p>
+                )}
             </div>
 
             <div>

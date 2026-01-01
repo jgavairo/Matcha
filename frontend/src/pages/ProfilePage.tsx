@@ -10,13 +10,14 @@ import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { mockUsers } from '../data/mockUsers';
 import { api } from '../services/api';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { addToast } = useNotification();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -25,23 +26,23 @@ const ProfilePage: React.FC = () => {
                 setUser(response.data);
             } catch (error) {
                 console.error("Failed to fetch profile", error);
-                toast.error("Failed to load profile");
+                addToast("Failed to load profile", 'error');
             } finally {
                 setLoading(false);
             }
         };
         fetchProfile();
-    }, []);
+    }, [addToast]);
 
     const handleProfileUpdate = async (data: Partial<CurrentUser>) => {
         if (!user) return;
         try {
             await api.put('/users/profile', data);
             setUser({ ...user, ...data });
-            toast.success("Profile updated successfully");
+            addToast("Profile updated successfully", 'success');
         } catch (error) {
             console.error("Failed to update profile", error);
-            toast.error("Failed to update profile");
+            addToast("Failed to update profile", 'error');
         }
     };
 
@@ -55,10 +56,10 @@ const ProfilePage: React.FC = () => {
             });
             // Assuming response.data is the image object with url
             setUser({ ...user, images: [...user.images, response.data.url] });
-            toast.success("Photo uploaded successfully");
+            addToast("Photo uploaded successfully", 'success');
         } catch (error) {
             console.error("Failed to upload photo", error);
-            toast.error("Failed to upload photo");
+            addToast("Failed to upload photo", 'error');
         }
     };
 
@@ -70,10 +71,10 @@ const ProfilePage: React.FC = () => {
             const newImages = [...user.images];
             newImages.splice(index, 1);
             setUser({ ...user, images: newImages });
-            toast.success("Photo deleted successfully");
+            addToast("Photo deleted successfully", 'success');
         } catch (error) {
             console.error("Failed to delete photo", error);
-            toast.error("Failed to delete photo");
+            addToast("Failed to delete photo", 'error');
         }
     };
 
@@ -87,10 +88,10 @@ const ProfilePage: React.FC = () => {
             const [selectedImage] = newImages.splice(index, 1);
             newImages.unshift(selectedImage);
             setUser({ ...user, images: newImages });
-            toast.success("Profile picture updated");
+            addToast("Profile picture updated", 'success');
         } catch (error) {
             console.error("Failed to set profile picture", error);
-            toast.error("Failed to set profile picture");
+            addToast("Failed to set profile picture", 'error');
         }
     };
 
@@ -149,7 +150,11 @@ const ProfilePage: React.FC = () => {
                 <Card>
                     <Tabs aria-label="Profile tabs" variant="underline">
                         <TabItem active title="Edit Profile" icon={HiUser}>
-                            <EditProfileForm user={user} onSubmit={handleProfileUpdate} />
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold dark:text-white">Personal Information</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Update your personal details and interests.</p>
+                                <EditProfileForm user={user} onSubmit={handleProfileUpdate} />
+                            </div>
                         </TabItem>
 
                         <TabItem title="Photos" icon={HiPhotograph}>

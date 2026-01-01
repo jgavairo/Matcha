@@ -9,10 +9,21 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const { tags, ...userData } = req.body;
+            const { tags, firstName, lastName, email, gender, sexualPreferences, biography } = req.body;
+
+            // Basic validation
+            if (!firstName || !lastName || !email || !gender || !sexualPreferences) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
 
             // Update basic user info
-            await updateUser(userId, userData);
+            await updateUser(userId, { firstName, lastName, email, gender, sexualPreferences, biography });
 
             // Update interests if provided
             if (tags) {

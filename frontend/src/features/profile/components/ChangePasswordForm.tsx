@@ -2,20 +2,21 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Label, TextInput, Button } from 'flowbite-react';
 import { api } from '../../../services/api';
-import toast from 'react-hot-toast';
+import { useNotification } from '../../../context/NotificationContext';
 
 const ChangePasswordForm: React.FC = () => {
     const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
     const newPassword = watch("newPassword");
+    const { addToast } = useNotification();
 
     const onSubmit = async (data: any) => {
         try {
             await api.put('/users/password', { newPassword: data.newPassword });
-            toast.success('Password updated successfully');
+            addToast('Password updated successfully', 'success');
             reset();
         } catch (error: any) {
             console.error('Failed to update password:', error);
-            toast.error(error.response?.data?.error || 'Failed to update password');
+            addToast(error.response?.data?.error || 'Failed to update password', 'error');
         }
     };
 
