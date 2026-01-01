@@ -9,10 +9,18 @@ interface UserListProps {
     actionLabel?: string;
     onAction?: (user: UserSummary) => void;
     onUserClick?: (user: UserSummary) => void;
+    emptyMessage?: string;
 }
 
-const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction, onUserClick }) => {
-    if (users.length === 0) return null;
+const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction, onUserClick, emptyMessage = "No users found." }) => {
+    if (users.length === 0) {
+        return (
+            <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4 dark:text-white">{title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 italic">{emptyMessage}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-6">

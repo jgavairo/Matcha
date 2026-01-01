@@ -173,13 +173,28 @@ const ProfilePage: React.FC = () => {
                         </TabItem>
 
                         <TabItem title="Matches" icon={HiHeart}>
-                            <UserList title="My Matches" users={user.matches} onUserClick={handleUserClick} />
+                            <UserList 
+                                title="My Matches" 
+                                users={user.matches} 
+                                onUserClick={handleUserClick} 
+                                emptyMessage="You haven't matched with anyone yet. Go discover some people!"
+                            />
                         </TabItem>
 
                         <TabItem title="Activity" icon={HiChartBar}>
                             <div className="space-y-8">
-                                <UserList title="Liked By" users={user.likedBy} onUserClick={handleUserClick} />
-                                <UserList title="Viewed By" users={user.viewedBy} onUserClick={handleUserClick} />
+                                <UserList 
+                                    title="Liked By" 
+                                    users={user.likedBy} 
+                                    onUserClick={handleUserClick} 
+                                    emptyMessage="No one has liked your profile yet."
+                                />
+                                <UserList 
+                                    title="Viewed By" 
+                                    users={user.viewedBy} 
+                                    onUserClick={handleUserClick} 
+                                    emptyMessage="No one has viewed your profile yet."
+                                />
                             </div>
                         </TabItem>
 
@@ -189,10 +204,8 @@ const ProfilePage: React.FC = () => {
                                 users={user.blockedUsers}
                                 actionLabel="Unblock"
                                 onAction={handleUnblock}
+                                emptyMessage="You haven't blocked anyone yet."
                             />
-                            {user.blockedUsers.length === 0 && (
-                                <p className="text-gray-500">You haven't blocked anyone yet.</p>
-                            )}
                         </TabItem>
                     </Tabs>
                 </Card>

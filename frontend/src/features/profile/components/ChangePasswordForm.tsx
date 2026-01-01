@@ -20,48 +20,50 @@ const ChangePasswordForm: React.FC = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 max-w-md">
-            <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="newPassword">New Password</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <div className="mb-2 block">
+                        <Label htmlFor="newPassword">New Password</Label>
+                    </div>
+                    <TextInput 
+                        id="newPassword" 
+                        type="password" 
+                        {...register("newPassword", { 
+                            required: "New password is required",
+                            minLength: { value: 6, message: "Password must be at least 6 characters" }
+                        })} 
+                        color={errors.newPassword ? "failure" : "gray"}
+                    />
+                    {errors.newPassword && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.newPassword.message as string}
+                        </p>
+                    )}
                 </div>
-                <TextInput 
-                    id="newPassword" 
-                    type="password" 
-                    {...register("newPassword", { 
-                        required: "New password is required",
-                        minLength: { value: 6, message: "Password must be at least 6 characters" }
-                    })} 
-                    color={errors.newPassword ? "failure" : "gray"}
-                />
-                {errors.newPassword && (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                        {errors.newPassword.message as string}
-                    </p>
-                )}
+
+                <div>
+                    <div className="mb-2 block">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    </div>
+                    <TextInput 
+                        id="confirmPassword" 
+                        type="password" 
+                        {...register("confirmPassword", { 
+                            required: "Please confirm your password",
+                            validate: value => value === newPassword || "Passwords do not match"
+                        })} 
+                        color={errors.confirmPassword ? "failure" : "gray"}
+                    />
+                    {errors.confirmPassword && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.confirmPassword.message as string}
+                        </p>
+                    )}
+                </div>
             </div>
 
-            <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                </div>
-                <TextInput 
-                    id="confirmPassword" 
-                    type="password" 
-                    {...register("confirmPassword", { 
-                        required: "Please confirm your password",
-                        validate: value => value === newPassword || "Passwords do not match"
-                    })} 
-                    color={errors.confirmPassword ? "failure" : "gray"}
-                />
-                {errors.confirmPassword && (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                        {errors.confirmPassword.message as string}
-                    </p>
-                )}
-            </div>
-
-            <Button type="submit" color="dark">Change Password</Button>
+            <Button type="submit" color="pink">Change Password</Button>
         </form>
     );
 };
