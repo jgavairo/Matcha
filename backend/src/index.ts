@@ -1,10 +1,12 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
 import { authMiddleware } from './middlewares/authMiddleware';
+import chatRoutes from './routes/chatRoutes';
 
 // initializing ================================================================
 
@@ -27,6 +29,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 
 
 // Routes =====================================================================
@@ -41,6 +44,11 @@ app.post('/auth/login', authController.login);
 app.get('/auth/me', authMiddleware, authController.me);
 
 app.post('/auth/logout', authMiddleware, authController.logout);
+
+// Chat Routes ----------------------------------------------------------------
+
+app.use('/chat', chatRoutes);
+
 
 
 // =============================================================================

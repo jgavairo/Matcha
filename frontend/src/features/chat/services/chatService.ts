@@ -1,0 +1,48 @@
+import { api } from '../../../services/api';
+
+export interface Conversation {
+    id: number;
+    match_id: number;
+    user1_id: number;
+    user2_id: number;
+    user1_username: string;
+    user2_username: string;
+    last_message: string;
+    last_message_date: string;
+    unread_count: number;
+}
+
+export interface Message {
+    id: number;
+    conversation_id: number;
+    sender_id: number;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+}
+
+export const chatService = {
+    getConversations: async (): Promise<Conversation[]> => {
+        const response = await api.get('/chat/conversations');
+        return response.data;
+    },
+
+    getMessages: async (conversationId: number): Promise<Message[]> => {
+        const response = await api.get(`/chat/conversations/${conversationId}/messages`);
+        return response.data;
+    },
+
+    sendMessage: async (conversationId: number, content: string): Promise<Message> => {
+        const response = await api.post(`/chat/conversations/${conversationId}/messages`, { content });
+        return response.data;
+    },
+
+    markAsRead: async (conversationId: number): Promise<void> => {
+        await api.post(`/chat/conversations/${conversationId}/read`);
+    },
+
+    // For testing
+    createMatch: async (targetUserId: number): Promise<void> => {
+        await api.post('/chat/matches', { targetUserId });
+    }
+};
