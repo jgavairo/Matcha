@@ -45,27 +45,53 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const handlePhotoUpload = (file: File) => {
+    const handlePhotoUpload = async (file: File) => {
         if (!user) return;
-        // TODO: Handle file upload
-        const newUrl = URL.createObjectURL(file);
-        setUser({ ...user, images: [...user.images, newUrl] });
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const response = await api.post('/users/photos', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            // Assuming response.data is the image object with url
+            setUser({ ...user, images: [...user.images, response.data.url] });
+            toast.success("Photo uploaded successfully");
+        } catch (error) {
+            console.error("Failed to upload photo", error);
+            toast.error("Failed to upload photo");
+        }
     };
 
-    const handlePhotoDelete = (index: number) => {
+    const handlePhotoDelete = async (index: number) => {
         if (!user) return;
-        const newImages = [...user.images];
-        newImages.splice(index, 1);
-        setUser({ ...user, images: newImages });
+        const urlToDelete = user.images[index];
+        try {
+            await api.delete('/users/photos', { data: { url: urlToDelete } });
+            const newImages = [...user.images];
+            newImages.splice(index, 1);
+            setUser({ ...user, images: newImages });
+            toast.success("Photo deleted successfully");
+        } catch (error) {
+            console.error("Failed to delete photo", error);
+            toast.error("Failed to delete photo");
+        }
     };
 
-    const handleSetProfilePic = (index: number) => {
+    const handleSetProfilePic = async (index: number) => {
         if (!user) return;
         if (index === 0) return;
-        const newImages = [...user.images];
-        const [selectedImage] = newImages.splice(index, 1);
-        newImages.unshift(selectedImage);
-        setUser({ ...user, images: newImages });
+        const urlToSet = user.images[index];
+        try {
+            await api.put('/users/photos/profile', { url: urlToSet });
+            const newImages = [...user.images];
+            const [selectedImage] = newImages.splice(index, 1);
+            newImages.unshift(selectedImage);
+            setUser({ ...user, images: newImages });
+            toast.success("Profile picture updated");
+        } catch (error) {
+            console.error("Failed to set profile picture", error);
+            toast.error("Failed to set profile picture");
+        }
     };
 
     const handleUnblock = (blockedUser: any) => {

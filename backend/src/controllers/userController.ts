@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage } from '../models/userModel';
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -43,6 +43,65 @@ export class UserController {
             res.status(200).json({ message: 'Password updated successfully' });
         } catch (error) {
             console.error('Error changing password:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public uploadPhoto = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'No file uploaded' });
+            }
+
+            const image = await addImage(userId, req.file.filename);
+            res.status(201).json(image);
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public deletePhoto = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { url } = req.body;
+            if (!url) {
+                return res.status(400).json({ error: 'URL is required' });
+            }
+
+            await removeImage(userId, url);
+            res.status(200).json({ message: 'Photo deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting photo:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public setProfilePhoto = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { url } = req.body;
+            if (!url) {
+                return res.status(400).json({ error: 'URL is required' });
+            }
+
+            await setProfileImage(userId, url);
+            res.status(200).json({ message: 'Profile photo updated successfully' });
+        } catch (error) {
+            console.error('Error setting profile photo:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

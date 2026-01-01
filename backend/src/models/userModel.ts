@@ -133,6 +133,33 @@ export const updatePassword = async (userId: number, newPassword: string) => {
     await pool.query(query, [hashedPassword, userId]);
 };
 
+export const addImage = async (userId: number, filename: string) => {
+    const url = `http://localhost:5000/uploads/${filename}`;
+    const query = 'INSERT INTO images (user_id, url, is_profile_picture) VALUES ($1, $2, (SELECT COUNT(*) = 0 FROM images WHERE user_id = $1)) RETURNING *';
+    const result = await pool.query(query, [userId, url]);
+    return result.rows[0];
+};
+
+export const removeImage = async (userId: number, url: string) => {
+    const query = 'DELETE FROM images WHERE user_id = $1 AND url = $2';
+    await pool.query(query, [userId, url]);
+};
+
+export const setProfileImage = async (userId: number, url: string) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query('UPDATE images SET is_profile_picture = FALSE WHERE user_id = $1', [userId]);
+        await client.query('UPDATE images SET is_profile_picture = TRUE WHERE user_id = $1 AND url = $2', [userId, url]);
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 export const getUserById = async (id: number) => {
     const query = `
         SELECT 
@@ -141,11 +168,14 @@ export const getUserById = async (id: number) => {
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             u.sexual_preferences,
-            COALESCE(array_agg(DISTINCT i.url) FILTER (WHERE i.url IS NOT NULL), '{}') as images,
+            (
+                SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
+                FROM images 
+                WHERE user_id = u.id
+            ) as images,
             COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
         FROM users u
         LEFT JOIN genders g ON u.gender_id = g.id
-        LEFT JOIN images i ON u.id = i.user_id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE u.id = $1
