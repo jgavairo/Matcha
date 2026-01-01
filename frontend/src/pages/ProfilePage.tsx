@@ -6,6 +6,7 @@ import PhotoUpload from '../features/profile/components/PhotoUpload';
 import StatsDisplay from '../features/profile/components/StatsDisplay';
 import UserList from '../features/profile/components/UserList';
 import ChangePasswordForm from '../features/profile/components/ChangePasswordForm';
+import SecuritySettings from '../features/profile/components/SecuritySettings';
 import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { mockUsers } from '../data/mockUsers';
@@ -174,6 +175,10 @@ const ProfilePage: React.FC = () => {
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold dark:text-white">Change Password</h3>
                                 <ChangePasswordForm />
+                                <SecuritySettings 
+                                    consent={user.geolocationConsent} 
+                                    onConsentChange={(newConsent) => setUser({ ...user, geolocationConsent: newConsent })} 
+                                />
                             </div>
                         </TabItem>
 

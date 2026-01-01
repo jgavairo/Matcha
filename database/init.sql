@@ -47,6 +47,8 @@ CREATE TABLE users (
     verification_token VARCHAR(255),
     latitude FLOAT,
     longitude FLOAT,
+    city VARCHAR(100),
+    geolocation_consent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -73,7 +75,7 @@ CREATE TABLE images (
 
 -- INSERT DEBUG USER --------------------------------------------------------------
 
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, status_id) VALUES ('test@test.com', 'Sarko', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Sarkozy', 'Test', '1990-01-01', 1, 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, status_id, latitude, longitude, city, geolocation_consent) VALUES ('test@test.com', 'Sarko', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Sarkozy', 'Test', '1990-01-01', 1, 2, 48.8566, 2.3522, 'Paris', TRUE);
 
 
 -- Matches table --------------------------------------------------------------
@@ -107,7 +109,7 @@ CREATE TABLE messages (
 );
 
 -- SEED DATA --------------------------------------------------------------
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('josephjones1@example.com', 'JosephJones1', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Joseph', 'Jones', '2000-01-08', 1, 44.7947949317558, -0.5597056057623522, 'Looking for a partner in crime.', 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, city, biography, status_id) VALUES ('josephjones1@example.com', 'JosephJones1', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Joseph', 'Jones', '2000-01-08', 1, 44.7947949317558, -0.5597056057623522, 'Bordeaux', 'Looking for a partner in crime.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 5);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 6);
@@ -115,7 +117,7 @@ INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users 
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 'https://randomuser.me/api/portraits/men/90.jpg', TRUE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 'https://randomuser.me/api/portraits/men/60.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JosephJones1'), 'https://randomuser.me/api/portraits/men/11.jpg', FALSE);
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('jessicajones2@example.com', 'JessicaJones2', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Jessica', 'Jones', '1976-03-28', 2, 50.61114843151511, 3.015089459770325, 'Loves long walks on the beach. Avid reader and coffee enthusiast and above all, a great listener.', 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, city, biography, status_id) VALUES ('jessicajones2@example.com', 'JessicaJones2', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Jessica', 'Jones', '1976-03-28', 2, 50.61114843151511, 3.015089459770325, 'Lille', 'Loves long walks on the beach. Avid reader and coffee enthusiast and above all, a great listener.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 7);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 3);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 2);
@@ -123,7 +125,7 @@ INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM us
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 'https://randomuser.me/api/portraits/women/95.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 'https://randomuser.me/api/portraits/women/58.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'JessicaJones2'), 'https://randomuser.me/api/portraits/women/75.jpg', FALSE);
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('charlesjohnson3@example.com', 'CharlesJohnson3', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Charles', 'Johnson', '1982-10-07', 1, 43.28351847984326, 5.338094377179288, 'Fitness enthusiast and outdoor lover. Whether it''s a morning run or a weekend hike, I enjoy staying active.', 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, city, biography, status_id) VALUES ('charlesjohnson3@example.com', 'CharlesJohnson3', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Charles', 'Johnson', '1982-10-07', 1, 43.28351847984326, 5.338094377179288, 'Marseille', 'Fitness enthusiast and outdoor lover. Whether it''s a morning run or a weekend hike, I enjoy staying active.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 7);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 10);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 4);
@@ -131,7 +133,7 @@ INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM us
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 'https://randomuser.me/api/portraits/men/3.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 'https://randomuser.me/api/portraits/men/59.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'CharlesJohnson3'), 'https://randomuser.me/api/portraits/men/19.jpg', FALSE);
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('sarahrodriguez4@example.com', 'SarahRodriguez4', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Sarah', 'Rodriguez', '1974-11-06', 2, 50.66356703249939, 3.0131133451981356, 'Music is my life.', 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, city, biography, status_id) VALUES ('sarahrodriguez4@example.com', 'SarahRodriguez4', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Sarah', 'Rodriguez', '1974-11-06', 2, 50.66356703249939, 3.0131133451981356, 'Lille', 'Music is my life.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 9);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 10);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 4);
@@ -139,7 +141,7 @@ INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users 
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 'https://randomuser.me/api/portraits/women/28.jpg', TRUE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 'https://randomuser.me/api/portraits/women/29.jpg', FALSE);
 INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = 'SarahRodriguez4'), 'https://randomuser.me/api/portraits/women/43.jpg', FALSE);
-INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('jamesgarcia5@example.com', 'JamesGarcia5', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'James', 'Garcia', '1995-10-23', 1, 50.59322184465915, 3.0112048221262127, 'Cat person.', 2);
+INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, city, biography, status_id) VALUES ('jamesgarcia5@example.com', 'JamesGarcia5', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'James', 'Garcia', '1995-10-23', 1, 50.59322184465915, 3.0112048221262127, 'Lille', 'Cat person.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JamesGarcia5'), 7);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JamesGarcia5'), 9);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'JamesGarcia5'), 10);

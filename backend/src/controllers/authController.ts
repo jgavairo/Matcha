@@ -85,10 +85,11 @@ export class AuthController {
                 fameRating: 100, // TODO: Implement fame rating
                 distance: 0,
                 location: {
-                    city: "Unknown", // TODO: Reverse geocoding
+                    city: user.city || "Unknown",
                     latitude: user.latitude,
                     longitude: user.longitude
                 },
+                geolocationConsent: user.geolocation_consent,
                 isOnline: true,
                 lastConnection: "Now",
                 hasLikedYou: false,

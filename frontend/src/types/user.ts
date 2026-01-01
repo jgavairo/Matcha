@@ -33,4 +33,5 @@ export interface CurrentUser extends UserProfile {
   viewedBy: UserSummary[];
   matches: UserSummary[];
   blockedUsers: UserSummary[];
+  geolocationConsent: boolean;
 }

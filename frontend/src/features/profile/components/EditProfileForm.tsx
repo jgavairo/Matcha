@@ -4,6 +4,7 @@ import { Label, TextInput, Textarea, Select, Button, Badge } from 'flowbite-reac
 import { CurrentUser } from '@app-types/user';
 import { api } from '../../../services/api';
 import { HiX } from 'react-icons/hi';
+import { useNotification } from '../../../context/NotificationContext';
 
 interface EditProfileFormProps {
     user: CurrentUser;
@@ -15,6 +16,14 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const [selectedTags, setSelectedTags] = useState<string[]>(user.tags || []);
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
+    const [location, setLocation] = useState({
+        latitude: user.location?.latitude || 0,
+        longitude: user.location?.longitude || 0,
+        city: user.location?.city || ""
+    });
+    const [locationError, setLocationError] = useState("");
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    const { addToast } = useNotification();
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
@@ -51,10 +60,88 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
     };
 
-    const onFormSubmit = (data: any) => {
+    const handleLocateMe = () => {
+        if (!user.geolocationConsent) {
+            addToast("Please enable geolocation consent in the Security tab to use this feature.", 'error');
+            return;
+        }
+        if (!navigator.geolocation) {
+            addToast("Geolocation is not supported by your browser", 'error');
+            return;
+        }
+        setIsGeocoding(true);
+        setLocationError("");
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await res.json();
+                const city = data.address.city || data.address.town || data.address.village || "Unknown Location";
+                setLocation({ latitude, longitude, city });
+            } catch (e) {
+                setLocation({ latitude, longitude, city: "GPS Location" });
+            } finally {
+                setIsGeocoding(false);
+            }
+        }, () => {
+            addToast("Unable to retrieve your location", 'error');
+            setIsGeocoding(false);
+        });
+    };
+
+    const handleCityBlur = async () => {
+        if (!location.city.trim()) return;
+        setIsGeocoding(true);
+        setLocationError("");
+        
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location.city)}&limit=1`);
+            const data = await res.json();
+            
+            if (data && data.length > 0) {
+                const { lat, lon } = data[0];
+                setLocation(prev => ({
+                    ...prev,
+                    latitude: parseFloat(lat),
+                    longitude: parseFloat(lon)
+                }));
+            } else {
+                setLocationError("Location not found. Please check the spelling.");
+            }
+        } catch (error) {
+            console.error("Geocoding error:", error);
+            setLocationError("Unable to validate location.");
+        } finally {
+            setIsGeocoding(false);
+        }
+    };
+
+    const onFormSubmit = async (data: any) => {
+        if (locationError) return;
+
+        let finalLocation = { ...location };
+
+        // If city is present but we want to ensure we have coords for THAT city.
+        if (finalLocation.city && finalLocation.city.trim() !== "") {
+             try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalLocation.city)}&limit=1`);
+                const geoData = await res.json();
+                if (geoData && geoData.length > 0) {
+                    finalLocation.latitude = parseFloat(geoData[0].lat);
+                    finalLocation.longitude = parseFloat(geoData[0].lon);
+                } else {
+                    setLocationError("Location not found.");
+                    return; // Stop submission
+                }
+             } catch (e) {
+                 // ignore or handle
+             }
+        }
+
         const processedData = {
             ...data,
             tags: selectedTags,
+            ...finalLocation
         };
         onSubmit(processedData);
     };
@@ -127,11 +214,27 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     <Label>Location</Label>
                 </div>
                 <div className="flex gap-2">
-                    <TextInput readOnly value={user.location?.city || "Unknown"} className="flex-1" />
-                    <Button color="light" size="sm" onClick={() => navigator.geolocation.getCurrentPosition(() => alert("Location updated!"))}>
-                        Update Location
+                    <TextInput 
+                        value={location.city} 
+                        onChange={(e) => setLocation({ ...location, city: e.target.value })}
+                        onBlur={handleCityBlur}
+                        placeholder="City or Neighborhood"
+                        className="flex-1" 
+                        color={locationError ? "failure" : "gray"}
+                        disabled={isGeocoding}
+                    />
+                    <Button color="light" size="sm" onClick={handleLocateMe} disabled={isGeocoding}>
+                        {isGeocoding ? "Locating..." : "Locate Me"}
                     </Button>
                 </div>
+                {locationError && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {locationError}
+                    </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                    Lat: {location.latitude.toFixed(4)}, Long: {location.longitude.toFixed(4)}
+                </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent } from '../models/userModel';
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -9,7 +9,7 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const { tags, firstName, lastName, email, gender, sexualPreferences, biography } = req.body;
+            const { tags, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city } = req.body;
 
             // Basic validation
             if (!firstName || !lastName || !email || !gender || !sexualPreferences) {
@@ -23,7 +23,7 @@ export class UserController {
             }
 
             // Update basic user info
-            await updateUser(userId, { firstName, lastName, email, gender, sexualPreferences, biography });
+            await updateUser(userId, { firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city });
 
             // Update interests if provided
             if (tags) {
@@ -113,6 +113,26 @@ export class UserController {
             res.status(200).json({ message: 'Profile photo updated successfully' });
         } catch (error) {
             console.error('Error setting profile photo:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public updateConsent = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            const { consent } = req.body;
+            if (typeof consent !== 'boolean') {
+                return res.status(400).json({ error: 'Consent must be a boolean' });
+            }
+
+            await updateGeolocationConsent(userId, consent);
+            res.status(200).json({ message: 'Consent updated successfully' });
+        } catch (error) {
+            console.error('Error updating consent:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

@@ -31,5 +31,6 @@ router.put('/password', authMiddleware, userController.changePassword);
 router.post('/photos', authMiddleware, upload.single('image'), userController.uploadPhoto);
 router.delete('/photos', authMiddleware, userController.deletePhoto);
 router.put('/photos/profile', authMiddleware, userController.setProfilePhoto);
+router.put('/consent', authMiddleware, userController.updateConsent);
 
 export default router;

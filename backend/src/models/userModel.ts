@@ -43,24 +43,13 @@ export const loginUser = async (user: LoginFormData) => {
 };
 
 export const updateUser = async (id: number, data: any) => {
-    const { firstName, lastName, email, gender, sexualPreferences, biography } = data;
+    const { firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city } = data;
     
     // Map gender string to ID
     const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
     const genderId = genderMap[gender] || null;
 
     // Map sexual preferences string to IDs array
-    // This logic assumes the user's gender is known or passed. 
-    // Actually, the frontend sends 'hetero', 'bi', 'homo'.
-    // We need to convert this to target gender IDs based on user's gender.
-    // For now, let's just store it if the column was text, but it is INT[].
-    // Let's assume the frontend sends the target gender IDs or we map it here.
-    // If the frontend sends 'hetero', 'bi', 'homo', we need the user's gender to know what that means.
-    // BUT, the update might change the gender too.
-    
-    // Let's simplify: The frontend should probably send the target genders directly or we calculate it.
-    // For this task, I will assume we map 'hetero'/'bi'/'homo' + 'gender' to target IDs.
-    
     let targetGenderIds: number[] = [];
     if (gender === 'male') {
         if (sexualPreferences === 'hetero') targetGenderIds = [2];
@@ -77,11 +66,11 @@ export const updateUser = async (id: number, data: any) => {
 
     const query = `
         UPDATE users 
-        SET first_name = $1, last_name = $2, email = $3, gender_id = $4, sexual_preferences = $5, biography = $6
-        WHERE id = $7
+        SET first_name = $1, last_name = $2, email = $3, gender_id = $4, sexual_preferences = $5, biography = $6, latitude = $7, longitude = $8, city = $9
+        WHERE id = $10
         RETURNING *
     `;
-    const values = [firstName, lastName, email, genderId, targetGenderIds, biography, id];
+    const values = [firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, id];
     
     try {
         const result = await pool.query(query, values);
@@ -164,7 +153,7 @@ export const getUserById = async (id: number) => {
     const query = `
         SELECT 
             u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
-            u.latitude, u.longitude,
+            u.latitude, u.longitude, u.city, u.geolocation_consent,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             u.sexual_preferences,
@@ -189,4 +178,9 @@ export const getUserById = async (id: number) => {
         console.error('Error getting user by id:', error);
         throw error;
     }
+};
+
+export const updateGeolocationConsent = async (userId: number, consent: boolean) => {
+    const query = 'UPDATE users SET geolocation_consent = $1 WHERE id = $2';
+    await pool.query(query, [consent, userId]);
 };
