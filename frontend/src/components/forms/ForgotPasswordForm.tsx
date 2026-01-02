@@ -22,14 +22,12 @@ export const ForgotPasswordForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await authService.forgotPassword(formData);
-      if (response.status === 200) {
-        addToast('Email sent successfully', 'success');
-        navigate('/login');
-      }
-    } catch (error) {
-      console.error('Error sending email:', error);
-      addToast('Failed to send email', 'error');
+      await authService.forgotPassword(formData);
+      addToast('Email sent successfully', 'success');
+      navigate('/login');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Error sending email';
+      addToast(errorMessage, 'error');
     }
   };
 

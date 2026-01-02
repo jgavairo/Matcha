@@ -43,7 +43,7 @@ const authService = {
             const response = await api.post('/auth/forgot-password', formData);
             return response.data;
         } catch (error) {
-            console.error('Error sending email:', error);
+            console.error('Error sending forgot password email:', error);
             throw error;
         }
     }

@@ -28,18 +28,12 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await authService.register(formData);
-      if (response.status === 201) {
-        addToast('User created successfully', 'success');
-        navigate('/login');
-      }
+      await authService.register(formData);
+      addToast('Register successful', 'success');
+      navigate('/login');
     } catch (error: any) {
-      const status = error.response?.status;
-      const errorCode = error.response?.data?.error;
-
-      if (status === 400)
-        addToast(errorCode, 'error');
-    
+      const errorMessage = error.response?.data?.error || 'Error registering user';
+      addToast(errorMessage, 'error');
     }
   };
 
