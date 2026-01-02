@@ -18,13 +18,13 @@ const theme = createTheme({
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <FlowbiteThemeProvider theme={theme}>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <FlowbiteThemeProvider theme={{ theme }}>
       <AppThemeProvider>
         <AuthProvider>
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <App />
-          </BrowserRouter>
+          <App />
         </AuthProvider>
       </AppThemeProvider>
     </FlowbiteThemeProvider>
+  </BrowserRouter>
 )
