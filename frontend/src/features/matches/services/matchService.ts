@@ -11,6 +11,8 @@ export const matchService = {
         fameRange: [0, 1000],
         minCommonTags: 0,
         tags: [],
+        gender: [],
+        sexualPreference: [],
         location: '',
         sortBy: 'distance',
         sortOrder: 'asc'

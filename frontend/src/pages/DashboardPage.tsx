@@ -12,9 +12,7 @@ const DashboardPage: React.FC = () => {
     error, 
     isFinished, 
     handleLike, 
-    handleDislike,
-    handleUndo,
-    canUndo
+    handleDislike
   } = useMatches();
 
   if (loading) {
@@ -41,14 +39,6 @@ const DashboardPage: React.FC = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No more profiles!</h2>
           <p className="text-gray-500 dark:text-gray-400">Check back later for more matches.</p>
-          {canUndo && (
-            <button 
-              onClick={handleUndo}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-800"
-            >
-              Undo Last Action
-            </button>
-          )}
         </div>
       </div>
     );
@@ -74,8 +64,6 @@ const DashboardPage: React.FC = () => {
                       user={user} 
                       onLike={handleLike} 
                       onDislike={handleDislike} 
-                      onUndo={handleUndo}
-                      canUndo={canUndo}
                       onOpenProfile={() => {}}
                     />
                   )}
