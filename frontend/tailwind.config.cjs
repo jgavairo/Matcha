@@ -48,6 +48,7 @@ module.exports = {
         'card-overlay': '10', // Gradient overlays
         'card-content': '20', // Interactive content areas
         'card-ui': '30',      // Buttons, badges on top of content
+        'undo-ui': '10',      // Buttons, badges on top of content
         'scroll-top': '35',   // Scroll to top button (Between cards and filters)
         'filter-dropdown': '38', // Dropdown menu (Behind filter bar, above content)
       }

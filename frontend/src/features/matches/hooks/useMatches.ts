@@ -119,13 +119,8 @@ export const useMatches = () => {
     }
   }, [users, currentIndex, nextUser]);
 
-  const handleUndo = useCallback(() => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
-  }, []);
-
   const currentUser = users[currentIndex];
   const isFinished = !loading && currentIndex >= users.length;
-  const canUndo = currentIndex > 0;
 
   return {
     users,
@@ -136,8 +131,6 @@ export const useMatches = () => {
     isFinished,
     handleLike,
     handleDislike,
-    handleUndo,
-    canUndo,
     filters,
     updateFilters
   };
