@@ -5,6 +5,7 @@ import { useTheme } from '@context/ThemeContext';
 import { useAuth } from '@context/AuthContext';
 import { useNotification } from '@context/NotificationContext';
 import { Button } from 'flowbite-react';
+import TitleImage from '../../assets/Title.png';
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -37,7 +38,7 @@ const Header: React.FC = () => {
     <nav className="bg-white border-b border-gray-200 px-4 dark:bg-gray-800 dark:border-gray-700 w-full z-header h-16 flex-none flex items-center">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl w-full">
           <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-primary-500">Matcha</span>
+            <img src={TitleImage} alt="Matcha" className="h-8" />
           </Link>
           <div className="flex items-center lg:order-2 gap-2">
             <button 
