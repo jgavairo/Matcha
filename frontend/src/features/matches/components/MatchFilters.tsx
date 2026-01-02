@@ -228,15 +228,17 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                             handleChange('location', e.target.value);
                             setLocationError(null);
                         }}
-                        helperText={
-                            locationError ? (
-                                <span className="text-red-500">{locationError}</span>
-                            ) : localFilters.location ? (
-                                "Distance filter will be relative to this location"
-                            ) : undefined
-                        }
                         color={locationError ? "failure" : "gray"}
                       />
+                      {(locationError || localFilters.location) && (
+                        <p className={`mt-2 text-sm ${locationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
+                          {locationError ? (
+                            locationError
+                          ) : (
+                            "Distance filter will be relative to this location"
+                          )}
+                        </p>
+                      )}
                     </div>
                   )}
 
