@@ -186,7 +186,19 @@ export const updateGeolocationConsent = async (userId: number, consent: boolean)
 };
 
 export const searchUsers = async (currentUserId: number, filters: any, page: number, limit: number) => {
-    const { ageRange, distanceRange, fameRange, minCommonTags, tags, location, locationCoords, sortBy, sortOrder } = filters;
+    const { 
+        ageRange, 
+        distanceRange, 
+        fameRange, 
+        minCommonTags, 
+        tags, 
+        gender,
+        sexualPreference,
+        location, 
+        locationCoords, 
+        sortBy, 
+        sortOrder 
+    } = filters;
     const offset = (page - 1) * limit;
 
     // Get current user location and tags for distance and common tags calculation
@@ -252,20 +264,6 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
 
     const values: any[] = [centerLat, centerLon, userTags, currentUserId];
     let paramIndex = 5;
-
-    const { 
-        ageRange, 
-        distanceRange, 
-        fameRange, 
-        minCommonTags, 
-        tags, 
-        gender,
-        sexualPreference,
-        location, 
-        locationCoords,
-        sortBy, 
-        sortOrder 
-    } = filters;
 
     // Apply filters
     if (ageRange) {
