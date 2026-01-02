@@ -5,12 +5,19 @@ import ActionButton from '@ui/ActionButton';
 
 interface UserCardProps {
   user: UserProfile;
-  onLike: () => void;
-  onDislike: () => void;
+  onLike?: () => void;
+  onDislike?: () => void;
   onOpenProfile: () => void;
+  showActions?: boolean;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onOpenProfile }) => {
+const UserCard: React.FC<UserCardProps> = ({ 
+  user, 
+  onLike, 
+  onDislike, 
+  onOpenProfile,
+  showActions = true 
+}) => {
   return (
     <div className="relative w-full h-full overflow-hidden bg-white rounded-2xl shadow-xl dark:bg-gray-800 group">
       {/* Full Height Image */}
@@ -31,7 +38,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onOpenProf
       <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end z-card-content pointer-events-none h-full">
         
         {/* User Info Section */}
-        <div className="mt-auto mb-6 pointer-events-auto cursor-pointer transition-transform duration-300 group-hover:-translate-y-2" onClick={onOpenProfile}>
+        <div className={`mt-auto ${showActions ? 'mb-6' : 'mb-0'} pointer-events-auto cursor-pointer transition-transform duration-300 group-hover:-translate-y-2`} onClick={onOpenProfile}>
           <div className="flex items-end justify-between mb-1">
             <h2 className="text-3xl font-bold text-white drop-shadow-md">
               {user.firstName}, {user.age}
@@ -51,25 +58,27 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onOpenProf
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center items-center gap-8 pointer-events-auto pb-2">
-          <ActionButton
-            variant="danger"
-            size="xl"
-            className="bg-black/40 backdrop-blur-md border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 scale-100 hover:scale-110 shadow-lg"
-            onClick={(e) => { e.stopPropagation(); onDislike(); }}
-          >
-            <HiX className="w-8 h-8" />
-          </ActionButton>
+        {showActions && onLike && onDislike && (
+          <div className="flex justify-center items-center gap-8 pointer-events-auto pb-2">
+            <ActionButton
+              variant="danger"
+              size="xl"
+              className="bg-black/40 backdrop-blur-md border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 scale-100 hover:scale-110 shadow-lg"
+              onClick={(e) => { e.stopPropagation(); onDislike(); }}
+            >
+              <HiX className="w-8 h-8" />
+            </ActionButton>
 
-          <ActionButton
-            variant="primary"
-            size="xl"
-            className="bg-black/40 backdrop-blur-md border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white hover:border-pink-500 transition-all duration-300 scale-100 hover:scale-110 shadow-lg"
-            onClick={(e) => { e.stopPropagation(); onLike(); }}
-          >
-            <HiHeart className="w-8 h-8" />
-          </ActionButton>
-        </div>
+            <ActionButton
+              variant="primary"
+              size="xl"
+              className="bg-black/40 backdrop-blur-md border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white hover:border-pink-500 transition-all duration-300 scale-100 hover:scale-110 shadow-lg"
+              onClick={(e) => { e.stopPropagation(); onLike(); }}
+            >
+              <HiHeart className="w-8 h-8" />
+            </ActionButton>
+          </div>
+        )}
       </div>
     </div>
   );

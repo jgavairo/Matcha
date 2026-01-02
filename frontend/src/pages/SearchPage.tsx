@@ -5,7 +5,7 @@ import { UserProfile } from '@app-types/user';
 import { matchService } from '@features/matches/services/matchService';
 import { MatchFiltersState } from '@features/matches/types/match';
 import MatchFilters from '@features/matches/components/MatchFilters';
-import SearchUserCard from '@features/matches/components/SearchUserCard';
+import UserCard from '@features/matches/components/UserCard';
 import UserProfileDrawer from '@features/matches/components/UserProfileDrawer';
 import { DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
 
@@ -206,13 +206,15 @@ const SearchPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {users.map((user) => (
-              <SearchUserCard 
-                key={user.id} 
-                user={user} 
-                onOpenProfile={() => setSelectedUser(user)} 
-              />
+              <div key={user.id} className="h-[400px]">
+                <UserCard 
+                  user={user} 
+                  onOpenProfile={() => setSelectedUser(user)}
+                  showActions={false}
+                />
+              </div>
             ))}
           </div>
           

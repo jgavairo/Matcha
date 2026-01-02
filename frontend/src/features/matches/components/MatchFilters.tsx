@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button, Label, RangeSlider, Select, TextInput, Badge } from 'flowbite-react';
-import { HiAdjustments, HiSortAscending, HiSortDescending, HiX } from 'react-icons/hi';
+import { Button, Label, RangeSlider, Select, TextInput, Badge, Checkbox } from 'flowbite-react';
+import { HiAdjustments, HiSortAscending, HiSortDescending, HiX, HiLocationMarker } from 'react-icons/hi';
 import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
 import { api } from '../../../services/api';
 import { useNotification } from '../../../context/NotificationContext';
+import { useAuth } from '../../../context/AuthContext';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;
@@ -47,6 +48,11 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
   const [locationError, setLocationError] = React.useState<string | null>(null);
   const lastScrollY = React.useRef(0);
   const { addToast } = useNotification();
+  const { user } = useAuth();
+
+  const hasChanges = React.useMemo(() => {
+    return JSON.stringify(localFilters) !== JSON.stringify(filters);
+  }, [localFilters, filters]);
 
   React.useEffect(() => {
     const fetchTags = async () => {
@@ -96,6 +102,49 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
     const { sortBy: defaultSortBy, sortOrder: defaultSortOrder, ...defaultCriteria } = DEFAULT_FILTERS;
     return JSON.stringify(filterCriteria) !== JSON.stringify(defaultCriteria);
   }, [filters, mode, hasSearched]);
+
+  const handleAroundMe = () => {
+    if (!user?.geolocationConsent) {
+        addToast("Please enable geolocation in your profile security settings first", 'error');
+        return;
+    }
+
+    if (!navigator.geolocation) {
+      addToast("Geolocation is not supported by your browser", 'error');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+            // Reverse geocoding to get city name for the input
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            const city = data.address.city || data.address.town || data.address.village || "Current Location";
+            
+            setLocalFilters(prev => ({
+                ...prev,
+                location: city,
+                locationCoords: { latitude, longitude }
+            }));
+            setLocationError(null);
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            // Fallback if reverse geocoding fails but we have coords
+             setLocalFilters(prev => ({
+                ...prev,
+                location: "Current Location",
+                locationCoords: { latitude, longitude }
+            }));
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        addToast("Unable to retrieve your location", 'error');
+      }
+    );
+  };
 
   const handleApply = async () => {
     let filtersToApply = { ...localFilters };
@@ -220,16 +269,22 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                       <div className="mb-2 block">
                         <Label htmlFor="location">Location</Label>
                       </div>
-                      <TextInput
-                        id="location"
-                        placeholder="e.g. Lyon"
-                        value={localFilters.location || ''}
-                        onChange={(e) => {
-                            handleChange('location', e.target.value);
-                            setLocationError(null);
-                        }}
-                        color={locationError ? "failure" : "gray"}
-                      />
+                      <div className="flex gap-2">
+                        <TextInput
+                            id="location"
+                            placeholder="e.g. Lyon"
+                            value={localFilters.location || ''}
+                            onChange={(e) => {
+                                handleChange('location', e.target.value);
+                                setLocationError(null);
+                            }}
+                            color={locationError ? "failure" : "gray"}
+                            className="flex-1"
+                        />
+                        <Button color="light" onClick={handleAroundMe} title="Around Me">
+                            <HiLocationMarker className="h-5 w-5" />
+                        </Button>
+                      </div>
                       {(locationError || localFilters.location) && (
                         <p className={`mt-2 text-sm ${locationError ? "text-red-600 dark:text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
                           {locationError ? (
@@ -283,6 +338,62 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                       value={localFilters.distanceRange[1]}
                       onChange={(e) => handleChange('distanceRange', [0, parseInt(e.target.value)])}
                     />
+                  </div>
+
+                  {/* Gender Identity */}
+                  <div>
+                    <div className="mb-2 block">
+                      <Label>Gender Identity</Label>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      {['male', 'female', 'other'].map((gender) => (
+                        <div key={gender} className="flex items-center gap-2">
+                          <Checkbox 
+                            id={`gender-${gender}`} 
+                            checked={(localFilters.gender || []).includes(gender)}
+                            onChange={(e) => {
+                              const current = localFilters.gender || [];
+                              if (e.target.checked) {
+                                handleChange('gender', [...current, gender]);
+                              } else {
+                                handleChange('gender', current.filter(g => g !== gender));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`gender-${gender}`} className="capitalize">
+                            {gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : 'Other'}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sexual Orientation */}
+                  <div>
+                    <div className="mb-2 block">
+                      <Label>Interested in</Label>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      {['male', 'female', 'other'].map((orientation) => (
+                        <div key={orientation} className="flex items-center gap-2">
+                          <Checkbox 
+                            id={`orientation-${orientation}`} 
+                            checked={(localFilters.sexualPreference || []).includes(orientation)}
+                            onChange={(e) => {
+                              const current = localFilters.sexualPreference || [];
+                              if (e.target.checked) {
+                                handleChange('sexualPreference', [...current, orientation]);
+                              } else {
+                                handleChange('sexualPreference', current.filter(o => o !== orientation));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`orientation-${orientation}`} className="capitalize">
+                            {orientation === 'male' ? 'Male' : orientation === 'female' ? 'Female' : 'Other'}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -376,7 +487,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                 <Button color="gray" onClick={handleClear}>
                   Clear Filters
                 </Button>
-                <Button color="pink" onClick={handleApply}>
+                <Button color="pink" onClick={handleApply} disabled={!hasChanges}>
                   Apply Filters
                 </Button>
               </div>

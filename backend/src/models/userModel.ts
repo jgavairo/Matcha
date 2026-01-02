@@ -198,7 +198,19 @@ export const updateGeolocationConsent = async (userId: number, consent: boolean)
 };
 
 export const searchUsers = async (currentUserId: number, filters: any, page: number, limit: number) => {
-    const { ageRange, distanceRange, fameRange, minCommonTags, tags, location, locationCoords, sortBy, sortOrder } = filters;
+    const { 
+        ageRange, 
+        distanceRange, 
+        fameRange, 
+        minCommonTags, 
+        tags, 
+        gender,
+        sexualPreference,
+        location, 
+        locationCoords, 
+        sortBy, 
+        sortOrder 
+    } = filters;
     const offset = (page - 1) * limit;
 
     // Get current user location and tags for distance and common tags calculation
@@ -222,6 +234,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             SELECT 
                 u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
                 u.latitude, u.longitude, u.city,
+                u.sexual_preferences,
                 EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
                 g.gender,
                 (
@@ -294,6 +307,22 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         query += ` AND tags && $${paramIndex}`;
         values.push(tags);
         paramIndex++;
+    }
+
+    if (gender && gender.length > 0) {
+        query += ` AND gender = ANY($${paramIndex})`;
+        values.push(gender);
+        paramIndex++;
+    }
+
+    if (sexualPreference && sexualPreference.length > 0) {
+        const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
+        const targetIds = sexualPreference.map((p: string) => genderMap[p]).filter((id: number) => id);
+        if (targetIds.length > 0) {
+             query += ` AND sexual_preferences && $${paramIndex}`;
+             values.push(targetIds);
+             paramIndex++;
+        }
     }
     
     if (location && !locationCoords) {
