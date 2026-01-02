@@ -27,9 +27,6 @@ const HomePage: React.FC = () => {
             Get Started
           </Button>
         </Link>
-        <Button color="gray" size="lg" onClick={handleDebugLogin}>
-          Debug Connect
-        </Button>
       </div>
     </div>
   );
