@@ -44,7 +44,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onLike, onDislike, onOpenProf
 
           <div className="flex items-center text-gray-200 mb-3 drop-shadow-md">
             <HiLocationMarker className="w-4 h-4 mr-1" />
-            <span className="text-sm font-medium">{user.distance} km away</span>
+            <span className="text-sm font-medium">
+              {user.distance > 0 ? `${user.distance} km away` : "Less than 1 km away"}
+            </span>
           </div>
         </div>
 
