@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import CardStack from '@features/matches/components/CardStack';
-import { useMatches } from '@features/matches/hooks/useMatches';
-import { Spinner } from 'flowbite-react';
+import { useMatches, DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
+import { Spinner, Button } from 'flowbite-react';
 import UserProfileModal from '@/features/matches/components/UserProfileDrawer';
 import MatchFilters from '@/features/matches/components/MatchFilters';
 import { UserProfile } from '@app-types/user';
@@ -22,6 +22,12 @@ const DiscoverPage: React.FC = () => {
   } = useMatches();
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+
+  const hasActiveFilters = useMemo(() => {
+    const { sortBy, sortOrder, ...filterCriteria } = filters;
+    const { sortBy: defaultSortBy, sortOrder: defaultSortOrder, ...defaultCriteria } = DEFAULT_FILTERS;
+    return JSON.stringify(filterCriteria) !== JSON.stringify(defaultCriteria);
+  }, [filters]);
 
   const handleBlock = () => {
     if (selectedUser) {
@@ -52,7 +58,11 @@ const DiscoverPage: React.FC = () => {
       ) : isFinished ? (
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No more profiles!</h2>
-          <p className="text-gray-500 dark:text-gray-400">Check back later for more matches.</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            {hasActiveFilters 
+              ? "Try adjusting your filters to see more people." 
+              : "Check back later for more matches."}
+          </p>
           {canUndo && (
             <button 
               onClick={handleUndo}

@@ -11,7 +11,7 @@ import { DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
 
 const SearchPage: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
@@ -19,6 +19,8 @@ const SearchPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const observerTarget = useRef(null);
 
   const fetchUsers = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
@@ -56,12 +58,26 @@ const SearchPage: React.FC = () => {
     }
   }, [filters]);
 
+  const handleFilterChange = (newFilters: MatchFiltersState) => {
+    setFilters(newFilters);
+    setHasSearched(true);
+  };
+
+  const handleClearFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+    setUsers([]);
+    setHasSearched(false);
+    setHasMore(true);
+    setPage(1);
+  };
+
   // Reset and fetch when filters change
   useEffect(() => {
+    if (!hasSearched) return;
     setPage(1);
     setHasMore(true);
     fetchUsers(1, true);
-  }, [filters]); // fetchUsers is dependent on filters, so this is correct
+  }, [filters, hasSearched]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -156,8 +172,12 @@ const SearchPage: React.FC = () => {
       {/* Filter Bar */}
       <MatchFilters 
         filters={filters} 
-        onFilterChange={setFilters} 
+        onFilterChange={handleFilterChange} 
         mode="search" 
+        isOpen={isFiltersOpen}
+        onToggle={setIsFiltersOpen}
+        hasSearched={hasSearched}
+        onClear={handleClearFilters}
       />
 
       <div className="flex justify-between items-center mb-8">
@@ -171,6 +191,13 @@ const SearchPage: React.FC = () => {
       ) : error ? (
         <div className="text-center text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
           <p>{error}</p>
+        </div>
+      ) : !hasSearched ? (
+        <div className="flex flex-col items-center justify-center mt-12 text-gray-500 dark:text-gray-400">
+          <p className="text-xl mb-6">Use filters to find people</p>
+          <Button color="pink" size="lg" onClick={() => setIsFiltersOpen(true)}>
+            Search Users
+          </Button>
         </div>
       ) : users.length === 0 ? (
         <div className="text-center text-gray-500 dark:text-gray-400 mt-12">

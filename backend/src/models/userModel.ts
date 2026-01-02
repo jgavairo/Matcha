@@ -184,3 +184,131 @@ export const updateGeolocationConsent = async (userId: number, consent: boolean)
     const query = 'UPDATE users SET geolocation_consent = $1 WHERE id = $2';
     await pool.query(query, [consent, userId]);
 };
+
+export const searchUsers = async (currentUserId: number, filters: any, page: number, limit: number) => {
+    const { ageRange, distanceRange, fameRange, minCommonTags, tags, location, locationCoords, sortBy, sortOrder } = filters;
+    const offset = (page - 1) * limit;
+
+    // Get current user location and tags for distance and common tags calculation
+    const currentUser = await getUserById(currentUserId);
+    if (!currentUser) throw new Error('User not found');
+
+    // Determine center for distance calculation
+    let centerLat = currentUser.latitude || 0;
+    let centerLon = currentUser.longitude || 0;
+
+    if (locationCoords && locationCoords.latitude && locationCoords.longitude) {
+        centerLat = locationCoords.latitude;
+        centerLon = locationCoords.longitude;
+    }
+
+    const userTags = currentUser.tags || [];
+
+    // Base query
+    let query = `
+        WITH user_data AS (
+            SELECT 
+                u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
+                u.latitude, u.longitude, u.city,
+                EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+                g.gender,
+                (
+                    SELECT url 
+                    FROM images 
+                    WHERE user_id = u.id AND is_profile_picture = TRUE 
+                    LIMIT 1
+                ) as profile_picture,
+                COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+                -- Calculate distance (Haversine formula)
+                (
+                    6371 * acos(
+                        LEAST(GREATEST(
+                        cos(radians($1)) * cos(radians(u.latitude)) * cos(radians(u.longitude) - radians($2)) +
+                        sin(radians($1)) * sin(radians(u.latitude))
+                        , -1.0), 1.0)
+                    )
+                ) as distance,
+                -- Calculate common tags count
+                (
+                    SELECT COUNT(*)
+                    FROM user_interests ui2
+                    JOIN interests i2 ON ui2.interest_id = i2.id
+                    WHERE ui2.user_id = u.id AND i2.name = ANY($3)
+                ) as common_tags_count,
+                -- Mock fame rating for now
+                0 as fame_rating
+            FROM users u
+            LEFT JOIN genders g ON u.gender_id = g.id
+            LEFT JOIN user_interests ui ON u.id = ui.user_id
+            LEFT JOIN interests t ON ui.interest_id = t.id
+            WHERE u.id != $4 -- Exclude current user
+            GROUP BY u.id, g.gender
+        )
+        SELECT *, count(*) OVER() as total_count
+        FROM user_data
+        WHERE 1=1
+    `;
+
+    const values: any[] = [centerLat, centerLon, userTags, currentUserId];
+    let paramIndex = 5;
+
+    // Apply filters
+    if (ageRange) {
+        query += ` AND age BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+        values.push(ageRange[0], ageRange[1]);
+        paramIndex += 2;
+    }
+
+    if (distanceRange) {
+        query += ` AND distance BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+        values.push(distanceRange[0], distanceRange[1]);
+        paramIndex += 2;
+    }
+
+    if (fameRange) {
+        query += ` AND fame_rating BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+        values.push(fameRange[0], fameRange[1]);
+        paramIndex += 2;
+    }
+
+    if (minCommonTags > 0) {
+        query += ` AND common_tags_count >= $${paramIndex}`;
+        values.push(minCommonTags);
+        paramIndex++;
+    }
+
+    if (tags && tags.length > 0) {
+        // Filter by specific tags if provided (must have at least one of the tags)
+        query += ` AND tags && $${paramIndex}`;
+        values.push(tags);
+        paramIndex++;
+    }
+    
+    if (location && !locationCoords) {
+        query += ` AND city ILIKE $${paramIndex}`;
+        values.push(`%${location}%`);
+        paramIndex++;
+    }
+
+    // Sorting
+    const sortColumn = sortBy === 'age' ? 'age' : 
+                       sortBy === 'fameRating' ? 'fame_rating' : 
+                       sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
+    
+    query += ` ORDER BY ${sortColumn} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}`;
+
+    // Pagination
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    values.push(limit, offset);
+
+    try {
+        const result = await pool.query(query, values);
+        return {
+            users: result.rows,
+            total: result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0
+        };
+    } catch (error) {
+        console.error('Error searching users:', error);
+        throw error;
+    }
+};

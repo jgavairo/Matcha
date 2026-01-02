@@ -4,22 +4,49 @@ import { HiAdjustments, HiSortAscending, HiSortDescending, HiX } from 'react-ico
 import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
 import { api } from '../../../services/api';
+import { useNotification } from '../../../context/NotificationContext';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;
   onFilterChange: (filters: MatchFiltersState) => void;
   mode?: 'discover' | 'search';
   className?: string;
+  isOpen?: boolean;
+  onToggle?: (isOpen: boolean) => void;
+  hasSearched?: boolean;
+  onClear?: () => void;
 }
 
-const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mode = 'discover', className }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+const MatchFilters: React.FC<MatchFiltersProps> = ({ 
+  filters, 
+  onFilterChange, 
+  mode = 'discover', 
+  className,
+  isOpen: controlledIsOpen,
+  onToggle,
+  hasSearched = false,
+  onClear
+}) => {
+  const [internalIsOpen, setInternalIsOpen] = React.useState(false);
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = (newState: boolean) => {
+    if (isControlled) {
+      onToggle?.(newState);
+    } else {
+      setInternalIsOpen(newState);
+    }
+  };
+
   const [isVisible, setIsVisible] = React.useState(true);
   const [localFilters, setLocalFilters] = React.useState<MatchFiltersState>(filters);
   const [availableTags, setAvailableTags] = React.useState<string[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [showDropdown, setShowDropdown] = React.useState(false);
+  const [locationError, setLocationError] = React.useState<string | null>(null);
   const lastScrollY = React.useRef(0);
+  const { addToast } = useNotification();
 
   React.useEffect(() => {
     const fetchTags = async () => {
@@ -63,20 +90,54 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
 
   // Check if current filters are different from defaults (ignoring sort)
   const hasActiveFilters = React.useMemo(() => {
+    if (mode === 'search' && hasSearched) return true;
+    
     const { sortBy, sortOrder, ...filterCriteria } = filters;
     const { sortBy: defaultSortBy, sortOrder: defaultSortOrder, ...defaultCriteria } = DEFAULT_FILTERS;
     return JSON.stringify(filterCriteria) !== JSON.stringify(defaultCriteria);
-  }, [filters]);
+  }, [filters, mode, hasSearched]);
 
-  const handleApply = () => {
-    onFilterChange(localFilters);
-    setIsOpen(false);
+  const handleApply = async () => {
+    let filtersToApply = { ...localFilters };
+    setLocationError(null);
+
+    if (filtersToApply.location) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(filtersToApply.location)}&limit=1`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                filtersToApply.locationCoords = {
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon)
+                };
+            } else {
+                setLocationError("Location not found. Please check the spelling.");
+                addToast("Location not found. Please check the spelling.", 'error');
+                return;
+            }
+        } catch (error) {
+            console.error('Geocoding error:', error);
+            setLocationError("Unable to validate location.");
+            addToast("Unable to validate location. Please try again.", 'error');
+            return;
+        }
+    } else {
+        filtersToApply.locationCoords = undefined;
+    }
+
+    setLocalFilters(filtersToApply);
+    onFilterChange(filtersToApply);
+    handleToggle(false);
   };
 
-  const handleReset = () => {
+  const handleClear = () => {
     setLocalFilters(DEFAULT_FILTERS);
-    onFilterChange(DEFAULT_FILTERS);
-    setIsOpen(false);
+    if (onClear) {
+      onClear();
+    } else {
+      onFilterChange(DEFAULT_FILTERS);
+    }
+    handleToggle(false);
   };
 
   const handleChange = (key: keyof MatchFiltersState, value: any) => {
@@ -163,7 +224,18 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
                         id="location"
                         placeholder="e.g. Lyon"
                         value={localFilters.location || ''}
-                        onChange={(e) => handleChange('location', e.target.value)}
+                        onChange={(e) => {
+                            handleChange('location', e.target.value);
+                            setLocationError(null);
+                        }}
+                        helperText={
+                            locationError ? (
+                                <span className="text-red-500">{locationError}</span>
+                            ) : localFilters.location ? (
+                                "Distance filter will be relative to this location"
+                            ) : undefined
+                        }
+                        color={locationError ? "failure" : "gray"}
                       />
                     </div>
                   )}
@@ -196,7 +268,9 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
                   {/* Distance Range */}
                   <div>
                     <div className="mb-2 flex justify-between">
-                      <Label htmlFor="distance-range">Max Distance (km)</Label>
+                      <Label htmlFor="distance-range">
+                        {localFilters.location ? `Max Distance from: ${localFilters.location}` : "Max Distance (km)"}
+                      </Label>
                       <span className="text-sm text-gray-500">{localFilters.distanceRange[1]} km</span>
                     </div>
                     <RangeSlider 
@@ -297,8 +371,8 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
               </div>
 
               <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <Button color="gray" onClick={handleReset}>
-                  Reset Defaults
+                <Button color="gray" onClick={handleClear}>
+                  Clear Filters
                 </Button>
                 <Button color="pink" onClick={handleApply}>
                   Apply Filters
@@ -310,7 +384,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({ filters, onFilterChange, mo
 
         {/* Bar Content - Visually on top */}
         <div 
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => handleToggle(!isOpen)}
           className="relative z-50 h-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750"
         >
           <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">

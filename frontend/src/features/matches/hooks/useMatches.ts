@@ -5,7 +5,7 @@ import { MatchFiltersState } from '../types/match';
 
 export const DEFAULT_FILTERS: MatchFiltersState = {
   ageRange: [18, 99],
-  distanceRange: [0, 100],
+  distanceRange: [0, 500],
   fameRange: [0, 1000],
   minCommonTags: 0,
   tags: [],

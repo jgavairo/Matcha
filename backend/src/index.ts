@@ -9,6 +9,7 @@ import { authMiddleware } from './middlewares/authMiddleware';
 import chatRoutes from './routes/chatRoutes';
 import tagRoutes from './routes/tagRoutes';
 import userRoutes from './routes/userRoutes';
+import matchRoutes from './routes/matchRoutes';
 
 // initializing ================================================================
 
@@ -51,6 +52,10 @@ app.post('/auth/logout', authMiddleware, authController.logout);
 // User Routes ----------------------------------------------------------------
 
 app.use('/users', userRoutes);
+
+// Match Routes ---------------------------------------------------------------
+
+app.use('/matches', matchRoutes);
 
 // Chat Routes ----------------------------------------------------------------
 
