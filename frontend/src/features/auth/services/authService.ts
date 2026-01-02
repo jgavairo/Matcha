@@ -1,5 +1,5 @@
 import { api } from "@services/api";
-import { LoginFormData, RegisterFormData } from "@app-types/forms";
+import { ForgotPasswordFormData, LoginFormData, RegisterFormData } from "@app-types/forms";
 
 const authService = {
     async login(formData: LoginFormData) {
@@ -35,6 +35,15 @@ const authService = {
             return response.data;
         } catch (error) {
             console.error('Error checking auth:', error);
+            throw error;
+        }
+    },
+    async forgotPassword(formData: ForgotPasswordFormData) {
+        try {
+            const response = await api.post('/auth/forgot-password', formData);
+            return response.data;
+        } catch (error) {
+            console.error('Error sending email:', error);
             throw error;
         }
     }

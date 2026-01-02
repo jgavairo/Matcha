@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { LoginFormData, RegisterFormData } from '../types/forms';
-import { createUser, loginUser, getUserById } from '../models/userModel';
+import { createUser, loginUser, getUserById, getUserByEmail } from '../models/userModel';
 import { generateToken } from '../utils/jwt';
+import nodemailer, { Transporter } from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export class AuthController {
@@ -103,6 +105,40 @@ export class AuthController {
             res.status(200).json(formattedUser);
         } catch (error) {
             console.error('Error in me:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async forgotPassword(req: Request, res: Response) {
+        const { email } = req.body;
+        try {
+            const user = await getUserByEmail(email);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+            const token = uuidv4();
+            const transporter: Transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD,
+                },
+            });
+            const mailOptions = {
+                from: 'noreply@matcha.com',
+                to: email,
+                subject: 'Reset your password',
+                html: `<div>
+                    <h1>Reset your password</h1>
+                    <p>Click the link to reset your password: <a href="${process.env.FRONTEND_URL}/reset-password?token=${token}">Reset password</a></p>
+                </div>`,
+            };
+            await transporter.sendMail(mailOptions);
+            res.status(200).json({ message: 'Email sent successfully' });
+        }
+        catch (error) {
+            console.error('Error in forgotPassword:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

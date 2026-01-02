@@ -180,6 +180,18 @@ export const getUserById = async (id: number) => {
     }
 };
 
+export const getUserByEmail = async (email: string) => {
+    const query = 'SELECT id FROM users WHERE email = $1';
+    const values = [email];
+    try {
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error getting user by email:', error);
+        throw error;
+    }
+};
+
 export const updateGeolocationConsent = async (userId: number, consent: boolean) => {
     const query = 'UPDATE users SET geolocation_consent = $1 WHERE id = $2';
     await pool.query(query, [consent, userId]);

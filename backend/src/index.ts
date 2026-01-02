@@ -36,6 +36,8 @@ app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
 
+
+
 // Routes =====================================================================
 
 
@@ -49,6 +51,7 @@ app.get('/auth/me', authMiddleware, authController.me);
 
 app.post('/auth/logout', authMiddleware, authController.logout);
 
+app.post('/auth/forgot-password', authController.forgotPassword);
 // User Routes ----------------------------------------------------------------
 
 app.use('/users', userRoutes);
