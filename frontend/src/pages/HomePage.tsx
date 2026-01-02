@@ -1,17 +1,8 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from 'flowbite-react';
-import { useAuth } from '../context/AuthContext';
 
 const HomePage: React.FC = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const handleDebugLogin = () => {
-    login();
-    navigate('/');
-  };
-
   return (
     <div className="text-center py-20">
       <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">

@@ -15,8 +15,6 @@ const DiscoverPage: React.FC = () => {
     isFinished, 
     handleLike, 
     handleDislike,
-    handleUndo,
-    canUndo,
     filters,
     updateFilters
   } = useMatches();
@@ -63,14 +61,6 @@ const DiscoverPage: React.FC = () => {
               ? "Try adjusting your filters to see more people." 
               : "Check back later for more matches."}
           </p>
-          {canUndo && (
-            <button 
-              onClick={handleUndo}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-800"
-            >
-              Undo Last Action
-            </button>
-          )}
         </div>
       ) : (
         <>
@@ -79,8 +69,6 @@ const DiscoverPage: React.FC = () => {
             currentIndex={currentIndex}
             onLike={handleLike}
             onDislike={handleDislike}
-            onUndo={handleUndo}
-            canUndo={canUndo}
             onOpenProfile={setSelectedUser}
           />
 
