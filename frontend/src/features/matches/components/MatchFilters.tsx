@@ -5,6 +5,7 @@ import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
 import { api } from '../../../services/api';
 import { useNotification } from '../../../context/NotificationContext';
+import { useAuth } from '../../../context/AuthContext';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;
@@ -47,6 +48,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
   const [locationError, setLocationError] = React.useState<string | null>(null);
   const lastScrollY = React.useRef(0);
   const { addToast } = useNotification();
+  const { user } = useAuth();
 
   const hasChanges = React.useMemo(() => {
     return JSON.stringify(localFilters) !== JSON.stringify(filters);
@@ -102,6 +104,11 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
   }, [filters, mode, hasSearched]);
 
   const handleAroundMe = () => {
+    if (!user?.geolocationConsent) {
+        addToast("Please enable geolocation in your profile security settings first", 'error');
+        return;
+    }
+
     if (!navigator.geolocation) {
       addToast("Geolocation is not supported by your browser", 'error');
       return;
