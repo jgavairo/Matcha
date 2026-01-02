@@ -48,6 +48,10 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
   const lastScrollY = React.useRef(0);
   const { addToast } = useNotification();
 
+  const hasChanges = React.useMemo(() => {
+    return JSON.stringify(localFilters) !== JSON.stringify(filters);
+  }, [localFilters, filters]);
+
   React.useEffect(() => {
     const fetchTags = async () => {
         try {
@@ -376,7 +380,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                 <Button color="gray" onClick={handleClear}>
                   Clear Filters
                 </Button>
-                <Button color="pink" onClick={handleApply}>
+                <Button color="pink" onClick={handleApply} disabled={!hasChanges}>
                   Apply Filters
                 </Button>
               </div>
