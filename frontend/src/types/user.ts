@@ -20,7 +20,8 @@ export interface UserSummary {
 export interface UserProfile extends UserSummary {
   firstName: string;
   lastName: string;
-  sexualPreferences: string;
+  sexualPreferences: string[];
+  birthDate: string;
   isOnline: boolean;
   lastConnection: string;
   hasLikedYou: boolean;

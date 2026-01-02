@@ -80,6 +80,7 @@ const DiscoverPage: React.FC = () => {
             onDislike={() => { if (selectedUser) { handleDislike(selectedUser.id.toString()); setSelectedUser(null); } }}
             onBlock={handleBlock}
             onReport={handleReport}
+            showPassButton={true}
           />
         </>
       )}

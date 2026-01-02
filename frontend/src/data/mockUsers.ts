@@ -47,8 +47,9 @@ const generateUsers = (count: number): UserProfile[] => {
       firstName: isMale ? `John${i}` : `Jane${i}`,
       lastName: `Doe${i}`,
       age: 18 + Math.floor(Math.random() * 40),
+      birthDate: "1990-01-01", // Placeholder, ideally calculated from age
       gender: gender,
-      sexualPreferences: 'Heterosexual',
+      sexualPreferences: ['Heterosexual'],
       biography: randomBio,
       distance: Math.floor(Math.random() * 100),
       location: {

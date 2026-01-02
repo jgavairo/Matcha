@@ -9,10 +9,10 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const { tags, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city } = req.body;
+            const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate } = req.body;
 
             // Basic validation
-            if (!firstName || !lastName || !email || !gender || !sexualPreferences) {
+            if (!username || !firstName || !lastName || !email || !gender || !sexualPreferences) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
 
@@ -23,7 +23,7 @@ export class UserController {
             }
 
             // Update basic user info
-            await updateUser(userId, { firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city });
+            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate });
 
             // Update interests if provided
             if (tags) {

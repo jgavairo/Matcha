@@ -43,7 +43,7 @@ export const loginUser = async (user: LoginFormData) => {
 };
 
 export const updateUser = async (id: number, data: any) => {
-    const { firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city } = data;
+    const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate } = data;
     
     // Map gender string to ID
     const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
@@ -51,7 +51,10 @@ export const updateUser = async (id: number, data: any) => {
 
     // Map sexual preferences string to IDs array
     let targetGenderIds: number[] = [];
-    if (gender === 'male') {
+    
+    if (Array.isArray(sexualPreferences)) {
+        targetGenderIds = sexualPreferences.map((pref: string) => genderMap[pref]).filter((id: number) => id);
+    } else if (gender === 'male') {
         if (sexualPreferences === 'hetero') targetGenderIds = [2];
         else if (sexualPreferences === 'homo') targetGenderIds = [1];
         else if (sexualPreferences === 'bi') targetGenderIds = [1, 2];
@@ -66,11 +69,11 @@ export const updateUser = async (id: number, data: any) => {
 
     const query = `
         UPDATE users 
-        SET first_name = $1, last_name = $2, email = $3, gender_id = $4, sexual_preferences = $5, biography = $6, latitude = $7, longitude = $8, city = $9
-        WHERE id = $10
+        SET username = $1, first_name = $2, last_name = $3, email = $4, gender_id = $5, sexual_preferences = $6, biography = $7, latitude = $8, longitude = $9, city = $10, birth_date = $11
+        WHERE id = $12
         RETURNING *
     `;
-    const values = [firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, id];
+    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, id];
     
     try {
         const result = await pool.query(query, values);

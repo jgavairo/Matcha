@@ -4,7 +4,6 @@ import { UserProfile } from '@app-types/user';
 import ReportModal from './ReportModal';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfo from './ProfileInfo';
-import ProfileFooter from './ProfileFooter';
 
 interface UserProfileModalProps {
   user: UserProfile | null;
@@ -14,6 +13,8 @@ interface UserProfileModalProps {
   onDislike: () => void;
   onBlock: () => void;
   onReport: (reason: string) => void;
+  showPassButton?: boolean;
+  hideActions?: boolean;
 }
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ 
@@ -23,7 +24,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onLike, 
   onDislike, 
   onBlock, 
-  onReport 
+  onReport,
+  showPassButton = false,
+  hideActions = false
 }) => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
@@ -48,11 +51,16 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
               onClose={onClose} 
               onBlock={onBlock} 
               onReportClick={() => setIsReportModalOpen(true)} 
+              hideActions={hideActions}
             />
 
-            <ProfileInfo user={user} />
-
-            <ProfileFooter onLike={onLike} onDislike={onDislike} />
+            <ProfileInfo 
+              user={user} 
+              onLike={onLike}
+              onDislike={onDislike}
+              showPassButton={showPassButton}
+              hideActions={hideActions}
+            />
           </div>
         )}
       </Drawer>

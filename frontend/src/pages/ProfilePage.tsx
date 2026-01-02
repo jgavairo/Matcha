@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Tabs, TabItem } from 'flowbite-react';
-import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart, HiLockClosed } from 'react-icons/hi';
+import { Card, Tabs, TabItem, Button } from 'flowbite-react';
+import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart, HiLockClosed, HiEye } from 'react-icons/hi';
 import EditProfileForm from '../features/profile/components/EditProfileForm';
 import PhotoUpload from '../features/profile/components/PhotoUpload';
 import StatsDisplay from '../features/profile/components/StatsDisplay';
@@ -17,7 +17,6 @@ const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const { addToast } = useNotification();
 
     useEffect(() => {
@@ -110,14 +109,25 @@ const ProfilePage: React.FC = () => {
             ...summary,
             firstName: "Unknown",
             lastName: "User",
-            sexualPreferences: "bi",
+            sexualPreferences: ["bi"],
+            birthDate: "2000-01-01",
             isOnline: false,
             lastConnection: "Recently",
             hasLikedYou: true,
             isMatch: false
         };
         setSelectedUser(fullProfile);
-        setIsModalOpen(true);
+    };
+
+    const handlePreview = async () => {
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data);
+            setSelectedUser(response.data);
+        } catch (error) {
+            console.error("Failed to fetch profile for preview", error);
+            addToast("Failed to load preview", 'error');
+        }
     };
 
     if (loading) return <div className="flex justify-center items-center h-screen dark:text-white">Loading...</div>;
@@ -137,6 +147,12 @@ const ProfilePage: React.FC = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{user.firstName} {user.lastName}</h1>
                     <p className="text-gray-500">@{user.username}</p>
+                </div>
+                <div className="ml-auto">
+                    <Button color="light" onClick={handlePreview}>
+                        <HiEye className="mr-2 h-5 w-5" />
+                        Preview
+                    </Button>
                 </div>
             </div>
 
@@ -222,13 +238,14 @@ const ProfilePage: React.FC = () => {
             </div>
 
             <UserProfileModal
-                user={selectedUser}
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                user={selectedUser?.id === user?.id ? user : selectedUser}
+                isOpen={!!selectedUser}
+                onClose={() => setSelectedUser(null)}
                 onLike={() => console.log("Like")}
                 onDislike={() => console.log("Dislike")}
                 onBlock={() => console.log("Block")}
                 onReport={(reason) => console.log("Report", reason)}
+                hideActions={selectedUser?.id === user?.id}
             />
         </div>
     );

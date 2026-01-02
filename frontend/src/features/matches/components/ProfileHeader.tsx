@@ -8,9 +8,10 @@ interface ProfileHeaderProps {
   onClose: () => void;
   onBlock: () => void;
   onReportClick: () => void;
+  hideActions?: boolean;
 }
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onClose, onBlock, onReportClick }) => {
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onClose, onBlock, onReportClick, hideActions = false }) => {
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
@@ -25,16 +26,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onClose, onBlock, o
         )}
       </div>
       <div className="flex items-center gap-2">
-        <div className="relative z-modal">
-          <Dropdown label="" renderTrigger={() => <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"><HiDotsVertical className="w-6 h-6 text-gray-500 dark:text-gray-400" /></button>}>
-            <DropdownItem onClick={onBlock} icon={HiBan} className="text-red-600 dark:text-red-500">
-              Block User
-            </DropdownItem>
-            <DropdownItem onClick={onReportClick} icon={HiFlag}>
-              Report
-            </DropdownItem>
-          </Dropdown>
-        </div>
+        {!hideActions && (
+          <div className="relative z-modal">
+            <Dropdown label="" renderTrigger={() => <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"><HiDotsVertical className="w-6 h-6 text-gray-500 dark:text-gray-400" /></button>}>
+              <DropdownItem onClick={onBlock} icon={HiBan} className="text-red-600 dark:text-red-500">
+                Block User
+              </DropdownItem>
+              <DropdownItem onClick={onReportClick} icon={HiFlag}>
+                Report
+              </DropdownItem>
+            </Dropdown>
+          </div>
+        )}
         <button 
           onClick={onClose}
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400"

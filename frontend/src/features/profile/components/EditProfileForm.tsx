@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { Label, TextInput, Textarea, Select, Button, Badge } from 'flowbite-react';
+import { useForm, Controller } from 'react-hook-form';
+import { Label, TextInput, Textarea, Select, Button, Badge, Checkbox, Datepicker } from 'flowbite-react';
 import { CurrentUser } from '@app-types/user';
 import { api } from '../../../services/api';
 import { HiX } from 'react-icons/hi';
@@ -21,20 +21,49 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         longitude: user.location?.longitude || 0,
         city: user.location?.city || ""
     });
+    const [cityInput, setCityInput] = useState(user.location?.city || "");
     const [locationError, setLocationError] = useState("");
     const [isGeocoding, setIsGeocoding] = useState(false);
     const { addToast } = useNotification();
 
-    const { register, handleSubmit, formState: { errors } } = useForm({
+    const { register, handleSubmit, formState: { errors }, watch, getValues, control, setValue } = useForm({
         defaultValues: {
+            username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
             gender: user.gender,
-            sexualPreferences: user.sexualPreferences,
+            sexualPreferences: user.sexualPreferences || [],
             biography: user.biography,
+            birthDate: user.birthDate || ""
         }
     });
+
+    const save = handleSubmit(async (data) => {
+        await onFormSubmit(data);
+    }, (errors) => {
+        console.log("Form validation failed:", errors);
+    });
+
+    const watchedSexualPreferences = watch('sexualPreferences');
+
+    // Sync birthDate when user prop updates
+    useEffect(() => {
+        setValue("birthDate", user.birthDate || "");
+    }, [user.birthDate, setValue]);
+
+    // Auto-save for Tags, Location, Sexual Preferences (when they change)
+    useEffect(() => {
+        // Skip initial render or if values haven't changed meaningfully
+        if (location.city === user.location?.city && 
+            location.latitude === user.location?.latitude && 
+            location.longitude === user.location?.longitude &&
+            JSON.stringify(selectedTags) === JSON.stringify(user.tags) &&
+            JSON.stringify(watchedSexualPreferences) === JSON.stringify(user.sexualPreferences)) {
+            return;
+        }
+        save();
+    }, [location, selectedTags, watchedSexualPreferences]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -78,8 +107,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 const data = await res.json();
                 const city = data.address.city || data.address.town || data.address.village || "Unknown Location";
                 setLocation({ latitude, longitude, city });
+                setCityInput(city);
             } catch (e) {
                 setLocation({ latitude, longitude, city: "GPS Location" });
+                setCityInput("GPS Location");
             } finally {
                 setIsGeocoding(false);
             }
@@ -90,18 +121,19 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     };
 
     const handleCityBlur = async () => {
-        if (!location.city.trim()) return;
+        if (!cityInput.trim()) return;
         setIsGeocoding(true);
         setLocationError("");
         
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location.city)}&limit=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityInput)}&limit=1`);
             const data = await res.json();
             
             if (data && data.length > 0) {
                 const { lat, lon } = data[0];
                 setLocation(prev => ({
                     ...prev,
+                    city: cityInput,
                     latitude: parseFloat(lat),
                     longitude: parseFloat(lon)
                 }));
@@ -151,16 +183,58 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         !selectedTags.includes(tag)
     );
 
+    // Helper to wrap register with onBlur/onChange save
+    const registerWithSave = (name: any, options?: any) => {
+        const { onBlur, onChange, ...rest } = register(name, options);
+        return {
+            ...rest,
+            onBlur: async (e: any) => {
+                await onBlur(e);
+                const currentValue = getValues(name);
+                const userValue = user[name as keyof CurrentUser] || "";
+                if (currentValue !== userValue) {
+                    save();
+                }
+            },
+            onChange: async (e: any) => {
+                await onChange(e);
+                // Only save on change for Selects, not TextInputs
+                if (e.target.tagName === 'SELECT') {
+                    const currentValue = getValues(name);
+                    const userValue = user[name as keyof CurrentUser] || "";
+                    if (currentValue !== userValue) {
+                        save();
+                    }
+                }
+            }
+        };
+    };
+
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                    <div className="mb-2 block">
+                        <Label htmlFor="username">Username</Label>
+                    </div>
+                    <TextInput 
+                        id="username" 
+                        {...registerWithSave("username", { required: "Username is required" })} 
+                        color={errors.username ? "failure" : "gray"}
+                    />
+                    {errors.username && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.username.message as string}
+                        </p>
+                    )}
+                </div>
                 <div>
                     <div className="mb-2 block">
                         <Label htmlFor="firstName">First Name</Label>
                     </div>
                     <TextInput 
                         id="firstName" 
-                        {...register("firstName", { required: "First name is required" })} 
+                        {...registerWithSave("firstName", { required: "First name is required" })} 
                         color={errors.firstName ? "failure" : "gray"}
                     />
                     {errors.firstName && (
@@ -175,7 +249,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="lastName" 
-                        {...register("lastName", { required: "Last name is required" })} 
+                        {...registerWithSave("lastName", { required: "Last name is required" })} 
                         color={errors.lastName ? "failure" : "gray"}
                     />
                     {errors.lastName && (
@@ -193,7 +267,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 <TextInput 
                     id="email" 
                     type="email" 
-                    {...register("email", { 
+                    {...registerWithSave("email", { 
                         required: "Email is required",
                         pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -215,8 +289,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 </div>
                 <div className="flex gap-2">
                     <TextInput 
-                        value={location.city} 
-                        onChange={(e) => setLocation({ ...location, city: e.target.value })}
+                        value={cityInput} 
+                        onChange={(e) => setCityInput(e.target.value)}
                         onBlur={handleCityBlur}
                         placeholder="City or Neighborhood"
                         className="flex-1" 
@@ -240,23 +314,67 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <div className="mb-2 block">
+                        <Label htmlFor="birthDate">Date of Birth</Label>
+                    </div>
+                    <Controller
+                        control={control}
+                        name="birthDate"
+                        render={({ field: { onChange, value } }) => (
+                            <Datepicker
+                                key={user.birthDate} // Force re-render when date changes from outside
+                                id="birthDate"
+                                value={value ? new Date(value) : undefined}
+                                onChange={(date: Date | null) => {
+                                    if (!date) return;
+                                    const offset = date.getTimezoneOffset();
+                                    const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000));
+                                    const dateString = adjustedDate.toISOString().split('T')[0];
+                                    onChange(dateString);
+                                    
+                                    const userValue = user.birthDate || "";
+                                    if (dateString !== userValue) {
+                                        save();
+                                    }
+                                }}
+                                color={errors.birthDate ? "failure" : "gray"}
+                            />
+                        )}
+                    />
+                    {errors.birthDate && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {errors.birthDate.message as string}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <div className="mb-2 block">
                         <Label htmlFor="gender">Gender</Label>
                     </div>
-                    <Select id="gender" {...register("gender")}>
+                    <Select id="gender" {...registerWithSave("gender")}>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                         <option value="other">Other</option>
                     </Select>
                 </div>
-                <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="sexualPreferences">Sexual Preferences</Label>
+            </div>
+
+            <div>
+                <div className="mb-2 block">
+                    <Label>Interested In</Label>
+                </div>
+                <div className="flex flex-wrap gap-4 p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="pref-male" value="male" {...register("sexualPreferences")} />
+                        <Label htmlFor="pref-male">Male</Label>
                     </div>
-                    <Select id="sexualPreferences" {...register("sexualPreferences")}>
-                        <option value="hetero">Heterosexual</option>
-                        <option value="bi">Bisexual</option>
-                        <option value="homo">Homosexual</option>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="pref-female" value="female" {...register("sexualPreferences")} />
+                        <Label htmlFor="pref-female">Female</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="pref-other" value="other" {...register("sexualPreferences")} />
+                        <Label htmlFor="pref-other">Other</Label>
+                    </div>
                 </div>
             </div>
 
@@ -264,7 +382,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 <div className="mb-2 block">
                     <Label htmlFor="biography">Biography</Label>
                 </div>
-                <Textarea id="biography" rows={4} {...register("biography")} />
+                <Textarea id="biography" rows={4} {...registerWithSave("biography")} />
             </div>
 
             <div>
@@ -313,8 +431,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     )}
                 </div>
             </div>
-
-            <Button type="submit" color="pink">Save Changes</Button>
         </form>
     );
 };
