@@ -58,11 +58,12 @@ const LoginForm = () => {
 
       {/* Password */}
       <div>
-        <Label htmlFor="password" className="mb-2 block">Mot de passe</Label>
+        <Label htmlFor="password" className="mb-2 block">Password</Label>
         <TextInput
           id="password"
           name="password"
           type="password"
+          placeholder='password'
           required
           value={formData.password}
           onChange={handleChange}

@@ -5,6 +5,7 @@ import ToastContainer from '@features/notifications/components/ToastContainer';
 import MainLayout from '@layouts/MainLayout';
 import HomePage from '@pages/HomePage';
 import RegisterPage from '@pages/RegisterPage';
+import ForgotPasswordPage from '@pages/ForgotPasswordPage';
 import LoginPage from '@pages/LoginPage';
 import DiscoverPage from '@pages/DiscoverPage';
 import SearchPage from '@pages/SearchPage';
@@ -33,6 +34,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="*" element={<div className="text-center py-10">404 Not Found</div>} />
         </Route>
 
