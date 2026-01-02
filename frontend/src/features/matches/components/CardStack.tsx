@@ -27,17 +27,23 @@ const CardStack: React.FC<CardStackProps> = ({
           // Only render cards around the current index to improve performance
           const shouldRender = index >= currentIndex && index < currentIndex + 5;
           
+          if (!shouldRender) {
+            return (
+              <div key={user.id} className="w-full flex-shrink-0" style={{ height: '200%' }}>
+                <div className="w-full h-1/2" />
+              </div>
+            );
+          }
+
           return (
             <div key={user.id} className="w-full flex-shrink-0" style={{ height: '200%' }}>
               <div className="w-full h-1/2">
-                {shouldRender && (
-                  <UserCard 
-                    user={user} 
-                    onLike={() => onLike(user.id.toString())} 
-                    onDislike={() => onDislike(user.id.toString())} 
-                    onOpenProfile={() => onOpenProfile(user)}
-                  />
-                )}
+                <UserCard 
+                  user={user} 
+                  onLike={() => onLike(user.id.toString())} 
+                  onDislike={() => onDislike(user.id.toString())} 
+                  onOpenProfile={() => onOpenProfile(user)}
+                />
               </div>
             </div>
           );
