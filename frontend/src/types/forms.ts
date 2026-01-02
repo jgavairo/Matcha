@@ -13,3 +13,7 @@ export interface LoginFormData {
     password: string;
     remember: boolean;
   }
+
+export interface ForgotPasswordFormData {
+    email: string;
+  }
