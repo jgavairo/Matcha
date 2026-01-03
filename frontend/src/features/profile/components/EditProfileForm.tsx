@@ -54,16 +54,18 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
 
     // Auto-save for Tags, Location, Sexual Preferences (when they change)
     useEffect(() => {
+        const sortArray = (arr: any[]) => [...(arr || [])].sort();
+        
         // Skip initial render or if values haven't changed meaningfully
         if (location.city === user.location?.city && 
             location.latitude === user.location?.latitude && 
             location.longitude === user.location?.longitude &&
-            JSON.stringify(selectedTags) === JSON.stringify(user.tags) &&
-            JSON.stringify(watchedSexualPreferences) === JSON.stringify(user.sexualPreferences)) {
+            JSON.stringify(sortArray(selectedTags)) === JSON.stringify(sortArray(user.tags)) &&
+            JSON.stringify(sortArray(watchedSexualPreferences)) === JSON.stringify(sortArray(user.sexualPreferences))) {
             return;
         }
         save();
-    }, [location, selectedTags, watchedSexualPreferences]);
+    }, [location, selectedTags, watchedSexualPreferences, user.tags, user.sexualPreferences, user.location]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -154,7 +156,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         let finalLocation = { ...location };
 
         // If city is present but we want to ensure we have coords for THAT city.
-        if (finalLocation.city && finalLocation.city.trim() !== "") {
+        // Only fetch if coordinates are missing (0,0)
+        if (finalLocation.city && finalLocation.city.trim() !== "" && (finalLocation.latitude === 0 || finalLocation.longitude === 0)) {
              try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalLocation.city)}&limit=1`);
                 const geoData = await res.json();
