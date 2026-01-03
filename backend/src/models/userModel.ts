@@ -159,7 +159,11 @@ export const getUserById = async (id: number) => {
             u.latitude, u.longitude, u.city, u.geolocation_consent,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
-            u.sexual_preferences,
+            (
+                SELECT COALESCE(array_agg(g2.gender), '{}')
+                FROM unnest(u.sexual_preferences) as pref_id
+                JOIN genders g2 ON g2.id = pref_id
+            ) as sexual_preferences,
             (
                 SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
                 FROM images 
@@ -237,7 +241,11 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             SELECT 
                 u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
                 u.latitude, u.longitude, u.city,
-                u.sexual_preferences,
+                (
+                    SELECT COALESCE(array_agg(g2.gender), '{}')
+                    FROM unnest(u.sexual_preferences) as pref_id
+                    JOIN genders g2 ON g2.id = pref_id
+                ) as sexual_preferences,
                 EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
                 g.gender,
                 (
@@ -263,6 +271,14 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                     JOIN interests i2 ON ui2.interest_id = i2.id
                     WHERE ui2.user_id = u.id AND i2.name = ANY($3)
                 ) as common_tags_count,
+                -- Check if user has liked current user
+                EXISTS (
+                    SELECT 1 FROM likes WHERE liker_id = u.id AND liked_id = $4
+                ) as has_liked_you,
+                -- Check if they are a match
+                EXISTS (
+                    SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $4) OR (user_id_1 = $4 AND user_id_2 = u.id)
+                ) as is_match,
                 -- Mock fame rating for now
                 0 as fame_rating
             FROM users u
@@ -319,13 +335,9 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     }
 
     if (sexualPreference && sexualPreference.length > 0) {
-        const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
-        const targetIds = sexualPreference.map((p: string) => genderMap[p]).filter((id: number) => id);
-        if (targetIds.length > 0) {
-             query += ` AND sexual_preferences && $${paramIndex}`;
-             values.push(targetIds);
-             paramIndex++;
-        }
+         query += ` AND sexual_preferences @> $${paramIndex}`;
+         values.push(sexualPreference);
+         paramIndex++;
     }
     
     if (location && !locationCoords) {
@@ -347,6 +359,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
 
     try {
         const result = await pool.query(query, values);
+        
         return {
             users: result.rows,
             total: result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0

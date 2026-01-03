@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from 'flowbite-react';
 import { HiLocationMarker, HiStar, HiClock, HiHeart, HiX } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
+import { getSexualOrientationLabel } from '../../../utils/userUtils';
 import ImageCarousel from './ImageCarousel';
 import ActionButton from '../../../components/ui/ActionButton';
 
@@ -104,7 +105,9 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, show
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Orientation</h4>
-                <p className="text-gray-900 dark:text-white capitalize">{user.sexualPreferences}</p>
+                <p className="text-gray-900 dark:text-white capitalize">
+                  {getSexualOrientationLabel(user.gender, user.sexualPreferences)}
+                </p>
               </div>
             </div>
 

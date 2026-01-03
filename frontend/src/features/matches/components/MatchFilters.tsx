@@ -341,60 +341,64 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                   </div>
 
                   {/* Gender Identity */}
-                  <div>
-                    <div className="mb-2 block">
-                      <Label>Gender Identity</Label>
+                  {mode === 'search' && (
+                    <div>
+                      <div className="mb-2 block">
+                        <Label>Gender Identity</Label>
+                      </div>
+                      <div className="flex flex-wrap gap-4">
+                        {['male', 'female', 'other'].map((gender) => (
+                          <div key={gender} className="flex items-center gap-2">
+                            <Checkbox 
+                              id={`gender-${gender}`} 
+                              checked={(localFilters.gender || []).includes(gender)}
+                              onChange={(e) => {
+                                const current = localFilters.gender || [];
+                                if (e.target.checked) {
+                                  handleChange('gender', [...current, gender]);
+                                } else {
+                                  handleChange('gender', current.filter(g => g !== gender));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`gender-${gender}`} className="capitalize">
+                              {gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : 'Other'}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-4">
-                      {['male', 'female', 'other'].map((gender) => (
-                        <div key={gender} className="flex items-center gap-2">
-                          <Checkbox 
-                            id={`gender-${gender}`} 
-                            checked={(localFilters.gender || []).includes(gender)}
-                            onChange={(e) => {
-                              const current = localFilters.gender || [];
-                              if (e.target.checked) {
-                                handleChange('gender', [...current, gender]);
-                              } else {
-                                handleChange('gender', current.filter(g => g !== gender));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`gender-${gender}`} className="capitalize">
-                            {gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : 'Other'}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  )}
 
                   {/* Sexual Orientation */}
-                  <div>
-                    <div className="mb-2 block">
-                      <Label>Interested in</Label>
+                  {mode === 'search' && (
+                    <div>
+                      <div className="mb-2 block">
+                        <Label>Interested in</Label>
+                      </div>
+                      <div className="flex flex-wrap gap-4">
+                        {['male', 'female', 'other'].map((orientation) => (
+                          <div key={orientation} className="flex items-center gap-2">
+                            <Checkbox 
+                              id={`orientation-${orientation}`} 
+                              checked={(localFilters.sexualPreference || []).includes(orientation)}
+                              onChange={(e) => {
+                                const current = localFilters.sexualPreference || [];
+                                if (e.target.checked) {
+                                  handleChange('sexualPreference', [...current, orientation]);
+                                } else {
+                                  handleChange('sexualPreference', current.filter(o => o !== orientation));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`orientation-${orientation}`} className="capitalize">
+                              {orientation === 'male' ? 'Male' : orientation === 'female' ? 'Female' : 'Other'}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-4">
-                      {['male', 'female', 'other'].map((orientation) => (
-                        <div key={orientation} className="flex items-center gap-2">
-                          <Checkbox 
-                            id={`orientation-${orientation}`} 
-                            checked={(localFilters.sexualPreference || []).includes(orientation)}
-                            onChange={(e) => {
-                              const current = localFilters.sexualPreference || [];
-                              if (e.target.checked) {
-                                handleChange('sexualPreference', [...current, orientation]);
-                              } else {
-                                handleChange('sexualPreference', current.filter(o => o !== orientation));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`orientation-${orientation}`} className="capitalize">
-                            {orientation === 'male' ? 'Male' : orientation === 'female' ? 'Female' : 'Other'}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Filters Column 2 */}

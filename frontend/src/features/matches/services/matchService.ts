@@ -58,9 +58,9 @@ export const matchService = {
                   latitude: user.latitude || 0,
                   longitude: user.longitude || 0
               },
-              sexualPreferences: 'bisexual', // Placeholder
-              hasLikedYou: false, // Placeholder
-              isMatch: false // Placeholder
+              sexualPreferences: user.sexual_preferences || [],
+              hasLikedYou: user.has_liked_you || false,
+              isMatch: user.is_match || false
           })),
           total: response.data.total
       };

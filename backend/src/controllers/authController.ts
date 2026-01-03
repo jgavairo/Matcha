@@ -72,8 +72,8 @@ export class AuthController {
             }
 
             // Map database fields to frontend CurrentUser interface
-            const genderIdMap: { [key: number]: string } = { 1: 'male', 2: 'female', 3: 'other' };
-            const sexualPreferences = (user.sexual_preferences || []).map((id: number) => genderIdMap[id] || 'other');
+            // const genderIdMap: { [key: number]: string } = { 1: 'male', 2: 'female', 3: 'other' };
+            // const sexualPreferences = (user.sexual_preferences || []).map((id: number) => genderIdMap[id] || 'other');
 
             const formattedUser = {
                 id: user.id,
@@ -84,7 +84,7 @@ export class AuthController {
                 age: user.age,
                 birthDate: user.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : "",
                 gender: user.gender,
-                sexualPreferences: sexualPreferences,
+                sexualPreferences: user.sexual_preferences || [],
                 biography: user.biography || "",
                 tags: user.tags || [],
                 images: user.images || [],
