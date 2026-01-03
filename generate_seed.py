@@ -84,8 +84,18 @@ DEFAULT_PASSWORD_HASH = (
 )
 
 for i in range(1, 201):
-    is_male = i % 2 != 0
-    gender_id = 1 if is_male else 2
+    # Determine Gender
+    # 1: Male, 2: Female, 3: Other
+    gender_roll = random.random()
+    if gender_roll < 0.45:
+        gender_id = 1
+        is_male = True
+    elif gender_roll < 0.90:
+        gender_id = 2
+        is_male = False
+    else:
+        gender_id = 3
+        is_male = random.choice([True, False])  # For name/image selection purposes
 
     first_name = random.choice(FIRST_NAMES_MALE if is_male else FIRST_NAMES_FEMALE)
     last_name = random.choice(LAST_NAMES)
@@ -106,9 +116,47 @@ for i in range(1, 201):
 
     bio = random.choice(BIOS).replace("'", "''")
 
+    # Determine sexual preferences
+    # 1: Male, 2: Female, 3: Other
+    pref_roll = random.random()
+    sexual_preferences = []
+
+    if gender_id == 1:  # Male
+        if pref_roll < 0.7:  # Hetero
+            sexual_preferences = [2]
+        elif pref_roll < 0.8:  # Gay
+            sexual_preferences = [1]
+        elif pref_roll < 0.9:  # Bi
+            sexual_preferences = [1, 2]
+        elif pref_roll < 0.95:  # Female + Other
+            sexual_preferences = [2, 3]
+        else:  # Pan
+            sexual_preferences = [1, 2, 3]
+
+    elif gender_id == 2:  # Female
+        if pref_roll < 0.7:  # Hetero
+            sexual_preferences = [1]
+        elif pref_roll < 0.8:  # Lesbian
+            sexual_preferences = [2]
+        elif pref_roll < 0.9:  # Bi
+            sexual_preferences = [1, 2]
+        elif pref_roll < 0.95:  # Male + Other
+            sexual_preferences = [1, 3]
+        else:  # Pan
+            sexual_preferences = [1, 2, 3]
+
+    else:  # Other (3)
+        # Random combination
+        options = [1, 2, 3]
+        # Ensure at least one preference
+        num_prefs = random.randint(1, 3)
+        sexual_preferences = sorted(random.sample(options, num_prefs))
+
+    sexual_preferences_str = "{" + ",".join(map(str, sexual_preferences)) + "}"
+
     # Insert User
     sql_statements.append(
-        f"INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, latitude, longitude, biography, status_id) VALUES ('{email}', '{username}', '{DEFAULT_PASSWORD_HASH}', '{first_name}', '{last_name}', '{birth_date}', {gender_id}, {lat}, {lng}, '{bio}', 2);"
+        f"INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, sexual_preferences, latitude, longitude, city, biography, status_id) VALUES ('{email}', '{username}', '{DEFAULT_PASSWORD_HASH}', '{first_name}', '{last_name}', '{birth_date}', {gender_id}, '{sexual_preferences_str}', {lat}, {lng}, '{city['name']}', '{bio}', 2);"
     )
 
     # Insert Interests
