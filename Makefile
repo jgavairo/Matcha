@@ -22,4 +22,16 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all install build up down clean fclean re
+stop:
+	docker compose stop
+
+start:
+	docker compose start
+
+logs:
+	docker compose logs -f
+
+seed:
+	python3 generate_seed.py
+
+.PHONY: all install build up down clean fclean re stop start logs seed
