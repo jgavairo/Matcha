@@ -8,7 +8,7 @@ const ProtectedRoute: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Spinner size="xl" color="pink" />
       </div>
     );

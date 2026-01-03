@@ -168,7 +168,7 @@ const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen relative">
+    <div className="container mx-auto px-4 py-8 relative">
       {/* Filter Bar */}
       <MatchFilters 
         filters={filters} 
