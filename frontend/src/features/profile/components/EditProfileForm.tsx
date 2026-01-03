@@ -65,7 +65,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
             return;
         }
         save();
-    }, [location, selectedTags, watchedSexualPreferences, user.tags, user.sexualPreferences, user.location]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location, selectedTags, watchedSexualPreferences]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -416,7 +417,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         autoComplete="off"
                     />
                     {showDropdown && (
-                        <ul className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
+                        <ul className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto bottom-full mb-1">
                             {filteredTags.length > 0 ? (
                                 filteredTags.map(tag => (
                                     <li 
