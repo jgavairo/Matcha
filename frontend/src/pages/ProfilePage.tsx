@@ -155,6 +155,12 @@ const ProfilePage: React.FC = () => {
     if (loading) return <div className="flex justify-center items-center h-screen dark:text-white">Loading...</div>;
     if (!user) return <div className="flex justify-center items-center h-screen dark:text-white">Error loading profile</div>;
 
+    const filteredLikedBy = user.likedBy.filter(u => !user.matches.some(m => m.id === u.id));
+    const filteredViewedBy = user.viewedBy.filter(u => 
+        !user.likedBy.some(l => l.id === u.id) && 
+        !user.matches.some(m => m.id === u.id)
+    );
+
     return (
         <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="flex items-center gap-6 mb-8">
@@ -233,15 +239,15 @@ const ProfilePage: React.FC = () => {
                             <div className="space-y-8">
                                 <UserList 
                                     title="Liked By" 
-                                    users={user.likedBy} 
+                                    users={filteredLikedBy} 
                                     onUserClick={handleUserClick} 
-                                    emptyMessage="No one has liked your profile yet."
+                                    emptyMessage={user.likedBy.length > 0 ? "Everyone who liked you is a match!" : "No one has liked your profile yet."}
                                 />
                                 <UserList 
                                     title="Viewed By" 
-                                    users={user.viewedBy} 
+                                    users={filteredViewedBy} 
                                     onUserClick={handleUserClick} 
-                                    emptyMessage="No one has viewed your profile yet."
+                                    emptyMessage={user.viewedBy.length > 0 ? "Everyone who viewed you has liked or matched!" : "No one has viewed your profile yet."}
                                 />
                             </div>
                         </TabItem>
