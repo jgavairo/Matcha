@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from 'flowbite-react';
-import { HiLocationMarker, HiStar, HiClock, HiHeart, HiX } from 'react-icons/hi';
+import { HiLocationMarker, HiStar, HiClock, HiHeart, HiX, HiUser } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import { getSexualOrientationLabel } from '../../../utils/userUtils';
 import ImageCarousel from './ImageCarousel';
@@ -91,11 +91,17 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, onUn
 
             {/* Status Badges */}
             <div className="flex flex-col gap-2 items-end">
-              {user.isMatch && (
-                <Badge color="purple" size="sm" icon={HiHeart}>It's a Match!</Badge>
-              )}
-              {user.hasLikedYou && !user.isMatch && (
-                <Badge color="pink" size="sm" icon={HiHeart}>Likes You</Badge>
+              {hideActions ? (
+                <Badge color="gray" size="sm" icon={HiUser}>It's You</Badge>
+              ) : (
+                <>
+                  {user.isMatch && (
+                    <Badge color="purple" size="sm" icon={HiHeart}>It's a Match!</Badge>
+                  )}
+                  {user.hasLikedYou && !user.isMatch && (
+                    <Badge color="pink" size="sm" icon={HiHeart}>Likes You</Badge>
+                  )}
+                </>
               )}
             </div>
           </div>
