@@ -105,26 +105,33 @@ const ProfilePage: React.FC = () => {
         try {
             // Fetch full profile from API
             const response = await api.get(`/users/${summary.id}`);
-            const userProfile = response.data;
+            const data = response.data;
             
-            // Transform API data to match UserProfile interface if necessary
-            // Assuming the API returns data compatible with UserProfile or we map it here
-            // For now, let's assume the API returns what we need, but we might need to add missing fields like isOnline, etc.
-            // if they are not in the DB response.
-            
+            // Transform API data to match UserProfile interface
             const fullProfile: UserProfile = {
-                ...userProfile,
-                // Ensure these fields exist or provide defaults
-                isOnline: userProfile.isOnline || false,
-                lastConnection: userProfile.lastConnection || "Recently",
-                hasLikedYou: userProfile.hasLikedYou || false,
-                isMatch: userProfile.isMatch || false,
-                // Map DB fields to frontend interface if names differ
-                fameRating: userProfile.fame_rating || userProfile.fameRating || 0,
-                likedBy: userProfile.likedBy || [],
-                viewedBy: userProfile.viewedBy || [],
-                matches: userProfile.matches || [],
-                blockedUsers: userProfile.blockedUsers || []
+                id: data.id,
+                username: data.username,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                age: data.age,
+                gender: data.gender,
+                biography: data.biography || '',
+                tags: data.tags || [],
+                fameRating: data.fame_rating || 0,
+                distance: summary.distance || 0,
+                isOnline: false, // Placeholder
+                lastConnection: new Date().toISOString(), // Placeholder
+                images: data.images || [],
+                location: {
+                    city: data.city || '',
+                    latitude: data.latitude || 0,
+                    longitude: data.longitude || 0
+                },
+                sexualPreferences: data.sexual_preferences || [],
+                birthDate: data.birth_date,
+                hasLikedYou: data.has_liked_you || false,
+                isLiked: data.is_liked || false,
+                isMatch: data.is_match || false
             };
 
             setSelectedUser(fullProfile);

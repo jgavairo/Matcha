@@ -544,3 +544,90 @@ export const unlikeUser = async (likerId: number, likedId: number) => {
         client.release();
     }
 };
+
+export const getLikedByUsers = async (userId: number) => {
+    const query = `
+        SELECT 
+            u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
+            u.latitude, u.longitude, u.city,
+            EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+            g.gender,
+            (
+                SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
+                FROM images 
+                WHERE user_id = u.id
+            ) as images,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+            (
+                (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+            ) as fame_rating
+        FROM likes l
+        JOIN users u ON l.liker_id = u.id
+        LEFT JOIN genders g ON u.gender_id = g.id
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE l.liked_id = $1
+        GROUP BY u.id, g.gender
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+};
+
+export const getViewedByUsers = async (userId: number) => {
+    const query = `
+        SELECT 
+            u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
+            u.latitude, u.longitude, u.city,
+            EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+            g.gender,
+            (
+                SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
+                FROM images 
+                WHERE user_id = u.id
+            ) as images,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+            (
+                (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+            ) as fame_rating
+        FROM views v
+        JOIN users u ON v.viewer_id = u.id
+        LEFT JOIN genders g ON u.gender_id = g.id
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE v.viewed_id = $1
+        GROUP BY u.id, g.gender
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+};
+
+export const getMatchedUsers = async (userId: number) => {
+    const query = `
+        SELECT 
+            u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
+            u.latitude, u.longitude, u.city,
+            EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+            g.gender,
+            (
+                SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
+                FROM images 
+                WHERE user_id = u.id
+            ) as images,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+            (
+                (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+            ) as fame_rating
+        FROM matches m
+        JOIN users u ON (CASE WHEN m.user_id_1 = $1 THEN m.user_id_2 ELSE m.user_id_1 END) = u.id
+        LEFT JOIN genders g ON u.gender_id = g.id
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE m.user_id_1 = $1 OR m.user_id_2 = $1
+        GROUP BY u.id, g.gender
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+};

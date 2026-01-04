@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
 import { LoginFormData, RegisterFormData } from '../types/forms';
-import { createUser, loginUser, getUserById, getUserByEmail } from '../models/userModel';
+import { 
+    createUser, 
+    loginUser, 
+    getUserById, 
+    getUserByEmail,
+    getLikedByUsers,
+    getViewedByUsers,
+    getMatchedUsers
+} from '../models/userModel';
 import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
@@ -75,6 +83,27 @@ export class AuthController {
             // const genderIdMap: { [key: number]: string } = { 1: 'male', 2: 'female', 3: 'other' };
             // const sexualPreferences = (user.sexual_preferences || []).map((id: number) => genderIdMap[id] || 'other');
 
+            const likedBy = await getLikedByUsers(user.id);
+            const viewedBy = await getViewedByUsers(user.id);
+            const matches = await getMatchedUsers(user.id);
+
+            const mapUserSummary = (u: any) => ({
+                id: u.id,
+                username: u.username,
+                age: u.age,
+                gender: u.gender,
+                biography: u.biography || '',
+                distance: 0, // Can't calculate distance here easily without viewer coords, but for lists it's fine
+                location: {
+                    city: u.city || '',
+                    latitude: u.latitude,
+                    longitude: u.longitude
+                },
+                tags: u.tags || [],
+                images: u.images || [],
+                fameRating: u.fame_rating || 0
+            });
+
             const formattedUser = {
                 id: user.id,
                 username: user.username,
@@ -88,7 +117,7 @@ export class AuthController {
                 biography: user.biography || "",
                 tags: user.tags || [],
                 images: user.images || [],
-                fameRating: 100, // TODO: Implement fame rating
+                fameRating: user.fame_rating || 0,
                 distance: 0,
                 location: {
                     city: user.city || "Unknown",
@@ -100,9 +129,9 @@ export class AuthController {
                 lastConnection: "Now",
                 hasLikedYou: false,
                 isMatch: false,
-                likedBy: [],
-                viewedBy: [],
-                matches: [],
+                likedBy: likedBy.map(mapUserSummary),
+                viewedBy: viewedBy.map(mapUserSummary),
+                matches: matches.map(mapUserSummary),
                 blockedUsers: []
             };
 
