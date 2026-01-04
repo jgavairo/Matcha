@@ -32,5 +32,7 @@ router.post('/photos', authMiddleware, upload.single('image'), userController.up
 router.delete('/photos', authMiddleware, userController.deletePhoto);
 router.put('/photos/profile', authMiddleware, userController.setProfilePhoto);
 router.put('/consent', authMiddleware, userController.updateConsent);
+router.post('/view/:id', authMiddleware, userController.recordView);
+router.get('/:id', authMiddleware, userController.getUser);
 
 export default router;

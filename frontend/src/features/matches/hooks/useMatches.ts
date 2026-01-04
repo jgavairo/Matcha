@@ -17,74 +17,61 @@ export const DEFAULT_FILTERS: MatchFiltersState = {
 };
 
 export const useMatches = () => {
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Initial load
+  // Fetch users when page or filters change
   useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await matchService.getRecommendations();
-      setAllUsers(data);
-    } catch (err) {
-      setError('Failed to load recommendations');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Apply filters and sort whenever filters or allUsers change
-  useEffect(() => {
-    if (allUsers.length === 0) return;
-
-    let filtered = [...allUsers];
-
-    // Filter
-    filtered = filtered.filter(user => 
-      user.age >= filters.ageRange[0] && 
-      user.age <= filters.ageRange[1] &&
-      user.distance <= filters.distanceRange[1] &&
-      user.fameRating >= filters.fameRange[0] &&
-      // Mock common tags check (using length for now as we don't have current user tags here yet)
-      user.tags.length >= filters.minCommonTags
-    );
-
-    // Sort
-    filtered.sort((a, b) => {
-      let valA: number | undefined;
-      let valB: number | undefined;
+    const fetchUsers = async () => {
+      setIsFetching(true);
+      if (page === 1) setLoading(true); // Only show full loading on first page
       
-      if (filters.sortBy === 'commonTags') {
-        valA = a.tags.length;
-        valB = b.tags.length;
-      } else {
-        // Safe cast because we know sortBy is one of the numeric keys if it's not commonTags
-        const key = filters.sortBy as keyof Pick<UserProfile, 'age' | 'distance' | 'fameRating'>;
-        valA = a[key];
-        valB = b[key];
+      try {
+        const { data } = await matchService.searchUsers(filters, page, 10);
+        
+        if (page === 1) {
+          setUsers(data);
+        } else {
+          setUsers(prev => {
+            // Filter out duplicates just in case
+            const newUsers = data.filter(newUser => !prev.some(u => u.id === newUser.id));
+            return [...prev, ...newUsers];
+          });
+        }
+        
+        // If we received fewer items than limit, we've reached the end
+        setHasMore(data.length === 10);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load recommendations');
+      } finally {
+        setLoading(false);
+        setIsFetching(false);
       }
+    };
 
-      if (valA === undefined || valB === undefined) return 0;
+    fetchUsers();
+  }, [page, filters]);
 
-      if (valA < valB) return filters.sortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return filters.sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    setUsers(filtered);
-    setCurrentIndex(0); // Reset stack when filters change
-  }, [filters, allUsers]);
+  // Infinite scroll trigger
+  useEffect(() => {
+    if (!isFetching && hasMore && users.length > 0 && currentIndex >= users.length - 3) {
+      setPage(prev => prev + 1);
+    }
+  }, [currentIndex, users.length, isFetching, hasMore]);
 
   const updateFilters = (newFilters: MatchFiltersState) => {
     setFilters(newFilters);
+    setPage(1);
+    setCurrentIndex(0);
+    setHasMore(true);
+    setUsers([]); // Clear users to show loading state
   };
 
   const nextUser = useCallback(() => {
@@ -122,13 +109,14 @@ export const useMatches = () => {
   }, [users, currentIndex, nextUser]);
 
   const currentUser = users[currentIndex];
-  const isFinished = !loading && currentIndex >= users.length;
+  const isFinished = !isFetching && currentIndex >= users.length && !hasMore;
 
   return {
     users,
     currentIndex,
     currentUser,
     loading,
+    isFetching,
     error,
     isFinished,
     handleLike,

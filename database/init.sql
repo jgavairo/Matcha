@@ -99,6 +99,27 @@ CREATE TABLE matches (
     UNIQUE(user_id_1, user_id_2)
 );
 
+
+-- Dislikes table --------------------------------------------------------------
+
+CREATE TABLE dislikes (
+    id SERIAL PRIMARY KEY,
+    disliker_id INT REFERENCES users(id) ON DELETE CASCADE,
+    disliked_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(disliker_id, disliked_id)
+);
+
+
+-- Views table --------------------------------------------------------------
+
+CREATE TABLE views (
+    id SERIAL PRIMARY KEY,
+    viewer_id INT REFERENCES users(id) ON DELETE CASCADE,
+    viewed_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Conversations table --------------------------------------------------------------
 
 CREATE TABLE conversations (

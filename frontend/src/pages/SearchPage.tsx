@@ -14,14 +14,31 @@ const SearchPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
+  
+  // Initialize filters from localStorage or use defaults (with includeInteracted: true for search)
+  const [filters, setFilters] = useState<MatchFiltersState>(() => {
+    const saved = localStorage.getItem('matcha_search_filters');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return { ...DEFAULT_FILTERS, includeInteracted: true };
+  });
+
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(() => {
+    // If we have saved filters, we want to search immediately
+    return !!localStorage.getItem('matcha_search_filters');
+  });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const observerTarget = useRef(null);
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('matcha_search_filters', JSON.stringify(filters));
+  }, [filters]);
 
   const fetchUsers = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
     if (isNewFilter) {
@@ -64,7 +81,8 @@ const SearchPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters(DEFAULT_FILTERS);
+    const resetFilters = { ...DEFAULT_FILTERS, includeInteracted: true };
+    setFilters(resetFilters);
     setUsers([]);
     setHasSearched(false);
     setHasMore(true);
@@ -77,7 +95,7 @@ const SearchPage: React.FC = () => {
     setPage(1);
     setHasMore(true);
     fetchUsers(1, true);
-  }, [filters, hasSearched]);
+  }, [filters, hasSearched]); // Added hasSearched to dependency array to trigger initial search if true
 
   // Infinite scroll observer
   useEffect(() => {

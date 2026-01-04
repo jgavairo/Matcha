@@ -25,6 +25,7 @@ export interface UserProfile extends UserSummary {
   isOnline: boolean;
   lastConnection: string;
   hasLikedYou: boolean;
+  isLiked?: boolean;
   isMatch: boolean;
 }
 

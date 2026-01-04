@@ -10,11 +10,22 @@ interface ProfileInfoProps {
   user: UserProfile;
   onLike: () => void;
   onDislike: () => void;
+  onUnlike?: () => void;
   showPassButton?: boolean;
   hideActions?: boolean;
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, showPassButton = false, hideActions = false }) => {
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, onUnlike, showPassButton = false, hideActions = false }) => {
+  const isLikedOrMatched = user.isMatch || user.isLiked;
+
+  const handleLikeClick = () => {
+    if (isLikedOrMatched && onUnlike) {
+      onUnlike();
+    } else {
+      onLike();
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="flex flex-col gap-6">
@@ -39,13 +50,13 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, show
               <ActionButton 
                   variant="primary"
                   size="lg"
-                  onClick={onLike}
+                  onClick={handleLikeClick}
                   className={`shadow-lg backdrop-blur-sm border-none transition-all duration-300 ${
-                      user.isMatch 
+                      isLikedOrMatched
                       ? 'bg-pink-500 text-white hover:bg-pink-600' 
                       : 'bg-white/80 text-pink-500 hover:bg-pink-500 hover:text-white'
                   }`}
-                  title={user.isMatch ? "Unlike" : "Like"}
+                  title={isLikedOrMatched ? "Unlike" : "Like"}
               >
                   <HiHeart className="w-6 h-6" />
               </ActionButton>

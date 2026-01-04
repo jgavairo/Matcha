@@ -20,14 +20,17 @@ export const matchService = {
     return data;
   },
 
-  likeUser: async (userId: number): Promise<void> => {
-    // await api.post(`/matches/${userId}/like`);
-    console.log(`Liked user ${userId} (API call)`);
+  likeUser: async (userId: number): Promise<{ isMatch: boolean }> => {
+    const response = await api.post(`/matches/${userId}/like`);
+    return response.data;
   },
 
   dislikeUser: async (userId: number): Promise<void> => {
-    // await api.post(`/matches/${userId}/dislike`);
-    console.log(`Disliked user ${userId} (API call)`);
+    await api.post(`/matches/${userId}/dislike`);
+  },
+
+  unlikeUser: async (userId: number): Promise<void> => {
+    await api.delete(`/matches/${userId}/like`);
   },
 
   searchUsers: async (filters: MatchFiltersState, page: number = 1, limit: number = 12): Promise<{ data: UserProfile[], total: number }> => {

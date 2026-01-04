@@ -10,4 +10,5 @@ export interface MatchFiltersState {
   locationCoords?: { latitude: number; longitude: number };
   sortBy: 'age' | 'distance' | 'fameRating' | 'commonTags';
   sortOrder: 'asc' | 'desc';
+  includeInteracted?: boolean;
 }

@@ -152,7 +152,7 @@ export const setProfileImage = async (userId: number, url: string) => {
     }
 };
 
-export const getUserById = async (id: number) => {
+export const getUserById = async (id: number, currentUserId?: number) => {
     const query = `
         SELECT 
             u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
@@ -169,7 +169,24 @@ export const getUserById = async (id: number) => {
                 FROM images 
                 WHERE user_id = u.id
             ) as images,
-            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+            -- Fame rating
+            (
+                (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+            ) as fame_rating
+            ${currentUserId ? `,
+            -- Interaction flags
+            EXISTS (
+                SELECT 1 FROM likes WHERE liker_id = u.id AND liked_id = $2
+            ) as has_liked_you,
+            EXISTS (
+                SELECT 1 FROM likes WHERE liker_id = $2 AND liked_id = u.id
+            ) as is_liked,
+            EXISTS (
+                SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = u.id)
+            ) as is_match
+            ` : ''}
         FROM users u
         LEFT JOIN genders g ON u.gender_id = g.id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -177,7 +194,7 @@ export const getUserById = async (id: number) => {
         WHERE u.id = $1
         GROUP BY u.id, g.gender
     `;
-    const values = [id];
+    const values = currentUserId ? [id, currentUserId] : [id];
     try {
         const result = await pool.query(query, values);
         return result.rows[0];
@@ -216,12 +233,27 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         location, 
         locationCoords, 
         sortBy, 
-        sortOrder 
+        sortOrder,
+        includeInteracted
     } = filters;
     const offset = (page - 1) * limit;
 
     // Get current user location and tags for distance and common tags calculation
-    const currentUser = await getUserById(currentUserId);
+    const currentUserResult = await pool.query(
+        `SELECT 
+            u.latitude, 
+            u.longitude, 
+            u.gender_id, 
+            u.sexual_preferences,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
+        FROM users u
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE u.id = $1
+        GROUP BY u.id`,
+        [currentUserId]
+    );
+    const currentUser = currentUserResult.rows[0];
     if (!currentUser) throw new Error('User not found');
 
     // Determine center for distance calculation
@@ -234,6 +266,11 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     }
 
     const userTags = currentUser.tags || [];
+    const myGenderId = currentUser.gender_id;
+    // If my prefs are empty, I am bisexual (interested in all)
+    const myPrefs = (!currentUser.sexual_preferences || currentUser.sexual_preferences.length === 0) 
+        ? [1, 2, 3] 
+        : currentUser.sexual_preferences;
 
     // Base query
     let query = `
@@ -279,13 +316,33 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 EXISTS (
                     SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $4) OR (user_id_1 = $4 AND user_id_2 = u.id)
                 ) as is_match,
-                -- Mock fame rating for now
-                0 as fame_rating
+                -- Fame rating (likes * 5 + views)
+                (
+                    (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                    (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+                ) as fame_rating
             FROM users u
             LEFT JOIN genders g ON u.gender_id = g.id
             LEFT JOIN user_interests ui ON u.id = ui.user_id
             LEFT JOIN interests t ON ui.interest_id = t.id
             WHERE u.id != $4 -- Exclude current user
+            ${!includeInteracted ? `
+            -- Exclude users already liked or disliked
+            AND NOT EXISTS (
+                SELECT 1 FROM likes WHERE liker_id = $4 AND liked_id = u.id
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM dislikes WHERE disliker_id = $4 AND disliked_id = u.id
+            )
+            ` : ''}
+            -- 1. Target gender must be in my preferences
+            AND u.gender_id = ANY($5)
+            -- 2. My gender must be in target's preferences (or target has no prefs = bisexual)
+            AND (
+                cardinality(u.sexual_preferences) = 0 
+                OR 
+                $6 = ANY(u.sexual_preferences)
+            )
             GROUP BY u.id, g.gender
         )
         SELECT *, count(*) OVER() as total_count
@@ -293,8 +350,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         WHERE 1=1
     `;
 
-    const values: any[] = [centerLat, centerLon, userTags, currentUserId];
-    let paramIndex = 5;
+    const values: any[] = [centerLat, centerLon, userTags, currentUserId, myPrefs, myGenderId];
+    let paramIndex = 7;
 
     // Apply filters
     if (ageRange) {
@@ -367,5 +424,123 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     } catch (error) {
         console.error('Error searching users:', error);
         throw error;
+    }
+};
+
+export const recordView = async (viewerId: number, viewedId: number) => {
+    if (viewerId === viewedId) return;
+
+    // Record view only if it doesn't exist (unique view per user pair)
+    const query = `
+        INSERT INTO views (viewer_id, viewed_id)
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+            SELECT 1 FROM views WHERE viewer_id = $1 AND viewed_id = $2
+        )
+    `;
+    try {
+        await pool.query(query, [viewerId, viewedId]);
+    } catch (error) {
+        console.error('Error recording view:', error);
+    }
+};
+
+export const likeUser = async (likerId: number, likedId: number) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Insert like
+        await client.query(`
+            INSERT INTO likes (liker_id, liked_id) 
+            VALUES ($1, $2) 
+            ON CONFLICT (liker_id, liked_id) DO NOTHING
+        `, [likerId, likedId]);
+
+        // 2. Check for match
+        const res = await client.query(`
+            SELECT 1 FROM likes WHERE liker_id = $1 AND liked_id = $2
+        `, [likedId, likerId]);
+
+        let isMatch = false;
+        if (res.rowCount && res.rowCount > 0) {
+            isMatch = true;
+            // Create match
+            await client.query(`
+                INSERT INTO matches (user_id_1, user_id_2) 
+                VALUES ($1, $2)
+                ON CONFLICT (user_id_1, user_id_2) DO NOTHING
+            `, [Math.min(likerId, likedId), Math.max(likerId, likedId)]);
+        }
+
+        // 3. Remove from dislikes if exists (in case of change of mind)
+        await client.query(`
+            DELETE FROM dislikes WHERE disliker_id = $1 AND disliked_id = $2
+        `, [likerId, likedId]);
+
+        await client.query('COMMIT');
+        return { isMatch };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const dislikeUser = async (dislikerId: number, dislikedId: number) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Insert dislike
+        await client.query(`
+            INSERT INTO dislikes (disliker_id, disliked_id) 
+            VALUES ($1, $2)
+            ON CONFLICT (disliker_id, disliked_id) DO NOTHING
+        `, [dislikerId, dislikedId]);
+
+        // 2. Remove like if exists
+        await client.query(`
+            DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
+        `, [dislikerId, dislikedId]);
+
+        // 3. Remove match if exists
+        await client.query(`
+            DELETE FROM matches 
+            WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1)
+        `, [dislikerId, dislikedId]);
+
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const unlikeUser = async (likerId: number, likedId: number) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Remove like
+        await client.query(`
+            DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
+        `, [likerId, likedId]);
+
+        // 2. Remove match if exists
+        await client.query(`
+            DELETE FROM matches 
+            WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1)
+        `, [likerId, likedId]);
+
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
     }
 };

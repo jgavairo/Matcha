@@ -54,6 +54,11 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
     return JSON.stringify(localFilters) !== JSON.stringify(filters);
   }, [localFilters, filters]);
 
+  // Sync local filters with prop filters
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
   React.useEffect(() => {
     const fetchTags = async () => {
         try {
@@ -180,13 +185,11 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
   };
 
   const handleClear = () => {
-    setLocalFilters(DEFAULT_FILTERS);
-    if (onClear) {
-      onClear();
-    } else {
-      onFilterChange(DEFAULT_FILTERS);
+    const defaults = { ...DEFAULT_FILTERS };
+    if (mode === 'search') {
+      defaults.includeInteracted = true;
     }
-    handleToggle(false);
+    setLocalFilters(defaults);
   };
 
   const handleChange = (key: keyof MatchFiltersState, value: any) => {
@@ -397,6 +400,20 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Include Interacted Users */}
+                  {mode === 'search' && (
+                    <div className="flex items-center gap-2 pt-2">
+                      <Checkbox 
+                        id="include-interacted" 
+                        checked={localFilters.includeInteracted || false}
+                        onChange={(e) => handleChange('includeInteracted', e.target.checked)}
+                      />
+                      <Label htmlFor="include-interacted">
+                        Include users I've already liked/disliked
+                      </Label>
                     </div>
                   )}
                 </div>

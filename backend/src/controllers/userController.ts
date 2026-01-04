@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById } from '../models/userModel';
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -133,6 +133,48 @@ export class UserController {
             res.status(200).json({ message: 'Consent updated successfully' });
         } catch (error) {
             console.error('Error updating consent:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public recordView = async (req: Request, res: Response) => {
+        try {
+            const viewerId = req.user?.id;
+            const viewedId = parseInt(req.params.id);
+
+            if (!viewerId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            if (isNaN(viewedId)) {
+                return res.status(400).json({ error: 'Invalid user ID' });
+            }
+
+            await recordView(viewerId, viewedId);
+            res.status(200).json({ message: 'View recorded' });
+        } catch (error) {
+            console.error('Error recording view:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public getUser = async (req: Request, res: Response) => {
+        try {
+            const userId = parseInt(req.params.id);
+            const currentUserId = req.user?.id;
+
+            if (isNaN(userId)) {
+                return res.status(400).json({ error: 'Invalid user ID' });
+            }
+
+            const user = await getUserById(userId, currentUserId);
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.status(200).json(user);
+        } catch (error) {
+            console.error('Error getting user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

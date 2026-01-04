@@ -11,6 +11,7 @@ import UserProfileModal from '../features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { mockUsers } from '../data/mockUsers';
 import { api } from '../services/api';
+import { matchService } from '../features/matches/services/matchService';
 import { useNotification } from '../context/NotificationContext';
 
 const ProfilePage: React.FC = () => {
@@ -100,23 +101,37 @@ const ProfilePage: React.FC = () => {
         console.log("Unblock", blockedUser);
     };
 
-    const handleUserClick = (summary: UserSummary) => {
-        // In a real app, we would fetch the full profile here
-        // For now, we'll find the user in our mock data or mock the missing fields
-        const foundUser = mockUsers.find(u => u.id === summary.id);
+    const handleUserClick = async (summary: UserSummary) => {
+        try {
+            // Fetch full profile from API
+            const response = await api.get(`/users/${summary.id}`);
+            const userProfile = response.data;
+            
+            // Transform API data to match UserProfile interface if necessary
+            // Assuming the API returns data compatible with UserProfile or we map it here
+            // For now, let's assume the API returns what we need, but we might need to add missing fields like isOnline, etc.
+            // if they are not in the DB response.
+            
+            const fullProfile: UserProfile = {
+                ...userProfile,
+                // Ensure these fields exist or provide defaults
+                isOnline: userProfile.isOnline || false,
+                lastConnection: userProfile.lastConnection || "Recently",
+                hasLikedYou: userProfile.hasLikedYou || false,
+                isMatch: userProfile.isMatch || false,
+                // Map DB fields to frontend interface if names differ
+                fameRating: userProfile.fame_rating || userProfile.fameRating || 0,
+                likedBy: userProfile.likedBy || [],
+                viewedBy: userProfile.viewedBy || [],
+                matches: userProfile.matches || [],
+                blockedUsers: userProfile.blockedUsers || []
+            };
 
-        const fullProfile: UserProfile = foundUser || {
-            ...summary,
-            firstName: "Unknown",
-            lastName: "User",
-            sexualPreferences: ["bi"],
-            birthDate: "2000-01-01",
-            isOnline: false,
-            lastConnection: "Recently",
-            hasLikedYou: true,
-            isMatch: false
-        };
-        setSelectedUser(fullProfile);
+            setSelectedUser(fullProfile);
+        } catch (error) {
+            console.error("Failed to fetch user profile", error);
+            addToast("Failed to load user profile", 'error');
+        }
     };
 
     const handlePreview = async () => {
@@ -241,8 +256,42 @@ const ProfilePage: React.FC = () => {
                 user={selectedUser?.id === user?.id ? user : selectedUser}
                 isOpen={!!selectedUser}
                 onClose={() => setSelectedUser(null)}
-                onLike={() => console.log("Like")}
-                onDislike={() => console.log("Dislike")}
+                onLike={async () => {
+                    if (selectedUser && selectedUser.id !== user?.id) {
+                        try {
+                            const result = await matchService.likeUser(selectedUser.id);
+                            setSelectedUser({ ...selectedUser, isLiked: true, isMatch: result.isMatch });
+                            addToast("User liked", 'success');
+                        } catch (error) {
+                            console.error("Failed to like user", error);
+                            addToast("Failed to like user", 'error');
+                        }
+                    }
+                }}
+                onDislike={async () => {
+                    if (selectedUser && selectedUser.id !== user?.id) {
+                        try {
+                            await matchService.dislikeUser(selectedUser.id);
+                            setSelectedUser(null); // Close modal on pass
+                            addToast("User passed", 'success');
+                        } catch (error) {
+                            console.error("Failed to dislike user", error);
+                            addToast("Failed to dislike user", 'error');
+                        }
+                    }
+                }}
+                onUnlike={async () => {
+                    if (selectedUser && selectedUser.id !== user?.id) {
+                        try {
+                            await matchService.unlikeUser(selectedUser.id);
+                            setSelectedUser({ ...selectedUser, isLiked: false, isMatch: false });
+                            addToast("User unliked", 'success');
+                        } catch (error) {
+                            console.error("Failed to unlike user", error);
+                            addToast("Failed to unlike user", 'error');
+                        }
+                    }
+                }}
                 onBlock={() => console.log("Block")}
                 onReport={(reason) => console.log("Report", reason)}
                 hideActions={selectedUser?.id === user?.id}

@@ -10,7 +10,8 @@ const DiscoverPage: React.FC = () => {
   const { 
     users,
     currentIndex,
-    loading, 
+    loading,
+    isFetching,
     error, 
     isFinished, 
     handleLike, 
@@ -41,6 +42,10 @@ const DiscoverPage: React.FC = () => {
     }
   };
 
+  const handleOpenProfile = (user: UserProfile) => {
+    setSelectedUser(user);
+  };
+
   return (
     <div className="flex-grow flex flex-col items-center justify-start md:justify-center p-4 overflow-hidden w-full relative">
       <MatchFilters filters={filters} onFilterChange={updateFilters} />
@@ -64,13 +69,20 @@ const DiscoverPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <CardStack 
-            users={users}
-            currentIndex={currentIndex}
-            onLike={handleLike}
-            onDislike={handleDislike}
-            onOpenProfile={setSelectedUser}
-          />
+          <div className="relative w-full flex justify-center">
+            <CardStack 
+              users={users}
+              currentIndex={currentIndex}
+              onLike={handleLike}
+              onDislike={handleDislike}
+              onOpenProfile={handleOpenProfile}
+            />
+            {isFetching && currentIndex >= users.length && (
+              <div className="absolute inset-0 flex items-center justify-center z-50">
+                <Spinner size="xl" color="pink" />
+              </div>
+            )}
+          </div>
 
           <UserProfileModal 
             user={selectedUser}
