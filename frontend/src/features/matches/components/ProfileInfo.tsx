@@ -16,7 +16,7 @@ interface ProfileInfoProps {
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, showPassButton = false, hideActions = false }) => {
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="p-4">
       <div className="flex flex-col gap-6">
         {/* Images */}
         <div className="h-96 w-full rounded-lg overflow-hidden shadow-lg flex-shrink-0 relative group">

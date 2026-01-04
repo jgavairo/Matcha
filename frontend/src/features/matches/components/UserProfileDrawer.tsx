@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Drawer } from 'flowbite-react';
+import AppDrawer from '../../../components/ui/AppDrawer';
 import { UserProfile } from '@app-types/user';
 import ReportModal from './ReportModal';
 import ProfileHeader from './ProfileHeader';
@@ -37,33 +37,29 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   return (
     <>
-      <Drawer 
-        open={isOpen} 
-        onClose={onClose} 
-        position="right" 
-        className="w-full md:w-[600px] p-0 fixed top-16 bottom-16 h-auto !z-modal border-l border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out"
-        backdrop={false}
-      >
+      <AppDrawer isOpen={isOpen} onClose={onClose}>
         {user && (
-          <div className="h-full flex flex-col bg-white dark:bg-gray-800">
-            <ProfileHeader 
-              user={user} 
-              onClose={onClose} 
-              onBlock={onBlock} 
-              onReportClick={() => setIsReportModalOpen(true)} 
-              hideActions={hideActions}
-            />
+          <div className="h-full overflow-y-auto bg-white dark:bg-gray-800">
+            <div className="min-h-full flex flex-col">
+              <ProfileHeader 
+                user={user} 
+                onClose={onClose} 
+                onBlock={onBlock} 
+                onReportClick={() => setIsReportModalOpen(true)} 
+                hideActions={hideActions}
+              />
 
-            <ProfileInfo 
-              user={user} 
-              onLike={onLike}
-              onDislike={onDislike}
-              showPassButton={showPassButton}
-              hideActions={hideActions}
-            />
+              <ProfileInfo 
+                user={user} 
+                onLike={onLike}
+                onDislike={onDislike}
+                showPassButton={showPassButton}
+                hideActions={hideActions}
+              />
+            </div>
           </div>
         )}
-      </Drawer>
+      </AppDrawer>
 
       <ReportModal 
         isOpen={isReportModalOpen} 

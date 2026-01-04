@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Drawer, Button, Label } from 'flowbite-react';
+import { Button, Label } from 'flowbite-react';
 import { HiX } from 'react-icons/hi';
+import AppDrawer from '../../../components/ui/AppDrawer';
 
 interface ImageEditorProps {
     file: File | null;
@@ -17,7 +18,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
     const [filter, setFilter] = useState('none');
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
 
     useEffect(() => {
         if (!isOpen) {
@@ -105,14 +106,27 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
 
     const handleMouseDown = (e: React.MouseEvent) => {
         setIsDragging(true);
-        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        dragStartRef.current = {
+            mouseX: e.clientX,
+            mouseY: e.clientY,
+            posX: position.x,
+            posY: position.y
+        };
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (isDragging) {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleFactor = canvas.width / rect.width;
+
+            const deltaX = (e.clientX - dragStartRef.current.mouseX) * scaleFactor;
+            const deltaY = (e.clientY - dragStartRef.current.mouseY) * scaleFactor;
+
             setPosition({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y
+                x: dragStartRef.current.posX + deltaX,
+                y: dragStartRef.current.posY + deltaY
             });
         }
     };
@@ -134,97 +148,93 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
     };
 
     return (
-        <Drawer 
-            open={isOpen} 
-            onClose={onClose} 
-            position="right" 
-            className="w-full md:w-[600px] p-0 !m-0 fixed top-16 bottom-16 h-auto !z-modal border-l border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out"
-            backdrop={false}
-        >
+        <AppDrawer isOpen={isOpen} onClose={onClose}>
             {file && (
-                <div className="h-full flex flex-col bg-white dark:bg-gray-800">
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Photo</h2>
-                        <button 
-                            onClick={onClose}
-                            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            <HiX className="w-6 h-6" />
-                        </button>
-                    </div>
+                <div className="h-full overflow-y-auto bg-white dark:bg-gray-800">
+                    <div className="min-h-full flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Photo</h2>
+                            <button 
+                                onClick={onClose}
+                                className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            >
+                                <HiX className="w-6 h-6" />
+                            </button>
+                        </div>
 
-                    <div className="flex-1 overflow-y-auto p-4">
-                        <div className="flex flex-col gap-4">
-                            <div className="flex justify-center bg-gray-900 rounded-lg overflow-hidden">
-                                <canvas 
-                                    ref={canvasRef} 
-                                    width={400} 
-                                    height={500} 
-                                    className="cursor-move touch-none"
-                                    onMouseDown={handleMouseDown}
-                                    onMouseMove={handleMouseMove}
-                                    onMouseUp={handleMouseUp}
-                                    onMouseLeave={handleMouseUp}
-                                />
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <div className="mb-2 block">
-                                        <Label>Zoom</Label>
-                                    </div>
-                                    <input 
-                                        type="range"
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                                        min={0.1} 
-                                        max={3} 
-                                        step={0.1} 
-                                        value={scale} 
-                                        onChange={(e) => setScale(parseFloat(e.target.value))} 
+                        <div className="flex-1 p-4">
+                            <div className="flex flex-col gap-4">
+                                <div className="flex justify-center bg-gray-900 rounded-lg overflow-hidden">
+                                    <canvas 
+                                        ref={canvasRef} 
+                                        width={400} 
+                                        height={500} 
+                                        className="cursor-move touch-none max-w-full max-h-[60vh] w-auto h-auto"
+                                        onMouseDown={handleMouseDown}
+                                        onMouseMove={handleMouseMove}
+                                        onMouseUp={handleMouseUp}
+                                        onMouseLeave={handleMouseUp}
                                     />
                                 </div>
-                                <div>
-                                    <div className="mb-2 block">
-                                        <Label>Rotation ({rotation}°)</Label>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="mb-2 block">
+                                            <Label>Zoom</Label>
+                                        </div>
+                                        <input 
+                                            type="range"
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                            min={0.1} 
+                                            max={3} 
+                                            step={0.1} 
+                                            value={scale} 
+                                            onChange={(e) => setScale(parseFloat(e.target.value))} 
+                                        />
                                     </div>
-                                    <input 
-                                        type="range"
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                                        min={0} 
-                                        max={360} 
-                                        step={1} 
-                                        value={rotation} 
-                                        onChange={(e) => setRotation(parseInt(e.target.value))} 
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <div className="mb-2 block">
-                                        <Label>Filter</Label>
+                                    <div>
+                                        <div className="mb-2 block">
+                                            <Label>Rotation ({rotation}°)</Label>
+                                        </div>
+                                        <input 
+                                            type="range"
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                            min={0} 
+                                            max={360} 
+                                            step={1} 
+                                            value={rotation} 
+                                            onChange={(e) => setRotation(parseInt(e.target.value))} 
+                                        />
                                     </div>
-                                    <select 
-                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                        value={filter} 
-                                        onChange={(e) => setFilter(e.target.value)}
-                                    >
-                                        <option value="none">None</option>
-                                        <option value="grayscale(100%)">Grayscale</option>
-                                        <option value="sepia(100%)">Sepia</option>
-                                        <option value="contrast(150%)">High Contrast</option>
-                                        <option value="brightness(120%)">Bright</option>
-                                        <option value="blur(2px)">Blur</option>
-                                    </select>
+                                    <div className="md:col-span-2">
+                                        <div className="mb-2 block">
+                                            <Label>Filter</Label>
+                                        </div>
+                                        <select 
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            value={filter} 
+                                            onChange={(e) => setFilter(e.target.value)}
+                                        >
+                                            <option value="none">None</option>
+                                            <option value="grayscale(100%)">Grayscale</option>
+                                            <option value="sepia(100%)">Sepia</option>
+                                            <option value="contrast(150%)">High Contrast</option>
+                                            <option value="brightness(120%)">Bright</option>
+                                            <option value="blur(2px)">Blur</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                        <Button onClick={handleSaveClick}>Save & Upload</Button>
-                        <Button color="gray" onClick={onClose}>Cancel</Button>
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+                            <Button onClick={handleSaveClick}>Save & Upload</Button>
+                            <Button color="gray" onClick={onClose}>Cancel</Button>
+                        </div>
                     </div>
                 </div>
             )}
-        </Drawer>
+        </AppDrawer>
     );
 };
 
