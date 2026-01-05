@@ -5,13 +5,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const createUser = async (user: RegisterFormData) => {
     const query = `
-    INSERT INTO users (email, username, first_name, last_name, birth_date, password, verification_token)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO users (email, username, first_name, last_name, birth_date, password, verification_token, verification_token_expires)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     `;
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const verificationToken = uuidv4();
-    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword, verificationToken];
+    const verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword, verificationToken, verificationTokenExpires];
     try {
         const result = await pool.query(query, values);
         return { id: result.rows[0].id, email: user.email, verificationToken: verificationToken };
@@ -24,7 +25,7 @@ export const createUser = async (user: RegisterFormData) => {
 export const loginUser = async (user: LoginFormData) => {
     try {
     const query = `
-    SELECT id, username, password, status_id FROM users WHERE username = $1
+    SELECT id, username, email, password, status_id, verification_token_expires FROM users WHERE username = $1
     `;
         const values = [user.username];
         const result = await pool.query(query, values);
@@ -38,8 +39,14 @@ export const loginUser = async (user: LoginFormData) => {
             return null;
         }
         if (result.rows[0].status_id == 0) {
-            console.error('User not verified');
-            return { id: result.rows[0].id, status: 'not_verified' };
+            const tokenExpires = result.rows[0].verification_token_expires;
+            const isTokenExpired = tokenExpires ? new Date(tokenExpires) < new Date() : true;
+            return { 
+                id: result.rows[0].id, 
+                email: result.rows[0].email,
+                status: 'not_verified',
+                tokenExpired: isTokenExpired
+            };
         }
         return { id: result.rows[0].id };
     } catch (error) {
@@ -640,14 +647,18 @@ export const getMatchedUsers = async (userId: number) => {
 
 export const getUserByVerificationToken = async (token: string) => {
     const query = `
-    SELECT id, email, status_id FROM users WHERE verification_token = $1
+    SELECT id, email, status_id, verification_token_expires FROM users WHERE verification_token = $1
     `;
     const values = [token];
     try {
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
-            console.error('User not found');
-            return null;
+            return { error: 'invalid_token' };
+        }
+        // Vérifier si le token a expiré
+        const expiresAt = new Date(result.rows[0].verification_token_expires);
+        if (expiresAt < new Date()) {
+            return { error: 'token_expired' };
         }
         return { id: result.rows[0].id, email: result.rows[0].email, status: result.rows[0].status_id };
     } catch (error) {
@@ -658,13 +669,31 @@ export const getUserByVerificationToken = async (token: string) => {
 
 export const updateUserStatus = async (userId: number, status: number) => {
     const query = `
-    UPDATE users SET status_id = $2 WHERE id = $1
+    UPDATE users SET status_id = $2, verification_token = NULL WHERE id = $1
     `;
     const values = [userId, status];
     try {
         await pool.query(query, values);
+        return true;
     } catch (error) {
         console.error('Error updating user status:', error);
+        return false;
+    }
+};
+
+export const generateVerificationToken = async (userId: number, expiresInMinutes: number = 15) => {
+    const newToken = uuidv4();
+    const newExpires = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+    const query = `
+    UPDATE users SET verification_token = $2, verification_token_expires = $3 WHERE id = $1
+    RETURNING email
+    `;
+    const values = [userId, newToken, newExpires];
+    try {
+        const result = await pool.query(query, values);
+        return { token: newToken, email: result.rows[0].email, expires: newExpires };
+    } catch (error) {
+        console.error('Error generating verification token:', error);
         throw error;
     }
 };

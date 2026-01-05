@@ -9,7 +9,9 @@ import {
     getViewedByUsers,
     getMatchedUsers,
     getUserByVerificationToken,
-    updateUserStatus
+    updateUserStatus,
+    generateVerificationToken,
+    updatePassword
 } from '../models/userModel';
 import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
@@ -35,6 +37,7 @@ export class AuthController {
                 to: user.email,
                 subject: 'Welcome to Matcha',
                 html: `<div>
+                    <img src="${process.env.FRONTEND_URL}/logo.png" alt="Matcha Logo" />
                     <h1>Welcome to Matcha</h1>
                     <p>Thank you for registering on Matcha. Please click the link below to verify your email:</p>
                     <a href="${process.env.FRONTEND_URL}/verify-email?token=${user.verificationToken}">Verify email</a>
@@ -62,6 +65,34 @@ export class AuthController {
                 return;
             }
             if (user.status === 'not_verified') {
+                // Si le token est expiré, en générer un nouveau et l'envoyer
+                if (user.tokenExpired) {
+                    const { token: newToken, email } = await generateVerificationToken(user.id);
+                    
+                    // Envoyer le nouvel email de vérification
+                    const transporter: Transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                            user: process.env.EMAIL_USER,
+                            pass: process.env.EMAIL_PASSWORD,
+                        },
+                    });
+                    const mailOptions = {
+                        from: 'noreply@matcha.com',
+                        to: email,
+                        subject: 'New verification link - Matcha',
+                        html: `<div>
+                            <h1>Your verification link has expired</h1>
+                            <p>Here is a new link to verify your email (valid for 15 minutes):</p>
+                            <a href="${process.env.FRONTEND_URL}/verify-email?token=${newToken}">Verify email</a>
+                        </div>`,
+                    };
+                    await transporter.sendMail(mailOptions);
+                    
+                    res.status(401).json({ error: 'Verification link expired. A new verification email has been sent.' });
+                    return;
+                }
+                
                 res.status(401).json({ error: 'User not verified, please check your email for verification' });
                 return;
             }
@@ -175,7 +206,9 @@ export class AuthController {
                 res.status(404).json({ error: 'User not found' });
                 return;
             }
-            const token = uuidv4();
+            
+            const { token } = await generateVerificationToken(user.id, 15);
+            
             const transporter: Transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -186,10 +219,11 @@ export class AuthController {
             const mailOptions = {
                 from: 'noreply@matcha.com',
                 to: email,
-                subject: 'Reset your password',
+                subject: 'Reset your password - Matcha',
                 html: `<div>
                     <h1>Reset your password</h1>
-                    <p>Click the link to reset your password: <a href="${process.env.FRONTEND_URL}/reset-password?token=${token}">Reset password</a></p>
+                    <p>Click the link to reset your password (valid for 15 minutes):</p>
+                    <a href="${process.env.FRONTEND_URL}/reset-password?token=${token}">Reset password</a>
                 </div>`,
             };
             await transporter.sendMail(mailOptions);
@@ -209,18 +243,71 @@ export class AuthController {
         }
         try {
             const user = await getUserByVerificationToken(token as string);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
-                return;
+            
+            // Vérifier les erreurs de token
+            if ('error' in user) {
+                if (user.error === 'invalid_token') {
+                    res.status(400).json({ error: 'Invalid verification token' });
+                    return;
+                }
+                if (user.error === 'token_expired') {
+                    res.status(400).json({ error: 'Verification token has expired. Please register again.' });
+                    return;
+                }
             }
+            
             if (user.status === 1) {
                 res.status(400).json({ error: 'Email already verified' });
                 return;
             }
+            
             await updateUserStatus(user.id, 1);
             res.status(200).json({ message: 'Email verified successfully' });
         } catch (error) {
             console.error('Error in verifyEmail:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async resetPassword(req: Request, res: Response) {
+        const { token, newPassword } = req.body;
+        
+        if (!token || !newPassword) {
+            res.status(400).json({ error: 'Token and new password are required' });
+            return;
+        }
+
+        try {
+            const user = await getUserByVerificationToken(token);
+            
+            // Vérifier les erreurs de token
+            if ('error' in user) {
+                if (user.error === 'invalid_token') {
+                    res.status(400).json({ error: 'Invalid or expired token' });
+                    return;
+                }
+                if (user.error === 'token_expired') {
+                    res.status(400).json({ error: 'Token has expired. Please request a new password reset.' });
+                    return;
+                }
+            }
+
+            // Mettre à jour le mot de passe
+            await updatePassword(user.id, newPassword);
+            
+            // Si l'utilisateur n'était pas vérifié, le vérifier automatiquement
+            if (user.status === 0) {
+                await updateUserStatus(user.id, 1);
+                res.status(200).json({ message: 'Password reset successfully. Your email has also been verified!' });
+                return;
+            }
+            
+            // Invalider le token (status reste le même, mais token est supprimé)
+            await updateUserStatus(user.id, user.status);
+            
+            res.status(200).json({ message: 'Password reset successfully' });
+        } catch (error) {
+            console.error('Error in resetPassword:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

@@ -45,6 +45,7 @@ CREATE TABLE users (
     biography TEXT,
     status_id INT REFERENCES status(id) DEFAULT 0,
     verification_token VARCHAR(255),
+    verification_token_expires TIMESTAMP,
     latitude FLOAT,
     longitude FLOAT,
     city VARCHAR(100),

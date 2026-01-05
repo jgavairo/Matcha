@@ -54,6 +54,8 @@ app.post('/auth/logout', authMiddleware, authController.logout);
 app.post('/auth/forgot-password', authController.forgotPassword);
 
 app.get('/auth/verify-email', authController.verifyEmail);
+
+app.post('/auth/reset-password', authController.resetPassword);
 // User Routes ----------------------------------------------------------------
 
 app.use('/users', userRoutes);

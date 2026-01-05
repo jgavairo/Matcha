@@ -29,7 +29,7 @@ const RegisterForm = () => {
     e.preventDefault();
     try {
       await authService.register(formData);
-      addToast('Register successful', 'success');
+      addToast('Register successful, please check your email for verification', 'success');
       navigate('/login');
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error registering user';
