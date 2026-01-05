@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { Conversation } from '../services/chatService';
-import { Avatar, Badge } from 'flowbite-react';
+import { Avatar, Badge, Tooltip } from 'flowbite-react';
+import { HiArchive, HiInbox } from 'react-icons/hi';
 
 interface ConversationListProps {
     conversations: Conversation[];
     currentUserId: number;
     onSelectConversation: (conversation: Conversation) => void;
+    onArchiveConversation: (conversation: Conversation) => void;
 }
 
-const ConversationList: React.FC<ConversationListProps> = ({ conversations, currentUserId, onSelectConversation }) => {
-    const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+const ConversationList: React.FC<ConversationListProps> = ({ conversations, currentUserId, onSelectConversation, onArchiveConversation }) => {
+    const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
 
     const filteredConversations = conversations.filter(c => {
+        if (activeTab === 'archived') {
+            return c.is_archived;
+        }
+        // For 'all' and 'unread', exclude archived
+        if (c.is_archived) return false;
+
         if (activeTab === 'unread') {
             return c.unread_count > 0;
         }
@@ -54,13 +62,25 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                 >
                     Unread
                 </button>
+                <button
+                    className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
+                        activeTab === 'archived'
+                            ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('archived')}
+                >
+                    Archived
+                </button>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto">
                 {filteredConversations.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                        {activeTab === 'all' ? 'No conversations yet.' : 'No unread messages.'}
+                        {activeTab === 'all' ? 'No conversations yet.' : 
+                         activeTab === 'unread' ? 'No unread messages.' : 
+                         'No archived conversations.'}
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -73,7 +93,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                 <li 
                                     key={conversation.id} 
                                     onClick={() => onSelectConversation(conversation)}
-                                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors group relative"
                                 >
                                     <div className="flex items-center space-x-4">
                                         <div className="flex-shrink-0">
@@ -95,10 +115,25 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                                     )}
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                                            <p className="text-sm text-gray-500 truncate dark:text-gray-400 pr-8">
                                                 {conversation.last_message || 'Start a conversation'}
                                             </p>
                                         </div>
+                                    </div>
+                                    
+                                    {/* Archive Action */}
+                                    <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Tooltip content={conversation.is_archived ? "Unarchive" : "Archive"}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onArchiveConversation(conversation);
+                                                }}
+                                                className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            >
+                                                {conversation.is_archived ? <HiInbox className="w-5 h-5" /> : <HiArchive className="w-5 h-5" />}
+                                            </button>
+                                        </Tooltip>
                                     </div>
                                 </li>
                             );

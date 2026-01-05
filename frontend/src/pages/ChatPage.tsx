@@ -62,6 +62,24 @@ const ChatPage: React.FC = () => {
         }
     };
 
+    const handleArchiveConversation = async (conversation: Conversation) => {
+        try {
+            if (conversation.is_archived) {
+                await chatService.unarchiveConversation(conversation.id);
+            } else {
+                await chatService.archiveConversation(conversation.id);
+            }
+            
+            setConversations(prev => prev.map(c => 
+                c.id === conversation.id 
+                    ? { ...c, is_archived: !c.is_archived } 
+                    : c
+            ));
+        } catch (error) {
+            console.error('Failed to archive conversation', error);
+        }
+    };
+
     if (loading) return <div className="p-10 text-center">Loading...</div>;
     if (!currentUserId) return <div className="p-10 text-center">Please log in.</div>;
 
@@ -83,6 +101,7 @@ const ChatPage: React.FC = () => {
                             conversations={conversations} 
                             currentUserId={currentUserId} 
                             onSelectConversation={handleSelectConversation} 
+                            onArchiveConversation={handleArchiveConversation}
                         />
                     </div>
                 </div>

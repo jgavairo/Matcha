@@ -10,6 +10,7 @@ export interface Conversation {
     last_message: string;
     last_message_date: string;
     unread_count: number;
+    is_archived?: boolean;
 }
 
 export interface Message {
@@ -45,5 +46,15 @@ export const chatService = {
     // For testing
     createMatch: async (targetUserId: number): Promise<void> => {
         await api.post('/chat/matches', { targetUserId });
+    },
+
+    archiveConversation: async (conversationId: number): Promise<void> => {
+        // await api.post(`/chat/conversations/${conversationId}/archive`);
+        console.log('Archived conversation', conversationId);
+    },
+
+    unarchiveConversation: async (conversationId: number): Promise<void> => {
+        // await api.post(`/chat/conversations/${conversationId}/unarchive`);
+        console.log('Unarchived conversation', conversationId);
     }
 };
