@@ -57,6 +57,7 @@ app.get('/auth/verify-email', authController.verifyEmail);
 app.post('/auth/reset-password', authController.resetPassword);
 
 app.get('/auth/check-token', authController.checkToken);
+
 // User Routes ----------------------------------------------------------------
 
 app.use('/users', userRoutes);
