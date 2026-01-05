@@ -19,6 +19,7 @@ export interface Message {
     content: string;
     is_read: boolean;
     created_at: string;
+    type?: 'text' | 'image' | 'audio' | 'system';
 }
 
 export const chatService = {

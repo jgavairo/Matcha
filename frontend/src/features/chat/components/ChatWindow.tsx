@@ -135,6 +135,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">
                 {messages.map((msg) => {
+                    // System Message Rendering
+                    if (msg.type === 'system') {
+                        return (
+                            <div key={msg.id} className="flex justify-center my-4 w-full">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 text-center italic">
+                                    {msg.content}
+                                </span>
+                            </div>
+                        );
+                    }
+
                     const isMe = msg.sender_id === currentUserId;
                     const avatarUrl = `https://ui-avatars.com/api/?name=${isMe ? 'Me' : otherUsername}&background=random`;
                     
