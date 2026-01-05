@@ -7,7 +7,9 @@ import {
     getUserByEmail,
     getLikedByUsers,
     getViewedByUsers,
-    getMatchedUsers
+    getMatchedUsers,
+    getUserByVerificationToken,
+    updateUserStatus
 } from '../models/userModel';
 import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
@@ -20,14 +22,33 @@ export class AuthController {
         const registerData: RegisterFormData = req.body;
         try {
             const user = await createUser(registerData);
-            res.status(201).json(user);
+            const transporter: Transporter = nodemailer.createTransport({
+                service: 'gmail',
+                from: 'matcha@noreply.com',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD,
+                },
+            });
+            const mailOptions = {
+                from: 'noreply@matcha.com',
+                to: user.email,
+                subject: 'Welcome to Matcha',
+                html: `<div>
+                    <h1>Welcome to Matcha</h1>
+                    <p>Thank you for registering on Matcha. Please click the link below to verify your email:</p>
+                    <a href="${process.env.FRONTEND_URL}/verify-email?token=${user.verificationToken}">Verify email</a>
+                </div>`,
+            };
+            await transporter.sendMail(mailOptions);
+            res.status(201).json({ message: 'User created successfully, please check your email for verification' });
         } catch (error: any) {
             if (error.code === '23505') {
                 res.status(400).json({ error: 'Account already exists' });
-                return
+                return;
             } 
-            res.status(500).json({ error: 'Failed to create user' });
             console.error('Error creating user:', error);
+            res.status(500).json({ error: 'Failed to create user' });
         }
     }
 
@@ -38,6 +59,10 @@ export class AuthController {
             const user = await loginUser(loginData);
             if (!user) {
                 res.status(401).json({ error: 'Invalid username or password' });
+                return;
+            }
+            if (user.status === 'not_verified') {
+                res.status(401).json({ error: 'User not verified, please check your email for verification' });
                 return;
             }
             const token = generateToken({ id: user.id }, loginData.remember);
@@ -172,6 +197,30 @@ export class AuthController {
         }
         catch (error) {
             console.error('Error in forgotPassword:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async verifyEmail(req: Request, res: Response) {
+        const { token } = req.query;
+        if (!token || typeof token !== 'string') {
+            res.status(400).json({ error: 'Token is required' });
+            return;
+        }
+        try {
+            const user = await getUserByVerificationToken(token as string);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+            if (user.status === 1) {
+                res.status(400).json({ error: 'Email already verified' });
+                return;
+            }
+            await updateUserStatus(user.id, 1);
+            res.status(200).json({ message: 'Email verified successfully' });
+        } catch (error) {
+            console.error('Error in verifyEmail:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

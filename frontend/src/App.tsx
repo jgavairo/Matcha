@@ -14,6 +14,7 @@ import ChatPage from '@pages/ChatPage';
 import AppLayout from '@layouts/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute';
 import UnauthenticatedRoute from '@components/UnauthenticatedRoute';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -37,6 +38,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="*" element={<div className="text-center py-10">404 Not Found</div>} />
             </Route>
         </Route>
