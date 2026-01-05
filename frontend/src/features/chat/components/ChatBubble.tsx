@@ -45,7 +45,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 </div>
                 
                 <div className={`flex flex-col leading-1.5 p-4 border-gray-200 ${isMe ? 'bg-blue-100 dark:bg-blue-700 rounded-s-xl rounded-ee-xl' : 'bg-gray-100 dark:bg-gray-700 rounded-e-xl rounded-es-xl'}`}>
-                    <p className="text-sm font-normal text-gray-900 dark:text-white whitespace-pre-wrap">
+                    <p className="text-sm font-normal text-gray-900 dark:text-white whitespace-pre-wrap break-all">
                         {message.content}
                     </p>
                 </div>
