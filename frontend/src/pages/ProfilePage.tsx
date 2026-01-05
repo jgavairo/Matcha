@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Tabs, TabItem, Button } from 'flowbite-react';
 import { HiUser, HiPhotograph, HiChartBar, HiBan, HiHeart, HiLockClosed, HiEye } from 'react-icons/hi';
-import EditProfileForm from '../features/profile/components/EditProfileForm';
-import PhotoUpload from '../features/profile/components/PhotoUpload';
-import StatsDisplay from '../features/profile/components/StatsDisplay';
-import UserList from '../features/profile/components/UserList';
-import ChangePasswordForm from '../features/profile/components/ChangePasswordForm';
-import SecuritySettings from '../features/profile/components/SecuritySettings';
-import UserProfileModal from '../features/matches/components/UserProfileDrawer';
+import EditProfileForm from '@features/profile/components/EditProfileForm';
+import PhotoUpload from '@features/profile/components/PhotoUpload';
+import StatsDisplay from '@features/profile/components/StatsDisplay';
+import UserList from '@features/profile/components/UserList';
+import ChangePasswordForm from '@features/profile/components/ChangePasswordForm';
+import SecuritySettings from '@features/profile/components/SecuritySettings';
+import UserProfileModal from '@features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
-import { mockUsers } from '../data/mockUsers';
-import { api } from '../services/api';
-import { matchService } from '../features/matches/services/matchService';
-import { useNotification } from '../context/NotificationContext';
+import { mockUsers } from '@/data/mockUsers';
+import { api } from '@services/api';
+import { matchService } from '@features/matches/services/matchService';
+import { useNotification } from '@context/NotificationContext';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);

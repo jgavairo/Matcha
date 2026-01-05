@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import ConversationList from '../features/chat/components/ConversationList';
-import ChatDrawer from '../features/chat/components/ChatDrawer';
-import { chatService, Conversation } from '../features/chat/services/chatService';
-import authService from '../features/auth/services/authService';
+import ConversationList from '@features/chat/components/ConversationList';
+import ChatDrawer from '@features/chat/components/ChatDrawer';
+import { chatService, Conversation } from '@features/chat/services/chatService';
+import authService from '@features/auth/services/authService';
 
 const ChatPage: React.FC = () => {
 

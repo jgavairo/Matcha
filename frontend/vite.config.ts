@@ -19,6 +19,9 @@ export default defineConfig({
       "@layouts": path.resolve(__dirname, "./src/layouts"),
       "@assets": path.resolve(__dirname, "./src/assets"),
       "@utils": path.resolve(__dirname, "./src/utils"),
+      "@forms": path.resolve(__dirname, "./src/components/forms"),
+      "@layout": path.resolve(__dirname, "./src/components/layout"),
+      "@data": path.resolve(__dirname, "./src/data"),
     },
   },
   server: {

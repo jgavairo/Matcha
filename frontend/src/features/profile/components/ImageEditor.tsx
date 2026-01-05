@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button, Label } from 'flowbite-react';
 import { HiX } from 'react-icons/hi';
-import AppDrawer from '../../../components/ui/AppDrawer';
+import AppDrawer from '@components/ui/AppDrawer';
 
 interface ImageEditorProps {
     file: File | null;

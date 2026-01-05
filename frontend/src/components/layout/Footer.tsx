@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@context/AuthContext';
-import BottomNav from './BottomNav';
+import BottomNav from '@components/layout/BottomNav';
 
 const PublicFooter: React.FC = () => (
   <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">

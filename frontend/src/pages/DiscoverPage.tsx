@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import CardStack from '@features/matches/components/CardStack';
 import { useMatches, DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
 import { Spinner, Button } from 'flowbite-react';
-import UserProfileModal from '@/features/matches/components/UserProfileDrawer';
-import MatchFilters from '@/features/matches/components/MatchFilters';
+import UserProfileModal from '@features/matches/components/UserProfileDrawer';
+import MatchFilters from '@features/matches/components/MatchFilters';
 import { UserProfile } from '@app-types/user';
 
 const DiscoverPage: React.FC = () => {

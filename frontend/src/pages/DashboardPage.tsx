@@ -1,6 +1,6 @@
 import React from 'react';
-import UserCard from '../features/matches/components/UserCard';
-import { useMatches } from '../features/matches/hooks/useMatches';
+import UserCard from '@features/matches/components/UserCard';
+import { useMatches } from '@features/matches/hooks/useMatches';
 import { Spinner } from 'flowbite-react';
 
 const DashboardPage: React.FC = () => {

@@ -1,9 +1,9 @@
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import './index.css'
-import { ThemeProvider as AppThemeProvider } from './context/ThemeContext'
-import { AuthProvider } from './context/AuthContext'
+import App from '@/App'
+import '@/index.css'
+import { ThemeProvider as AppThemeProvider } from '@context/ThemeContext'
+import { AuthProvider } from '@context/AuthContext'
 import { createTheme, ThemeProvider as FlowbiteThemeProvider } from 'flowbite-react'
 
 const theme = createTheme({
