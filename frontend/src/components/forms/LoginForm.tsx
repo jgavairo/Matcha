@@ -12,7 +12,7 @@ const LoginForm = () => {
   const { addToast } = useNotification();
   const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
+    username: '',
     password: '',
     remember: false,
   });
@@ -36,7 +36,7 @@ const LoginForm = () => {
       }
     } catch (error) {
       console.error('Error logging in user');
-      addToast('Wrong email or password', 'error');
+      addToast('Wrong username or password', 'error');
     }
   };
 
@@ -44,14 +44,14 @@ const LoginForm = () => {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Email */}
       <div>
-        <Label htmlFor="email" className="mb-2 block">Email</Label>
+        <Label htmlFor="username" className="mb-2 block">Username</Label>
         <TextInput
-          id="email"
-          name="email"
-          type="email"
-          placeholder="exemple@email.com"
+          id="username"
+          name="username"
+          type="text"
+          placeholder="username"
           required
-          value={formData.email}
+          value={formData.username}
           onChange={handleChange}
         />
       </div>

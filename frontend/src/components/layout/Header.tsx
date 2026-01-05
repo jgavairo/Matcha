@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     <nav className="bg-white border-b border-gray-200 px-4 dark:bg-gray-800 dark:border-gray-700 w-full z-header h-16 flex-none flex items-center">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl w-full">
           <Link to="/" className="flex items-center">
-            <img src={TitleImage} alt="Matcha" className="h-8" />
+            <img src={TitleImage} alt="Matcha" className="h-10" />
           </Link>
           <div className="flex items-center lg:order-2 gap-2">
             <button 

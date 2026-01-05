@@ -37,7 +37,7 @@ export class AuthController {
         try {
             const user = await loginUser(loginData);
             if (!user) {
-                res.status(401).json({ error: 'Invalid email or password' });
+                res.status(401).json({ error: 'Invalid username or password' });
                 return;
             }
             const token = generateToken({ id: user.id }, loginData.remember);

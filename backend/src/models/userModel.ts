@@ -22,12 +22,12 @@ export const createUser = async (user: RegisterFormData) => {
 export const loginUser = async (user: LoginFormData) => {
     try {
     const query = `
-    SELECT id, email, password FROM users WHERE email = $1
+    SELECT id, username, password FROM users WHERE username = $1
     `;
-        const values = [user.email];
+        const values = [user.username];
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
-            console.error('Invalid email');
+            console.error('Invalid username');
             return null;
         }
         const isValidPassword = await bcrypt.compare(user.password, result.rows[0].password);
