@@ -45,7 +45,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                 <button
                     className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
                         activeTab === 'all'
-                            ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500'
+                            ? 'text-pink-600 border-b-2 border-pink-600 dark:text-pink-500 dark:border-pink-500'
                             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                     onClick={() => setActiveTab('all')}
@@ -55,7 +55,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                 <button
                     className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
                         activeTab === 'unread'
-                            ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500'
+                            ? 'text-pink-600 border-b-2 border-pink-600 dark:text-pink-500 dark:border-pink-500'
                             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                     onClick={() => setActiveTab('unread')}
@@ -65,7 +65,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                 <button
                     className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
                         activeTab === 'archived'
-                            ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500'
+                            ? 'text-pink-600 border-b-2 border-pink-600 dark:text-pink-500 dark:border-pink-500'
                             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
                     onClick={() => setActiveTab('archived')}
@@ -129,7 +129,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                                     e.stopPropagation();
                                                     onArchiveConversation(conversation);
                                                 }}
-                                                className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-500"
+                                                className="text-gray-500 hover:text-pink-600 dark:text-gray-400 dark:hover:text-pink-500"
                                             >
                                                 {conversation.is_archived ? <HiInbox className="w-5 h-5" /> : <HiArchive className="w-5 h-5" />}
                                             </button>
