@@ -465,12 +465,49 @@ export const likeUser = async (likerId: number, likedId: number) => {
         let isMatch = false;
         if (res.rowCount && res.rowCount > 0) {
             isMatch = true;
-            // Create match
+            // Create match or update if exists (reactivate)
             await client.query(`
-                INSERT INTO matches (user_id_1, user_id_2) 
-                VALUES ($1, $2)
-                ON CONFLICT (user_id_1, user_id_2) DO NOTHING
+                INSERT INTO matches (user_id_1, user_id_2, is_active) 
+                VALUES ($1, $2, TRUE)
+                ON CONFLICT (user_id_1, user_id_2) DO UPDATE SET is_active = TRUE, updated_at = NOW()
             `, [Math.min(likerId, likedId), Math.max(likerId, likedId)]);
+            
+            // Get match ID
+            const matchRes = await client.query(`
+                SELECT id FROM matches WHERE user_id_1 = $1 AND user_id_2 = $2
+            `, [Math.min(likerId, likedId), Math.max(likerId, likedId)]);
+
+            const matchId = matchRes.rows[0].id;
+
+            // Check if conversation exists
+            let conversationId;
+            const existingConv = await client.query(`
+                SELECT id FROM conversations WHERE match_id = $1
+            `, [matchId]);
+
+            if (existingConv.rowCount && existingConv.rowCount > 0) {
+                conversationId = existingConv.rows[0].id;
+            } else {
+                const convRes = await client.query(`
+                    INSERT INTO conversations (match_id)
+                    VALUES ($1)
+                    RETURNING id
+                `, [matchId]);
+                conversationId = convRes.rows[0].id;
+            }
+
+            // Send system message
+            const systemMessage = "It's a match! You can now chat.";
+            const msgRes = await client.query(`
+                INSERT INTO messages (conversation_id, sender_id, content)
+                VALUES ($1, NULL, $2)
+                RETURNING *
+            `, [conversationId, systemMessage]);
+
+            const message = msgRes.rows[0];
+
+            await client.query('COMMIT');
+            return { isMatch, message, conversationId };
         }
 
         // 3. Remove from dislikes if exists (in case of change of mind)
@@ -505,13 +542,38 @@ export const dislikeUser = async (dislikerId: number, dislikedId: number) => {
             DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
         `, [dislikerId, dislikedId]);
 
-        // 3. Remove match if exists
-        await client.query(`
-            DELETE FROM matches 
+        // 3. Deactivate match if exists
+        const matchRes = await client.query(`
+            UPDATE matches 
+            SET is_active = FALSE, updated_at = NOW()
             WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1)
+            RETURNING id
         `, [dislikerId, dislikedId]);
 
+        if (matchRes.rowCount && matchRes.rowCount > 0) {
+            const matchId = matchRes.rows[0].id;
+            
+            // Get conversation
+            const convRes = await client.query(`
+                SELECT id FROM conversations WHERE match_id = $1
+            `, [matchId]);
+
+            if (convRes.rowCount && convRes.rowCount > 0) {
+                const conversationId = convRes.rows[0].id;
+                const systemMessage = "User has left the chat.";
+                const msgRes = await client.query(`
+                    INSERT INTO messages (conversation_id, sender_id, content)
+                    VALUES ($1, NULL, $2)
+                    RETURNING *
+                `, [conversationId, systemMessage]);
+                
+                await client.query('COMMIT');
+                return { message: msgRes.rows[0], conversationId };
+            }
+        }
+
         await client.query('COMMIT');
+        return {};
     } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -530,13 +592,38 @@ export const unlikeUser = async (likerId: number, likedId: number) => {
             DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
         `, [likerId, likedId]);
 
-        // 2. Remove match if exists
-        await client.query(`
-            DELETE FROM matches 
+        // 2. Deactivate match if exists
+        const matchRes = await client.query(`
+            UPDATE matches 
+            SET is_active = FALSE, updated_at = NOW()
             WHERE (user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1)
+            RETURNING id
         `, [likerId, likedId]);
 
+        if (matchRes.rowCount && matchRes.rowCount > 0) {
+            const matchId = matchRes.rows[0].id;
+            
+            // Get conversation
+            const convRes = await client.query(`
+                SELECT id FROM conversations WHERE match_id = $1
+            `, [matchId]);
+
+            if (convRes.rowCount && convRes.rowCount > 0) {
+                const conversationId = convRes.rows[0].id;
+                const systemMessage = "User has left the chat.";
+                const msgRes = await client.query(`
+                    INSERT INTO messages (conversation_id, sender_id, content)
+                    VALUES ($1, NULL, $2)
+                    RETURNING *
+                `, [conversationId, systemMessage]);
+                
+                await client.query('COMMIT');
+                return { message: msgRes.rows[0], conversationId };
+            }
+        }
+
         await client.query('COMMIT');
+        return {};
     } catch (error) {
         await client.query('ROLLBACK');
         throw error;

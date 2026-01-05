@@ -56,12 +56,38 @@ const ChatPage: React.FC = () => {
             });
         };
 
+        const handleMessagesRead = ({ conversationId, readerId }: { conversationId: number, readerId: number }) => {
+            if (readerId === currentUserId) {
+                setConversations(prev => prev.map(c => 
+                    c.id === conversationId 
+                        ? { ...c, unread_count: 0 } 
+                        : c
+                ));
+            }
+        };
+
+        const handleStatusUpdate = ({ conversationId, is_active }: { conversationId: number, is_active: boolean }) => {
+            setConversations(prev => prev.map(c => 
+                c.id === conversationId 
+                    ? { ...c, is_active } 
+                    : c
+            ));
+            
+            if (selectedConversation?.id === conversationId) {
+                setSelectedConversation(prev => prev ? { ...prev, is_active } : null);
+            }
+        };
+
         socketService.on('chat_message', handleMessage);
+        socketService.on('messages_read', handleMessagesRead);
+        socketService.on('conversation_status_update', handleStatusUpdate);
 
         return () => {
             socketService.off('chat_message', handleMessage);
+            socketService.off('messages_read', handleMessagesRead);
+            socketService.off('conversation_status_update', handleStatusUpdate);
         };
-    }, [selectedConversation, socketService]);
+    }, [selectedConversation, socketService, currentUserId]);
 
     const loadConversations = async () => {
         try {

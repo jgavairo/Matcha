@@ -42,16 +42,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
         const handleMessage = (msg: Message) => {
             if (msg.conversation_id === conversation.id) {
                 setMessages((prev) => [...prev, msg]);
-                chatService.markAsRead(conversation.id);
+                if (msg.sender_id !== currentUserId) {
+                    chatService.markAsRead(conversation.id);
+                }
+            }
+        };
+
+        const handleMessagesRead = ({ conversationId, readerId }: { conversationId: number, readerId: number }) => {
+            if (conversationId === conversation.id) {
+                setMessages(prev => prev.map(msg => {
+                    if (msg.sender_id !== readerId) {
+                        return { ...msg, is_read: true };
+                    }
+                    return msg;
+                }));
             }
         };
 
         socketService.on('chat_message', handleMessage);
+        socketService.on('messages_read', handleMessagesRead);
 
         return () => {
             socketService.off('chat_message', handleMessage);
+            socketService.off('messages_read', handleMessagesRead);
         };
-    }, [conversation, socketService]);
+    }, [conversation, socketService, currentUserId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -184,73 +199,82 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
 
             {/* Input */}
             <form onSubmit={handleSend} className="border-t bg-white dark:bg-gray-800 dark:border-gray-700">
-                {previewUrl && (
-                    <div className="mb-4 relative inline-block">
-                        <img src={previewUrl} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600" />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setSelectedFile(null);
-                                setPreviewUrl(null);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
-                        >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                {!conversation.is_active && (
+                    <div className="p-2 text-center text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                        This conversation is no longer active.
                     </div>
                 )}
-                <label htmlFor="chat" className="sr-only">Your message</label>
-                <div className="flex items-center px-3 py-2 bg-gray-50 dark:bg-gray-700">
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={handleFileInputChange} 
-                    />
-                    <button 
-                        type="button" 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                    >
-                        <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2M12 4v12m0-12l-4 4m4-4l4 4"/>
-                        </svg>
-                        <span className="sr-only">Upload image</span>
-                    </button>
-                    <button type="button" className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600">
-                        <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3Z"/>
-                        </svg>
-                        <span className="sr-only">Voice message</span>
-                    </button>
-                    <textarea 
-                        id="chat" 
-                        rows={1} 
-                        className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none" 
-                        placeholder="Your message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSend(e);
-                            }
-                        }}
-                    ></textarea>
-                    <button 
-                        type="submit" 
-                        disabled={!newMessage.trim() && !selectedFile}
-                        className="inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <svg className="w-5 h-5 rotate-90 rtl:-rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
-                            <path d="m17.914 18.594-8-18a1 1 0 0 0-1.828 0l-8 18a1 1 0 0 0 1.157 1.376L8 18.281V9a1 1 0 0 1 2 0v9.281l6.758 1.689a1 1 0 0 0 1.156-1.376Z"/>
-                        </svg>
-                        <span className="sr-only">Send message</span>
-                    </button>
-                </div>
+                {conversation.is_active && (
+                    <>
+                        {previewUrl && (
+                            <div className="mb-4 relative inline-block">
+                                <img src={previewUrl} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600" />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedFile(null);
+                                        setPreviewUrl(null);
+                                    }}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                        <label htmlFor="chat" className="sr-only">Your message</label>
+                        <div className="flex items-center px-3 py-2 bg-gray-50 dark:bg-gray-700">
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*" 
+                                onChange={handleFileInputChange} 
+                            />
+                            <button 
+                                type="button" 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
+                            >
+                                <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2M12 4v12m0-12l-4 4m4-4l4 4"/>
+                                </svg>
+                                <span className="sr-only">Upload image</span>
+                            </button>
+                            <button type="button" className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600">
+                                <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3Z"/>
+                                </svg>
+                                <span className="sr-only">Voice message</span>
+                            </button>
+                            <textarea 
+                                id="chat" 
+                                rows={1} 
+                                className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none" 
+                                placeholder="Your message..."
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend(e);
+                                    }
+                                }}
+                            ></textarea>
+                            <button 
+                                type="submit" 
+                                disabled={!newMessage.trim() && !selectedFile}
+                                className="inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <svg className="w-5 h-5 rotate-90 rtl:-rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+                                    <path d="m17.914 18.594-8-18a1 1 0 0 0-1.828 0l-8 18a1 1 0 0 0 1.157 1.376L8 18.281V9a1 1 0 0 1 2 0v9.281l6.758 1.689a1 1 0 0 0 1.156-1.376Z"/>
+                                </svg>
+                                <span className="sr-only">Send message</span>
+                            </button>
+                        </div>
+                    </>
+                )}
             </form>
         </div>
     );
