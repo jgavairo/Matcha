@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import ConversationList from '@features/chat/components/ConversationList';
 import ChatDrawer from '@features/chat/components/ChatDrawer';
 import ChatWindow from '@features/chat/components/ChatWindow';
-import { chatService, Conversation } from '@features/chat/services/chatService';
+import { chatService, Conversation, Message } from '@features/chat/services/chatService';
 import authService from '@features/auth/services/authService';
+import { useSocket } from '@context/SocketContext';
 
 const ChatPage: React.FC = () => {
 
@@ -12,6 +13,7 @@ const ChatPage: React.FC = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
+    const { socketService } = useSocket();
 
     useEffect(() => {
         const init = async () => {
@@ -27,6 +29,39 @@ const ChatPage: React.FC = () => {
         };
         init();
     }, []);
+
+    useEffect(() => {
+        const handleMessage = (msg: Message) => {
+            setConversations(prev => {
+                const index = prev.findIndex(c => c.id === msg.conversation_id);
+                if (index === -1) {
+                    loadConversations();
+                    return prev;
+                }
+
+                const updatedConversations = [...prev];
+                const conversation = updatedConversations[index];
+                
+                updatedConversations[index] = {
+                    ...conversation,
+                    last_message: msg.content,
+                    last_message_date: msg.created_at,
+                    unread_count: (selectedConversation?.id === conversation.id) ? conversation.unread_count : conversation.unread_count + 1
+                };
+
+                // Move to top
+                updatedConversations.sort((a, b) => new Date(b.last_message_date).getTime() - new Date(a.last_message_date).getTime());
+
+                return updatedConversations;
+            });
+        };
+
+        socketService.on('chat_message', handleMessage);
+
+        return () => {
+            socketService.off('chat_message', handleMessage);
+        };
+    }, [selectedConversation, socketService]);
 
     const loadConversations = async () => {
         try {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '../../../hooks/useFileDrop';
+import { useSocket } from '@context/SocketContext';
 
 import ChatBubble from './ChatBubble';
 
@@ -18,6 +19,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { socketService } = useSocket();
 
     const { isDragging, dragHandlers } = useFileDrop({
         onFileSelect: (file) => handleFileSelect(file),
@@ -33,6 +35,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             setMessages([]);
         }
     }, [conversation]);
+
+    useEffect(() => {
+        if (!conversation) return;
+
+        const handleMessage = (msg: Message) => {
+            if (msg.conversation_id === conversation.id) {
+                setMessages((prev) => [...prev, msg]);
+                chatService.markAsRead(conversation.id);
+            }
+        };
+
+        socketService.on('chat_message', handleMessage);
+
+        return () => {
+            socketService.off('chat_message', handleMessage);
+        };
+    }, [conversation, socketService]);
 
     useEffect(() => {
         scrollToBottom();
