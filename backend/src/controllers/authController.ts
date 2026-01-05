@@ -175,6 +175,8 @@ export class AuthController {
                 tags: user.tags || [],
                 images: user.images || [],
                 fameRating: user.fame_rating || 0,
+                likesCount: parseInt(user.likes_count || '0'),
+                viewsCount: parseInt(user.views_count || '0'),
                 distance: 0,
                 location: {
                     city: user.city || "Unknown",

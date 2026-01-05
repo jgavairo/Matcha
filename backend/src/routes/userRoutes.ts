@@ -33,6 +33,11 @@ router.delete('/photos', authMiddleware, userController.deletePhoto);
 router.put('/photos/profile', authMiddleware, userController.setProfilePhoto);
 router.put('/consent', authMiddleware, userController.updateConsent);
 router.post('/view/:id', authMiddleware, userController.recordView);
+
+router.get('/matches', authMiddleware, userController.getMatches);
+router.get('/liked-by', authMiddleware, userController.getLikedBy);
+router.get('/viewed-by', authMiddleware, userController.getViewedBy);
+
 router.get('/:id', authMiddleware, userController.getUser);
 
 export default router;

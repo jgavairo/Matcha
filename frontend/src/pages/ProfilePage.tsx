@@ -20,6 +20,37 @@ const ProfilePage: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const { addToast } = useNotification();
 
+    const handleTabChange = async (tabIndex: number) => {
+        if (tabIndex === 3) { // Matches
+            // Clear matches before fetching to show loading state or just refresh
+            setUser(prev => prev ? { ...prev, matches: [] } : null);
+            try {
+                const response = await api.get('/users/matches');
+                setUser(prev => prev ? { ...prev, matches: response.data } : null);
+            } catch (error) {
+                console.error("Failed to fetch matches", error);
+                addToast("Failed to load matches", 'error');
+            }
+        } else if (tabIndex === 4) { // Activity
+            // Clear activity before fetching
+            setUser(prev => prev ? { ...prev, likedBy: [], viewedBy: [] } : null);
+            try {
+                const [likedByRes, viewedByRes] = await Promise.all([
+                    api.get('/users/liked-by'),
+                    api.get('/users/viewed-by')
+                ]);
+                setUser(prev => prev ? { 
+                    ...prev, 
+                    likedBy: likedByRes.data,
+                    viewedBy: viewedByRes.data 
+                } : null);
+            } catch (error) {
+                console.error("Failed to fetch activity", error);
+                addToast("Failed to load activity", 'error');
+            }
+        }
+    };
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -188,12 +219,12 @@ const ProfilePage: React.FC = () => {
                 {/* Stats Overview */}
                 <StatsDisplay
                     fameRating={user.fameRating}
-                    likesCount={user.likedBy.length}
-                    viewsCount={user.viewedBy.length}
+                    likesCount={user.likesCount ?? user.likedBy.length}
+                    viewsCount={user.viewsCount ?? user.viewedBy.length}
                 />
 
                 <Card>
-                    <Tabs aria-label="Profile tabs" variant="underline">
+                    <Tabs aria-label="Profile tabs" variant="underline" onActiveTabChange={handleTabChange}>
                         <TabItem active title="Edit Profile" icon={HiUser}>
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold dark:text-white">Personal Information</h3>

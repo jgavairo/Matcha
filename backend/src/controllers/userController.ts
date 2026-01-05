@@ -1,5 +1,22 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getMatchedUsers, getLikedByUsers, getViewedByUsers } from '../models/userModel';
+
+const mapUserSummary = (u: any) => ({
+    id: u.id,
+    username: u.username,
+    age: u.age,
+    gender: u.gender,
+    biography: u.biography || '',
+    distance: 0,
+    location: {
+        city: u.city || '',
+        latitude: u.latitude,
+        longitude: u.longitude
+    },
+    tags: u.tags || [],
+    images: u.images || [],
+    fameRating: u.fame_rating || 0
+});
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -175,6 +192,48 @@ export class UserController {
             res.status(200).json(user);
         } catch (error) {
             console.error('Error getting user:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public getMatches = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+            const matches = await getMatchedUsers(userId);
+            res.status(200).json(matches);
+        } catch (error) {
+            console.error('Error fetching matches:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public getLikedBy = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+            const likedBy = await getLikedByUsers(userId);
+            res.status(200).json(likedBy.map(mapUserSummary));
+        } catch (error) {
+            console.error('Error fetching liked by users:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public getViewedBy = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+            const viewedBy = await getViewedByUsers(userId);
+            res.status(200).json(viewedBy.map(mapUserSummary));
+        } catch (error) {
+            console.error('Error fetching viewed by users:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

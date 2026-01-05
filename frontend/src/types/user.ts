@@ -37,4 +37,6 @@ export interface CurrentUser extends UserProfile {
   matches: UserSummary[];
   blockedUsers: UserSummary[];
   geolocationConsent: boolean;
+  likesCount?: number;
+  viewsCount?: number;
 }

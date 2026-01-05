@@ -187,7 +187,9 @@ export const getUserById = async (id: number, currentUserId?: number) => {
             (
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
-            ) as fame_rating
+            ) as fame_rating,
+            (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) as likes_count,
+            (SELECT COUNT(*) FROM views WHERE viewed_id = u.id) as views_count
             ${currentUserId ? `,
             -- Interaction flags
             EXISTS (
