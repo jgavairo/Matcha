@@ -177,7 +177,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="p-4 border-t bg-white dark:bg-gray-800 dark:border-gray-700">
+            <form onSubmit={handleSend} className="border-t bg-white dark:bg-gray-800 dark:border-gray-700">
                 {previewUrl && (
                     <div className="mb-4 relative inline-block">
                         <img src={previewUrl} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 dark:border-gray-600" />
@@ -196,7 +196,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                     </div>
                 )}
                 <label htmlFor="chat" className="sr-only">Your message</label>
-                <div className="flex items-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <div className="flex items-center px-3 py-2 bg-gray-50 dark:bg-gray-700">
                     <input 
                         type="file" 
                         ref={fileInputRef} 

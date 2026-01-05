@@ -31,7 +31,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-sm">
             {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700">
                 <button
