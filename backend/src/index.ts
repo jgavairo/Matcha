@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
@@ -13,7 +13,6 @@ import matchRoutes from './routes/matchRoutes';
 
 // initializing ================================================================
 
-dotenv.config();
 const authController = new AuthController();
 
 const app = express();

@@ -11,12 +11,13 @@ export interface Conversation {
     last_message_date: string;
     unread_count: number;
     is_archived?: boolean;
+    is_active: boolean;
 }
 
 export interface Message {
     id: number;
     conversation_id: number;
-    sender_id: number;
+    sender_id: number | null;
     content: string;
     is_read: boolean;
     created_at: string;

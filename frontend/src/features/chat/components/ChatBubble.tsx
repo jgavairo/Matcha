@@ -20,6 +20,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     onCopy,
     onDelete
 }) => {
+    if (message.sender_id === null) {
+        return (
+            <div className="flex justify-center my-4">
+                <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                    {message.content}
+                </span>
+            </div>
+        );
+    }
+
     const handleCopy = () => {
         if (onCopy) {
             onCopy(message.content);

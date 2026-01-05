@@ -4,23 +4,17 @@ import Cookies from 'js-cookie';
 const SOCKET_URL = 'http://localhost:5000';
 
 class SocketService {
-    public socket: Socket | null = null;
+    public socket: Socket;
 
-    connect() {
-        const token = Cookies.get('token');
-        
-        if (this.socket?.connected) return;
-
+    constructor() {
         this.socket = io(SOCKET_URL, {
-            auth: {
-                token
-            },
             transports: ['websocket'],
-            autoConnect: true
+            autoConnect: false,
+            withCredentials: true
         });
 
         this.socket.on('connect', () => {
-            console.log('Socket connected:', this.socket?.id);
+            console.log('Socket connected:', this.socket.id);
         });
 
         this.socket.on('disconnect', () => {
@@ -32,29 +26,27 @@ class SocketService {
         });
     }
 
+    connect() {
+        if (this.socket.connected) return;
+        this.socket.connect();
+    }
+
     disconnect() {
-        if (this.socket) {
+        if (this.socket.connected) {
             this.socket.disconnect();
-            this.socket = null;
         }
     }
 
     emit(event: string, data: any) {
-        if (this.socket) {
-            this.socket.emit(event, data);
-        }
+        this.socket.emit(event, data);
     }
 
     on(event: string, callback: (data: any) => void) {
-        if (this.socket) {
-            this.socket.on(event, callback);
-        }
+        this.socket.on(event, callback);
     }
 
     off(event: string, callback?: (data: any) => void) {
-        if (this.socket) {
-            this.socket.off(event, callback);
-        }
+        this.socket.off(event, callback);
     }
 }
 

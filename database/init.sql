@@ -97,6 +97,8 @@ CREATE TABLE matches (
     user_id_1 INT REFERENCES users(id),
     user_id_2 INT REFERENCES users(id),
     created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT TRUE,
     UNIQUE(user_id_1, user_id_2)
 );
 

@@ -33,6 +33,23 @@ export const createConversation = async (matchId: number) => {
 };
 
 export const createMessage = async (conversationId: number, senderId: number, content: string) => {
+    // Check if match is active
+    const checkQuery = `
+        SELECT m.is_active 
+        FROM conversations c
+        JOIN matches m ON c.match_id = m.id
+        WHERE c.id = $1
+    `;
+    const checkRes = await pool.query(checkQuery, [conversationId]);
+    
+    if (checkRes.rows.length === 0) {
+         throw new Error('Conversation not found');
+    }
+    
+    if (!checkRes.rows[0].is_active) {
+        throw new Error('Conversation is not active');
+    }
+
     const query = `
         INSERT INTO messages (conversation_id, sender_id, content)
         VALUES ($1, $2, $3)
@@ -54,11 +71,12 @@ export const getConversations = async (userId: number) => {
             c.match_id,
             m.user_id_1,
             m.user_id_2,
+            m.is_active,
             u1.username as user1_username,
             u2.username as user2_username,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
             (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_date,
-            (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = FALSE) as unread_count
+            (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND (sender_id != $1 OR sender_id IS NULL) AND is_read = FALSE) as unread_count
         FROM conversations c
         JOIN matches m ON c.match_id = m.id
         JOIN users u1 ON m.user_id_1 = u1.id
@@ -98,8 +116,19 @@ export const markMessagesAsRead = async (conversationId: number, userId: number)
     const query = `
         UPDATE messages
         SET is_read = TRUE
-        WHERE conversation_id = $1 AND sender_id != $2
+        WHERE conversation_id = $1 AND (sender_id != $2 OR sender_id IS NULL)
     `;
     const values = [conversationId, userId];
     await pool.query(query, values);
+};
+
+export const getConversationParticipants = async (conversationId: number) => {
+    const query = `
+        SELECT m.user_id_1, m.user_id_2
+        FROM conversations c
+        JOIN matches m ON c.match_id = m.id
+        WHERE c.id = $1
+    `;
+    const result = await pool.query(query, [conversationId]);
+    return result.rows[0];
 };
