@@ -1,27 +1,47 @@
-import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { api } from "@services/api";
 import { Button, Label, TextInput, Spinner } from "flowbite-react";
 import { useNotification } from "@context/NotificationContext";
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const token = searchParams.get('token');
     const { addToast } = useNotification();
     
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [status, setStatus] = useState<'form' | 'loading' | 'success' | 'error'>('form');
+    const [status, setStatus] = useState<'checking' | 'form' | 'loading' | 'success' | 'error'>('checking');
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const checkToken = async () => {
+            if (!token) {
+                addToast('Page not found', 'error');
+                navigate('/');
+                return;
+            }
+
+            try {
+                const response = await api.get(`/auth/check-token?token=${token}`);
+                if (response.data.valid) {
+                    setStatus('form');
+                } else {
+                    addToast('Page not found', 'error');
+                    navigate('/');
+                }
+            } catch (error) {
+                addToast('Page not found', 'error');
+                navigate('/');
+            }
+        };
+
+        checkToken();
+    }, [token, navigate, addToast]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!token) {
-            setStatus('error');
-            setMessage('Invalid reset link. Token is missing.');
-            return;
-        }
 
         if (password !== confirmPassword) {
             addToast('Passwords do not match', 'error');
@@ -43,25 +63,12 @@ const ResetPasswordPage = () => {
         }
     };
 
-    // No token in URL
-    if (!token) {
+    // Afficher un spinner pendant la vérification du token
+    if (status === 'checking') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
-                <div className="text-center">
-                    <div className="text-red-500 text-6xl mb-4">✗</div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        Invalid Link
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        This password reset link is invalid or has expired.
-                    </p>
-                    <Link 
-                        to="/forgot-password" 
-                        className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
-                    >
-                        Request New Link
-                    </Link>
-                </div>
+                <Spinner size="xl" color="pink" />
+                <p className="mt-4 text-gray-600">Verifying link...</p>
             </div>
         );
     }
@@ -146,4 +153,3 @@ const ResetPasswordPage = () => {
 };
 
 export default ResetPasswordPage;
-

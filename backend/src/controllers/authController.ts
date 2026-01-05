@@ -311,4 +311,27 @@ export class AuthController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
+    async checkToken(req: Request, res: Response) {
+        const { token } = req.query;
+        
+        if (!token || typeof token !== 'string') {
+            res.status(400).json({ valid: false, error: 'Token is required' });
+            return;
+        }
+
+        try {
+            const user = await getUserByVerificationToken(token);
+            
+            if ('error' in user) {
+                res.status(400).json({ valid: false, error: user.error });
+                return;
+            }
+            
+            res.status(200).json({ valid: true });
+        } catch (error) {
+            console.error('Error in checkToken:', error);
+            res.status(500).json({ valid: false, error: 'Internal server error' });
+        }
+    }
 }
