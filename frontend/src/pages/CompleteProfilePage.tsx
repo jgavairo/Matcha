@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Textarea } from 'flowbite-react';
+import { Button, Textarea, TextInput } from 'flowbite-react';
 import { useAuth } from '@context/AuthContext';
 import { useNotification } from '@context/NotificationContext';
 import { api } from '@services/api';
 import ImageEditor from '@features/profile/components/ImageEditor';
-import { HiUpload, HiX } from 'react-icons/hi';
+import { HiUpload, HiX, HiLocationMarker } from 'react-icons/hi';
 
 const AVAILABLE_TAGS = [
   'Travel', 'Music', 'Movies', 'Reading', 'Sports',
@@ -30,6 +30,10 @@ interface ProfileData {
   biography: string;
   tags: string[];
   profileImage: string | null;
+  city: string;
+  latitude: number | null;
+  longitude: number | null;
+  geolocationConsent: boolean;
 }
 
 export default function CompleteProfilePage() {
@@ -45,13 +49,19 @@ export default function CompleteProfilePage() {
     sexualPreferences: user?.sexualPreferences || [],
     biography: user?.biography || '',
     tags: user?.tags || [],
-    profileImage: user?.images?.[0] || null
+    profileImage: user?.images?.[0] || null,
+    city: user?.location?.city || '',
+    latitude: user?.location?.latitude || null,
+    longitude: user?.location?.longitude || null,
+    geolocationConsent: user?.geolocationConsent || false
   });
 
   const [editingFile, setEditingFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   const goToStep = (newStep: number) => {
     if (isAnimating) return;
@@ -149,6 +159,65 @@ export default function CompleteProfilePage() {
     setProfileData(prev => ({ ...prev, profileImage: null }));
   };
 
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('La géolocalisation n\'est pas supportée par votre navigateur');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverse geocoding to get city name
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`
+          );
+          const data = await response.json();
+          const city = data.city || data.locality || 'Unknown';
+
+          setProfileData(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+            city,
+            geolocationConsent: true
+          }));
+          addToast('Localisation récupérée avec succès', 'success');
+        } catch (error) {
+          console.error('Error getting city name:', error);
+          setProfileData(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+            city: 'Unknown',
+            geolocationConsent: true
+          }));
+          addToast('Localisation récupérée, mais impossible de déterminer la ville', 'warning');
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setLocationError('Impossible d\'obtenir votre localisation. Veuillez renseigner votre ville manuellement.');
+        setIsGettingLocation(false);
+      }
+    );
+  };
+
+  const handleCityChange = (city: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      city,
+      geolocationConsent: false
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
       // Exclude profileImage from the request as it's already uploaded separately
@@ -173,6 +242,7 @@ export default function CompleteProfilePage() {
       case 3: return profileData.biography.length >= 10;
       case 4: return profileData.tags.length >= 1;
       case 5: return !!profileData.profileImage;
+      case 6: return !!profileData.city && profileData.city.trim().length > 0;
       default: return true;
     }
   };
@@ -360,6 +430,60 @@ export default function CompleteProfilePage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Step 6: Location */}
+          {step === 6 && (
+            <div className="text-white text-center">
+              <h1 className="text-3xl font-bold mb-2">Votre localisation</h1>
+              <p className="text-white/70 mb-8">Autorisez la géolocalisation ou renseignez votre ville</p>
+              
+              <div className="flex flex-col gap-4 mb-8">
+                <button
+                  onClick={getCurrentLocation}
+                  disabled={isGettingLocation}
+                  className="p-4 rounded-2xl bg-white/20 hover:bg-white/30 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  <HiLocationMarker className="w-6 h-6" />
+                  <span className="text-xl font-medium">
+                    {isGettingLocation ? 'Récupération de votre position...' : 'Autoriser la géolocalisation'}
+                  </span>
+                </button>
+
+                {locationError && (
+                  <p className="text-red-200 text-sm">{locationError}</p>
+                )}
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/30"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-transparent text-white/70">ou</span>
+                  </div>
+                </div>
+
+                <div>
+                  <TextInput
+                    type="text"
+                    placeholder="Entrez votre ville"
+                    value={profileData.city}
+                    onChange={(e) => handleCityChange(e.target.value)}
+                    className="bg-white/20 border-white/30 text-white placeholder-white/50 focus:border-white focus:ring-white rounded-2xl"
+                  />
+                </div>
+
+                {profileData.city && (
+                  <div className="mt-4 p-4 bg-white/10 rounded-2xl">
+                    <p className="text-white/80 text-sm">
+                      {profileData.geolocationConsent 
+                        ? `Ville détectée : ${profileData.city}` 
+                        : `Ville renseignée : ${profileData.city}`}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

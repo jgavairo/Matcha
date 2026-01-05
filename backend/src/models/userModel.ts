@@ -56,7 +56,7 @@ export const loginUser = async (user: LoginFormData) => {
 };
 
 export const updateUser = async (id: number, data: any) => {
-    const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId } = data;
+    const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = data;
     
     // Map gender string to ID
     const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
@@ -95,11 +95,12 @@ export const updateUser = async (id: number, data: any) => {
             longitude = COALESCE($9, longitude),
             city = COALESCE($10, city),
             birth_date = COALESCE($11, birth_date),
-            status_id = COALESCE($12, status_id)
-        WHERE id = $13
+            status_id = COALESCE($12, status_id),
+            geolocation_consent = COALESCE($13, geolocation_consent)
+        WHERE id = $14
         RETURNING *
     `;
-    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, statusId, id];
+    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent, id];
     
     try {
         const result = await pool.query(query, values);
@@ -238,6 +239,73 @@ export const getUserByEmail = async (email: string) => {
         return result.rows[0];
     } catch (error) {
         console.error('Error getting user by email:', error);
+        throw error;
+    }
+};
+
+export const validateProfileCompletion = async (userId: number): Promise<{ isValid: boolean; missingFields: string[] }> => {
+    const query = `
+        SELECT 
+            u.gender_id,
+            u.sexual_preferences,
+            u.biography,
+            u.city,
+            (
+                SELECT COUNT(*) FROM images WHERE user_id = u.id
+            ) as image_count,
+            (
+                SELECT COUNT(*) FROM user_interests WHERE user_id = u.id
+            ) as interest_count
+        FROM users u
+        WHERE u.id = $1
+    `;
+    
+    try {
+        const result = await pool.query(query, [userId]);
+        const user = result.rows[0];
+        
+        if (!user) {
+            return { isValid: false, missingFields: ['User not found'] };
+        }
+        
+        const missingFields: string[] = [];
+        
+        // Check gender
+        if (!user.gender_id) {
+            missingFields.push('gender');
+        }
+        
+        // Check sexual preferences
+        if (!user.sexual_preferences || (Array.isArray(user.sexual_preferences) && user.sexual_preferences.length === 0)) {
+            missingFields.push('sexualPreferences');
+        }
+        
+        // Check biography (min 10 characters)
+        if (!user.biography || user.biography.length < 10) {
+            missingFields.push('biography');
+        }
+        
+        // Check interests/tags (at least 1)
+        if (!user.interest_count || user.interest_count < 1) {
+            missingFields.push('tags');
+        }
+        
+        // Check images (at least 1)
+        if (!user.image_count || user.image_count < 1) {
+            missingFields.push('profileImage');
+        }
+        
+        // Check city
+        if (!user.city || user.city.trim().length === 0) {
+            missingFields.push('city');
+        }
+        
+        return {
+            isValid: missingFields.length === 0,
+            missingFields
+        };
+    } catch (error) {
+        console.error('Error validating profile completion:', error);
         throw error;
     }
 };

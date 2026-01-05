@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, updateUserStatus } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, updateUserStatus, validateProfileCompletion } from '../models/userModel';
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -9,7 +9,7 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId } = req.body;
+            const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = req.body;
 
             // Email validation if provided
             if (email) {
@@ -20,11 +20,28 @@ export class UserController {
             }
 
             // Update basic user info (only if fields are provided)
-            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId });
+            // Note: We don't update statusId here yet, we'll validate first
+            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, geolocationConsent });
 
             // Update interests if provided
             if (tags && tags.length > 0) {
                 await updateUserInterests(userId, tags);
+            }
+
+            // If trying to set statusId to 2 (profile completed), validate first
+            if (statusId === 2) {
+                const validation = await validateProfileCompletion(userId);
+                if (!validation.isValid) {
+                    return res.status(400).json({ 
+                        error: 'Profile is not complete',
+                        missingFields: validation.missingFields
+                    });
+                }
+                // Profile is valid, now update statusId
+                await updateUser(userId, { statusId: 2 });
+            } else if (statusId !== undefined) {
+                // Allow updating to other statuses without validation
+                await updateUser(userId, { statusId });
             }
 
             res.status(200).json({ message: 'Profile updated successfully' });
