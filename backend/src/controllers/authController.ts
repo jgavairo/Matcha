@@ -166,6 +166,7 @@ export class AuthController {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 email: user.email,
+                statusId: user.status_id,
                 age: user.age,
                 birthDate: user.birth_date ? new Date(user.birth_date).toISOString().split('T')[0] : "",
                 gender: user.gender,
@@ -244,7 +245,6 @@ export class AuthController {
         try {
             const user = await getUserByVerificationToken(token as string);
             
-            // Vérifier les erreurs de token
             if ('error' in user) {
                 if (user.error === 'invalid_token') {
                     res.status(400).json({ error: 'Invalid verification token' });
@@ -280,7 +280,6 @@ export class AuthController {
         try {
             const user = await getUserByVerificationToken(token);
             
-            // Vérifier les erreurs de token
             if ('error' in user) {
                 if (user.error === 'invalid_token') {
                     res.status(400).json({ error: 'Invalid or expired token' });
@@ -292,17 +291,14 @@ export class AuthController {
                 }
             }
 
-            // Mettre à jour le mot de passe
             await updatePassword(user.id, newPassword);
             
-            // Si l'utilisateur n'était pas vérifié, le vérifier automatiquement
             if (user.status === 0) {
                 await updateUserStatus(user.id, 1);
                 res.status(200).json({ message: 'Password reset successfully. Your email has also been verified!' });
                 return;
             }
             
-            // Invalider le token (status reste le même, mais token est supprimé)
             await updateUserStatus(user.id, user.status);
             
             res.status(200).json({ message: 'Password reset successfully' });

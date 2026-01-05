@@ -63,7 +63,6 @@ const ResetPasswordPage = () => {
         }
     };
 
-    // Afficher un spinner pendant la vérification du token
     if (status === 'checking') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
@@ -119,7 +118,6 @@ const ResetPasswordPage = () => {
 
             {status === 'success' && (
                 <div className="text-center">
-                    <div className="text-green-500 text-6xl mb-4">✓</div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Password Reset!
                     </h1>
@@ -135,7 +133,6 @@ const ResetPasswordPage = () => {
 
             {status === 'error' && (
                 <div className="text-center">
-                    <div className="text-red-500 text-6xl mb-4">✗</div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Reset Failed
                     </h1>

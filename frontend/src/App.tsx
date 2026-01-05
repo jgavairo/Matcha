@@ -3,6 +3,8 @@ import { NotificationProvider } from '@context/NotificationContext';
 import { useAuth } from '@context/AuthContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
 import MainLayout from '@layouts/MainLayout';
+import AppLayout from '@layouts/AppLayout';
+import SimpleLayout from '@layouts/SimpleLayout';
 import HomePage from '@pages/HomePage';
 import RegisterPage from '@pages/RegisterPage';
 import ForgotPasswordPage from '@pages/ForgotPasswordPage';
@@ -11,14 +13,16 @@ import DiscoverPage from '@pages/DiscoverPage';
 import SearchPage from '@pages/SearchPage';
 import ProfilePage from '@pages/ProfilePage';
 import ChatPage from '@pages/ChatPage';
-import AppLayout from '@layouts/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute';
 import UnauthenticatedRoute from '@components/UnauthenticatedRoute';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from '@pages/VerifyEmailPage';
+import ResetPasswordPage from '@pages/ResetPasswordPage';
+import CompleteProfilePage from '@pages/CompleteProfilePage';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  const isProfileComplete = user?.statusId === 2;
 
   return (
     <NotificationProvider>
@@ -30,6 +34,9 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/matches" element={<div className="text-center py-10">Matches Page (Todo)</div>} />
             <Route path="/chat" element={<ChatPage />} />
+          </Route>
+          <Route element={<SimpleLayout />}>
+            <Route path="/complete-profile" element={<CompleteProfilePage />} />
           </Route>
         </Route>
 
@@ -45,8 +52,16 @@ function App() {
             </Route>
         </Route>
 
-        <Route path="/" element={isAuthenticated ? <AppLayout /> : <MainLayout />}>
-          <Route index element={isAuthenticated ? <DiscoverPage /> : <HomePage />} />
+        <Route path="/" element={
+          isAuthenticated 
+            ? (isProfileComplete ? <AppLayout /> : <SimpleLayout />)
+            : <MainLayout />
+        }>
+          <Route index element={
+            isAuthenticated 
+              ? (isProfileComplete ? <DiscoverPage /> : <CompleteProfilePage />)
+              : <HomePage />
+          } />
         </Route>
       </Routes>
     </NotificationProvider>

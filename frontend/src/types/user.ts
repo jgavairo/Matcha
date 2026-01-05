@@ -31,6 +31,7 @@ export interface UserProfile extends UserSummary {
 
 export interface CurrentUser extends UserProfile {
   email: string;
+  statusId: number; // 0: NEW, 1: VERIFIED, 2: COMPLETED
   likedBy: UserSummary[];
   viewedBy: UserSummary[];
   matches: UserSummary[];
