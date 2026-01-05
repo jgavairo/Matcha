@@ -34,9 +34,9 @@ const LoginForm = () => {
         addToast('Connection successful', 'success');
         navigate('/');
       }
-    } catch (error) {
-      console.error('Error logging in user');
-      addToast('Wrong username or password', 'error');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Wrong username or password';
+      addToast(errorMessage, 'error');
     }
   };
 

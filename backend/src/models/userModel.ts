@@ -1,18 +1,20 @@
 import { LoginFormData, RegisterFormData } from '../types/forms';
 import { pool } from '../config/database';
 import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 export const createUser = async (user: RegisterFormData) => {
     const query = `
-    INSERT INTO users (email, username, first_name, last_name, birth_date, password)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO users (email, username, first_name, last_name, birth_date, password, verification_token)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     `;
     const hashedPassword = await bcrypt.hash(user.password, 10);
-    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword];
+    const verificationToken = uuidv4();
+    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword, verificationToken];
     try {
         const result = await pool.query(query, values);
-        return result.rows[0];
+        return { id: result.rows[0].id, email: user.email, verificationToken: verificationToken };
     } catch (error) {
         console.error('Error creating user:', error);
         throw error;
@@ -22,7 +24,7 @@ export const createUser = async (user: RegisterFormData) => {
 export const loginUser = async (user: LoginFormData) => {
     try {
     const query = `
-    SELECT id, username, password FROM users WHERE username = $1
+    SELECT id, username, password, status_id FROM users WHERE username = $1
     `;
         const values = [user.username];
         const result = await pool.query(query, values);
@@ -34,6 +36,10 @@ export const loginUser = async (user: LoginFormData) => {
         if (!isValidPassword) {
             console.error('Invalid password');
             return null;
+        }
+        if (result.rows[0].status_id == 0) {
+            console.error('User not verified');
+            return { id: result.rows[0].id, status: 'not_verified' };
         }
         return { id: result.rows[0].id };
     } catch (error) {
@@ -717,4 +723,35 @@ export const getMatchedUsers = async (userId: number) => {
     `;
     const result = await pool.query(query, [userId]);
     return result.rows;
+};
+
+export const getUserByVerificationToken = async (token: string) => {
+    const query = `
+    SELECT id, email, status_id FROM users WHERE verification_token = $1
+    `;
+    const values = [token];
+    try {
+        const result = await pool.query(query, values);
+        if (result.rows.length === 0) {
+            console.error('User not found');
+            return null;
+        }
+        return { id: result.rows[0].id, email: result.rows[0].email, status: result.rows[0].status_id };
+    } catch (error) {
+        console.error('Error getting user by verification token:', error);
+        throw error;
+    }
+};
+
+export const updateUserStatus = async (userId: number, status: number) => {
+    const query = `
+    UPDATE users SET status_id = $2 WHERE id = $1
+    `;
+    const values = [userId, status];
+    try {
+        await pool.query(query, values);
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        throw error;
+    }
 };
