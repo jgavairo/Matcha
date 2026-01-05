@@ -56,37 +56,50 @@ export const loginUser = async (user: LoginFormData) => {
 };
 
 export const updateUser = async (id: number, data: any) => {
-    const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate } = data;
+    const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId } = data;
     
     // Map gender string to ID
     const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
-    const genderId = genderMap[gender] || null;
+    const genderId = gender ? (genderMap[gender] || null) : null;
 
     // Map sexual preferences string to IDs array
-    let targetGenderIds: number[] = [];
+    let targetGenderIds: number[] | null = null;
     
-    if (Array.isArray(sexualPreferences)) {
-        targetGenderIds = sexualPreferences.map((pref: string) => genderMap[pref]).filter((id: number) => id);
-    } else if (gender === 'male') {
-        if (sexualPreferences === 'hetero') targetGenderIds = [2];
-        else if (sexualPreferences === 'homo') targetGenderIds = [1];
-        else if (sexualPreferences === 'bi') targetGenderIds = [1, 2];
-    } else if (gender === 'female') {
-        if (sexualPreferences === 'hetero') targetGenderIds = [1];
-        else if (sexualPreferences === 'homo') targetGenderIds = [2];
-        else if (sexualPreferences === 'bi') targetGenderIds = [1, 2];
-    } else {
-        // For 'other', let's assume bi for now or handle differently
-        targetGenderIds = [1, 2, 3];
+    if (sexualPreferences !== undefined) {
+        if (Array.isArray(sexualPreferences) && sexualPreferences.length > 0) {
+            targetGenderIds = sexualPreferences.map((pref: string) => genderMap[pref]).filter((id: number) => id);
+        } else if (gender === 'male') {
+            if (sexualPreferences === 'hetero') targetGenderIds = [2];
+            else if (sexualPreferences === 'homo') targetGenderIds = [1];
+            else if (sexualPreferences === 'bi') targetGenderIds = [1, 2];
+        } else if (gender === 'female') {
+            if (sexualPreferences === 'hetero') targetGenderIds = [1];
+            else if (sexualPreferences === 'homo') targetGenderIds = [2];
+            else if (sexualPreferences === 'bi') targetGenderIds = [1, 2];
+        } else {
+            // For 'other', let's assume bi for now or handle differently
+            targetGenderIds = [1, 2, 3];
+        }
     }
 
     const query = `
         UPDATE users 
-        SET username = $1, first_name = $2, last_name = $3, email = $4, gender_id = $5, sexual_preferences = $6, biography = $7, latitude = $8, longitude = $9, city = $10, birth_date = $11
-        WHERE id = $12
+        SET username = COALESCE($1, username),
+            first_name = COALESCE($2, first_name),
+            last_name = COALESCE($3, last_name),
+            email = COALESCE($4, email),
+            gender_id = COALESCE($5, gender_id),
+            sexual_preferences = COALESCE($6, sexual_preferences),
+            biography = COALESCE($7, biography),
+            latitude = COALESCE($8, latitude),
+            longitude = COALESCE($9, longitude),
+            city = COALESCE($10, city),
+            birth_date = COALESCE($11, birth_date),
+            status_id = COALESCE($12, status_id)
+        WHERE id = $13
         RETURNING *
     `;
-    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, id];
+    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, statusId, id];
     
     try {
         const result = await pool.query(query, values);

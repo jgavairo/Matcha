@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, updateUserStatus } from '../models/userModel';
 
 export class UserController {
     public updateProfile = async (req: Request, res: Response) => {
@@ -9,24 +9,21 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate } = req.body;
+            const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId } = req.body;
 
-            // Basic validation
-            if (!username || !firstName || !lastName || !email || !gender || !sexualPreferences) {
-                return res.status(400).json({ error: 'Missing required fields' });
+            // Email validation if provided
+            if (email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    return res.status(400).json({ error: 'Invalid email format' });
+                }
             }
 
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return res.status(400).json({ error: 'Invalid email format' });
-            }
-
-            // Update basic user info
-            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate });
+            // Update basic user info (only if fields are provided)
+            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId });
 
             // Update interests if provided
-            if (tags) {
+            if (tags && tags.length > 0) {
                 await updateUserInterests(userId, tags);
             }
 
