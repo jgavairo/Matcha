@@ -4,7 +4,6 @@ import { Button, Textarea, TextInput } from 'flowbite-react';
 import { useAuth } from '@context/AuthContext';
 import { useNotification } from '@context/NotificationContext';
 import { api } from '@services/api';
-import ImageEditor from '@features/profile/components/ImageEditor';
 import { HiUpload, HiX, HiLocationMarker } from 'react-icons/hi';
 
 const AVAILABLE_TAGS = [
@@ -56,7 +55,6 @@ export default function CompleteProfilePage() {
     geolocationConsent: user?.geolocationConsent || false
   });
 
-  const [editingFile, setEditingFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -107,9 +105,22 @@ export default function CompleteProfilePage() {
     }));
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     if (file && file.type.startsWith('image/')) {
-      setEditingFile(file);
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const response = await api.post('/users/photos', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        // Assuming response.data is the image object with url
+        const imageUrl = response.data.url || response.data;
+        setProfileData(prev => ({ ...prev, profileImage: imageUrl }));
+        addToast('Photo de profil uploadée avec succès', 'success');
+      } catch (error) {
+        console.error('Failed to upload photo', error);
+        addToast('Échec de l\'upload de la photo', 'error');
+      }
     }
   };
 
@@ -137,31 +148,13 @@ export default function CompleteProfilePage() {
     setIsDragging(false);
   };
 
-  const handleSaveEdited = async (file: File) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-      const response = await api.post('/users/photos', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      // Assuming response.data is the image object with url
-      const imageUrl = response.data.url || response.data;
-      setProfileData(prev => ({ ...prev, profileImage: imageUrl }));
-      setEditingFile(null);
-      addToast('Profile picture uploaded successfully', 'success');
-    } catch (error) {
-      console.error('Failed to upload photo', error);
-      addToast('Failed to upload photo', 'error');
-    }
-  };
-
   const handleRemovePhoto = () => {
     setProfileData(prev => ({ ...prev, profileImage: null }));
   };
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setLocationError('La géolocalisation n\'est pas supportée par votre navigateur');
+      setLocationError('Localisation not supported by your browser');
       return;
     }
 
@@ -187,7 +180,7 @@ export default function CompleteProfilePage() {
             city,
             geolocationConsent: true
           }));
-          addToast('Localisation récupérée avec succès', 'success');
+          addToast('Location retrieved successfully', 'success');
         } catch (error) {
           console.error('Error getting city name:', error);
           setProfileData(prev => ({
@@ -197,14 +190,14 @@ export default function CompleteProfilePage() {
             city: 'Unknown',
             geolocationConsent: true
           }));
-          addToast('Localisation récupérée, mais impossible de déterminer la ville', 'warning');
+          addToast('Location retrieved, but unable to determine the city', 'warning');
         } finally {
           setIsGettingLocation(false);
         }
       },
       (error) => {
         console.error('Error getting location:', error);
-        setLocationError('Impossible d\'obtenir votre localisation. Veuillez renseigner votre ville manuellement.');
+        setLocationError('Unable to retrieve your location. Please enter your city manually.');
         setIsGettingLocation(false);
       }
     );
@@ -254,7 +247,7 @@ export default function CompleteProfilePage() {
       <div className="absolute top-0 left-0 right-0 h-2 bg-white/20 z-10">
         <div 
           className="h-full bg-white transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+          style={{ width: `${((step) / totalSteps) * 100}%` }}
         />
       </div>
 
@@ -436,8 +429,8 @@ export default function CompleteProfilePage() {
           {/* Step 6: Location */}
           {step === 6 && (
             <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">Votre localisation</h1>
-              <p className="text-white/70 mb-8">Autorisez la géolocalisation ou renseignez votre ville</p>
+              <h1 className="text-3xl font-bold mb-2">Your location</h1>
+              <p className="text-white/70 mb-8">Allow geolocation or enter your city</p>
               
               <div className="flex flex-col gap-4 mb-8">
                 <button
@@ -447,7 +440,7 @@ export default function CompleteProfilePage() {
                 >
                   <HiLocationMarker className="w-6 h-6" />
                   <span className="text-xl font-medium">
-                    {isGettingLocation ? 'Récupération de votre position...' : 'Autoriser la géolocalisation'}
+                    {isGettingLocation ? 'Retrieving your position...' : 'Allow geolocation'}
                   </span>
                 </button>
 
@@ -456,11 +449,8 @@ export default function CompleteProfilePage() {
                 )}
 
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/30"></div>
-                  </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-transparent text-white/70">ou</span>
+                    <span className="px-4 bg-transparent text-white/70">or</span>
                   </div>
                 </div>
 
@@ -488,14 +478,6 @@ export default function CompleteProfilePage() {
           )}
         </div>
       </div>
-
-      {/* Image Editor Modal */}
-      <ImageEditor 
-        file={editingFile} 
-        isOpen={!!editingFile} 
-        onClose={() => setEditingFile(null)} 
-        onSave={handleSaveEdited} 
-      />
 
       {/* Navigation buttons */}
       <div className="absolute bottom-8 left-0 right-0 px-6 z-10">
