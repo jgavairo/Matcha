@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '../../../hooks/useFileDrop';
 
+import ChatBubble from './ChatBubble';
+
 interface ChatWindowProps {
     conversation: Conversation | null;
     currentUserId: number;
@@ -146,31 +148,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                         );
                     }
 
-                    const isMe = msg.sender_id === currentUserId;
-                    const avatarUrl = `https://ui-avatars.com/api/?name=${isMe ? 'Me' : otherUsername}&background=random`;
-                    
                     return (
-                        <div key={msg.id} className={`flex items-start gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}>
-                            <img className="w-8 h-8 rounded-full" src={avatarUrl} alt="User avatar" />
-                            <div className="flex flex-col gap-1 w-full max-w-[320px]">
-                                <div className={`flex items-center space-x-2 rtl:space-x-reverse ${isMe ? 'justify-end' : ''}`}>
-                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {isMe ? 'You' : otherUsername}
-                                    </span>
-                                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                                <div className={`flex flex-col leading-1.5 p-4 border-gray-200 ${isMe ? 'bg-blue-100 dark:bg-blue-700 rounded-s-xl rounded-ee-xl' : 'bg-gray-100 dark:bg-gray-700 rounded-e-xl rounded-es-xl'}`}>
-                                    <p className="text-sm font-normal text-gray-900 dark:text-white">
-                                        {msg.content}
-                                    </p>
-                                </div>
-                                <span className={`text-sm font-normal text-gray-500 dark:text-gray-400 ${isMe ? 'text-right' : ''}`}>
-                                    {msg.is_read ? 'Read' : 'Delivered'}
-                                </span>
-                            </div>
-                        </div>
+                        <ChatBubble 
+                            key={msg.id}
+                            message={msg}
+                            isMe={msg.sender_id === currentUserId}
+                            otherUsername={otherUsername}
+                            onCopy={(content) => navigator.clipboard.writeText(content)}
+                            onReply={(msg) => setNewMessage(`Replying to: "${msg.content.substring(0, 20)}..." `)}
+                            onDelete={(id) => console.log('Delete message', id)}
+                        />
                     );
                 })}
                 <div ref={messagesEndRef} />
