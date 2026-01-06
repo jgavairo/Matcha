@@ -39,7 +39,17 @@ export const chatService = {
         const response = await api.post(`/chat/conversations/${conversationId}/messages`, { content });
         return response.data;
     },
-
+    uploadFiles: async (files: File[]): Promise<string[]> => {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        
+        const response = await api.post('/chat/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data.urls;
+    },
     markAsRead: async (conversationId: number): Promise<void> => {
         await api.post(`/chat/conversations/${conversationId}/read`);
     },
