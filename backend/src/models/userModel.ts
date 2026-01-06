@@ -1,54 +1,58 @@
 import { LoginFormData, RegisterFormData } from '../types/forms';
 import { pool } from '../config/database';
+import { db } from '../utils/db';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createUser = async (user: RegisterFormData) => {
-    const query = `
-    INSERT INTO users (email, username, first_name, last_name, birth_date, password, verification_token, verification_token_expires)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
-    `;
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const verificationToken = uuidv4();
     const verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
-    const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword, verificationToken, verificationTokenExpires];
-    try {
-        const result = await pool.query(query, values);
-        return { id: result.rows[0].id, email: user.email, verificationToken: verificationToken };
-    } catch (error) {
-        console.error('Error creating user:', error);
-        throw error;
-    }
+
+    const result = await db.insert('users', {
+        email: user.email,
+        username: user.username,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        birth_date: user.birthDate,
+        password: hashedPassword,
+        verification_token: verificationToken,
+        verification_token_expires: verificationTokenExpires
+    });
+
+    return { id: result.id, email: user.email, verificationToken: verificationToken };
 };
 
 export const loginUser = async (user: LoginFormData) => {
     try {
-    const query = `
-    SELECT id, username, email, password, status_id, verification_token_expires FROM users WHERE username = $1
-    `;
-        const values = [user.username];
-        const result = await pool.query(query, values);
-        if (result.rows.length === 0) {
+        const result = await db.findOne(
+            'users', 
+            { username: user.username }, 
+            ['id', 'username', 'email', 'password', 'status_id', 'verification_token_expires']
+        );
+
+        if (!result) {
             console.error('Invalid username');
             return null;
         }
-        const isValidPassword = await bcrypt.compare(user.password, result.rows[0].password);
+
+        const isValidPassword = await bcrypt.compare(user.password, result.password);
         if (!isValidPassword) {
             console.error('Invalid password');
             return null;
         }
-        if (result.rows[0].status_id == 0) {
-            const tokenExpires = result.rows[0].verification_token_expires;
+
+        if (result.status_id == 0) {
+            const tokenExpires = result.verification_token_expires;
             const isTokenExpired = tokenExpires ? new Date(tokenExpires) < new Date() : true;
             return { 
-                id: result.rows[0].id, 
-                email: result.rows[0].email,
+                id: result.id, 
+                email: result.email,
                 status: 'not_verified',
                 tokenExpired: isTokenExpired
             };
         }
-        return { id: result.rows[0].id };
+        return { id: result.id };
     } catch (error) {
         console.error('Error logging in user:', error);
         throw error;
@@ -82,33 +86,23 @@ export const updateUser = async (id: number, data: any) => {
         }
     }
 
-    const query = `
-        UPDATE users 
-        SET username = COALESCE($1, username),
-            first_name = COALESCE($2, first_name),
-            last_name = COALESCE($3, last_name),
-            email = COALESCE($4, email),
-            gender_id = COALESCE($5, gender_id),
-            sexual_preferences = COALESCE($6, sexual_preferences),
-            biography = COALESCE($7, biography),
-            latitude = COALESCE($8, latitude),
-            longitude = COALESCE($9, longitude),
-            city = COALESCE($10, city),
-            birth_date = COALESCE($11, birth_date),
-            status_id = COALESCE($12, status_id),
-            geolocation_consent = COALESCE($13, geolocation_consent)
-        WHERE id = $14
-        RETURNING *
-    `;
-    const values = [username, firstName, lastName, email, genderId, targetGenderIds, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent, id];
-    
-    try {
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    } catch (error) {
-        console.error('Error updating user:', error);
-        throw error;
-    }
+    const updateData = {
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        gender_id: genderId,
+        sexual_preferences: targetGenderIds,
+        biography,
+        latitude,
+        longitude,
+        city,
+        birth_date: birthDate,
+        status_id: statusId,
+        geolocation_consent: geolocationConsent
+    };
+
+    return await db.update('users', id, updateData);
 };
 
 export const updateUserInterests = async (userId: number, tags: string[]) => {
@@ -148,8 +142,7 @@ export const updateUserInterests = async (userId: number, tags: string[]) => {
 
 export const updatePassword = async (userId: number, newPassword: string) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const query = 'UPDATE users SET password = $1 WHERE id = $2';
-    await pool.query(query, [hashedPassword, userId]);
+    await db.update('users', userId, { password: hashedPassword });
 };
 
 export const addImage = async (userId: number, filename: string) => {
@@ -246,15 +239,7 @@ export const getUserById = async (id: number, currentUserId?: number) => {
 };
 
 export const getUserByEmail = async (email: string) => {
-    const query = 'SELECT id FROM users WHERE email = $1';
-    const values = [email];
-    try {
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    } catch (error) {
-        console.error('Error getting user by email:', error);
-        throw error;
-    }
+    return await db.findOne('users', { email }, ['id']);
 };
 
 export const validateProfileCompletion = async (userId: number): Promise<{ isValid: boolean; missingFields: string[] }> => {
@@ -325,8 +310,7 @@ export const validateProfileCompletion = async (userId: number): Promise<{ isVal
 };
 
 export const updateGeolocationConsent = async (userId: number, consent: boolean) => {
-    const query = 'UPDATE users SET geolocation_consent = $1 WHERE id = $2';
-    await pool.query(query, [consent, userId]);
+    await db.update('users', userId, { geolocation_consent: consent });
 };
 
 export const searchUsers = async (currentUserId: number, filters: any, page: number, limit: number) => {
@@ -907,21 +891,23 @@ export const getMatchedUsers = async (userId: number) => {
 };
 
 export const getUserByVerificationToken = async (token: string) => {
-    const query = `
-    SELECT id, email, status_id, verification_token_expires FROM users WHERE verification_token = $1
-    `;
-    const values = [token];
     try {
-        const result = await pool.query(query, values);
-        if (result.rows.length === 0) {
+        const user = await db.findOne(
+            'users', 
+            { verification_token: token },
+            ['id', 'email', 'status_id', 'verification_token_expires']
+        );
+        
+        if (!user) {
             return { error: 'invalid_token' };
         }
+        
         // Vérifier si le token a expiré
-        const expiresAt = new Date(result.rows[0].verification_token_expires);
+        const expiresAt = new Date(user.verification_token_expires);
         if (expiresAt < new Date()) {
             return { error: 'token_expired' };
         }
-        return { id: result.rows[0].id, email: result.rows[0].email, status: result.rows[0].status_id };
+        return { id: user.id, email: user.email, status: user.status_id };
     } catch (error) {
         console.error('Error getting user by verification token:', error);
         throw error;
@@ -929,12 +915,11 @@ export const getUserByVerificationToken = async (token: string) => {
 };
 
 export const updateUserStatus = async (userId: number, status: number) => {
-    const query = `
-    UPDATE users SET status_id = $2, verification_token = NULL WHERE id = $1
-    `;
-    const values = [userId, status];
     try {
-        await pool.query(query, values);
+        await db.update('users', userId, { 
+            status_id: status, 
+            verification_token: null 
+        });
         return true;
     } catch (error) {
         console.error('Error updating user status:', error);
@@ -945,16 +930,12 @@ export const updateUserStatus = async (userId: number, status: number) => {
 export const generateVerificationToken = async (userId: number, expiresInMinutes: number = 15) => {
     const newToken = uuidv4();
     const newExpires = new Date(Date.now() + expiresInMinutes * 60 * 1000);
-    const query = `
-    UPDATE users SET verification_token = $2, verification_token_expires = $3 WHERE id = $1
-    RETURNING email
-    `;
-    const values = [userId, newToken, newExpires];
-    try {
-        const result = await pool.query(query, values);
-        return { token: newToken, email: result.rows[0].email, expires: newExpires };
-    } catch (error) {
-        console.error('Error generating verification token:', error);
-        throw error;
-    }
+    
+    // We need the email back, db.update returns the updated row by default
+    const result = await db.update('users', userId, {
+        verification_token: newToken,
+        verification_token_expires: newExpires
+    });
+    
+    return { token: newToken, email: result.email, expires: newExpires };
 };
