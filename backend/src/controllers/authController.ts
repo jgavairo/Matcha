@@ -7,12 +7,12 @@ import {
     getUserByEmail,
     getLikedByUsers,
     getViewedByUsers,
-    getMatchedUsers,
     getUserByVerificationToken,
     updateUserStatus,
     generateVerificationToken,
     updatePassword
 } from '../models/userModel';
+import { getMatchedUsers } from '../models/matchModel';
 import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
 import path from 'path';

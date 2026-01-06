@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getMatchedUsers, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
+import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
+import { getMatchedUsers } from '../models/matchModel';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
