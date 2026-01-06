@@ -142,3 +142,17 @@ export const getMatchedUsers = async (userId: number) => {
     const result = await db.query(query, [userId]);
     return result.rows;
 };
+
+export const getMatchedUserIds = async (userId: number): Promise<number[]> => {
+    const query = `
+        SELECT 
+            CASE 
+                WHEN user_id_1 = $1 THEN user_id_2 
+                ELSE user_id_1 
+            END as partner_id
+        FROM matches 
+        WHERE (user_id_1 = $1 OR user_id_2 = $1) AND is_active = TRUE
+    `;
+    const result = await db.query(query, [userId]);
+    return result.rows.map((row: any) => row.partner_id);
+};

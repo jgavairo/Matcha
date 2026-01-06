@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
+import { getIO } from '../config/socket';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -182,6 +183,20 @@ export class UserController {
             }
 
             await recordView(viewerId, viewedId);
+
+            // Notify viewed user
+            const viewer = await getUserById(viewerId);
+            if (viewer) {
+                const io = getIO();
+                io.to(`user_${viewedId}`).emit('notification', {
+                    type: 'visit',
+                    message: `${viewer.username} visited your profile.`,
+                    senderId: viewerId,
+                    senderUsername: viewer.username,
+                    avatar: viewer.images[0]
+                });
+            }
+
             res.status(200).json({ message: 'View recorded' });
         } catch (error) {
             console.error('Error recording view:', error);

@@ -7,6 +7,10 @@ export interface Conversation {
     user2_id: number;
     user1_username: string;
     user2_username: string;
+    user1_is_online: boolean;
+    user2_is_online: boolean;
+    user1_last_connection: string;
+    user2_last_connection: string;
     last_message: string;
     last_message_date: string;
     unread_count: number;

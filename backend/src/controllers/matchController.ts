@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { searchUsers, likeUser, dislikeUser, unlikeUser } from '../models/userModel';
+import { searchUsers, likeUser, dislikeUser, unlikeUser, getUserById } from '../models/userModel';
 import { getIO } from '../config/socket';
 
 export class MatchController {
@@ -12,14 +12,48 @@ export class MatchController {
             if (isNaN(likedId)) return res.status(400).json({ error: 'Invalid user ID' });
 
             const result = await likeUser(likerId, likedId);
+            const liker = await getUserById(likerId);
 
             if (result.isMatch && result.message) {
                 const io = getIO();
                 io.to(`user_${likerId}`).emit('chat_message', result.message);
                 io.to(`user_${likedId}`).emit('chat_message', result.message);
+                
                 if (result.conversationId) {
                     io.to(`user_${likerId}`).emit('conversation_status_update', { conversationId: result.conversationId, is_active: true });
                     io.to(`user_${likedId}`).emit('conversation_status_update', { conversationId: result.conversationId, is_active: true });
+                }
+
+                // Match Notifications
+                const likedUser = await getUserById(likedId);
+                
+                io.to(`user_${likerId}`).emit('notification', {
+                    type: 'match',
+                    message: `You matched with ${likedUser.username}!`,
+                    senderId: likedId,
+                    senderUsername: likedUser.username,
+                    avatar: likedUser.images[0]
+                });
+
+                io.to(`user_${likedId}`).emit('notification', {
+                    type: 'match',
+                    message: `You matched with ${liker.username}!`,
+                    senderId: likerId,
+                    senderUsername: liker.username,
+                    avatar: liker.images[0]
+                });
+
+            } else {
+                // Like Notification
+                if (liker) {
+                    const io = getIO();
+                    io.to(`user_${likedId}`).emit('notification', {
+                        type: 'like',
+                        message: `${liker.username} liked your profile.`,
+                        senderId: likerId,
+                        senderUsername: liker.username,
+                        avatar: liker.images[0]
+                    });
                 }
             }
 
@@ -64,6 +98,7 @@ export class MatchController {
             if (isNaN(likedId)) return res.status(400).json({ error: 'Invalid user ID' });
 
             const result = await unlikeUser(likerId, likedId);
+            const liker = await getUserById(likerId);
 
             if (result.message && result.conversationId) {
                 const io = getIO();
@@ -71,6 +106,18 @@ export class MatchController {
                 io.to(`user_${likedId}`).emit('chat_message', result.message);
                 io.to(`user_${likerId}`).emit('conversation_status_update', { conversationId: result.conversationId, is_active: false });
                 io.to(`user_${likedId}`).emit('conversation_status_update', { conversationId: result.conversationId, is_active: false });
+            }
+
+            // Unlike Notification
+            if (liker) {
+                const io = getIO();
+                io.to(`user_${likedId}`).emit('notification', {
+                    type: 'unlike',
+                    message: `${liker.username} unliked you.`,
+                    senderId: likerId,
+                    senderUsername: liker.username,
+                    avatar: liker.images[0]
+                });
             }
 
             res.status(200).json({ message: 'User unliked' });

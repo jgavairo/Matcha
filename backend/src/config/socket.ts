@@ -3,6 +3,8 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
+import { db } from '../utils/db';
+import * as matchModel from '../models/matchModel';
 
 let io: Server;
 
@@ -41,16 +43,42 @@ export const initializeSocket = (httpServer: HttpServer) => {
     next();
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     // @ts-ignore
     const userId = socket.userId;
     console.log(`User connected: ${userId} (${socket.id})`);
     
+    // Update user status to online
+    try {
+        await db.query('UPDATE users SET is_online = true WHERE id = $1', [userId]);
+        
+        // Notify only engaged users
+        const friendIds = await matchModel.getMatchedUserIds(userId);
+        friendIds.forEach(friendId => {
+            io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: true });
+        });
+    } catch (error) {
+        console.error(`Failed to update user status for ${userId}`, error);
+    }
+
     socket.join(`user_${userId}`);
     console.log(`User ${userId} joined room user_${userId}`);
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       console.log(`User disconnected: ${userId}`);
+      // Update user status to offline
+      try {
+          const now = new Date();
+          await db.query('UPDATE users SET is_online = false, last_connection = $1 WHERE id = $2', [now, userId]);
+          
+          // Notify only engaged users
+          const friendIds = await matchModel.getMatchedUserIds(userId);
+          friendIds.forEach(friendId => {
+              io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: false, lastConnection: now });
+          });
+      } catch (error) {
+          console.error(`Failed to update user status for ${userId}`, error);
+      }
     });
 
     // WebRTC Signaling

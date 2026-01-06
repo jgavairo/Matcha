@@ -22,6 +22,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [newMessage, setNewMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [otherUserStatus, setOtherUserStatus] = useState<{ isOnline: boolean; lastConnection: string }>({ isOnline: false, lastConnection: '' });
     
     // Call Context
     const { callUser } = useCall();
@@ -39,6 +40,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
         if (conversation) {
             loadMessages();
             chatService.markAsRead(conversation.id);
+            
+            // Set initial status
+            const isUser1 = conversation.user1_id === currentUserId;
+            setOtherUserStatus({
+                isOnline: isUser1 ? conversation.user2_is_online : conversation.user1_is_online,
+                lastConnection: isUser1 ? conversation.user2_last_connection : conversation.user1_last_connection
+            });
         } else {
             setMessages([]);
         }
@@ -66,13 +74,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 }));
             }
         };
+        
+        const handleStatusChange = (data: { userId: number, isOnline: boolean, lastConnection: string }) => {
+            const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
+            if (data.userId === otherUserId) {
+                setOtherUserStatus(prev => ({
+                    ...prev,
+                    isOnline: data.isOnline,
+                    lastConnection: data.lastConnection || prev.lastConnection
+                }));
+            }
+        };
 
         socketService.on('chat_message', handleMessage);
         socketService.on('messages_read', handleMessagesRead);
+        socketService.on('user_status_change', handleStatusChange);
 
         return () => {
             socketService.off('chat_message', handleMessage);
             socketService.off('messages_read', handleMessagesRead);
+            socketService.off('user_status_change', handleStatusChange);
         };
     }, [conversation, socketService, currentUserId]);
 
@@ -203,6 +224,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 currentUserId={currentUserId}
                 onCallUser={() => callUser(conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id, otherUsername, "")}
                 onClose={onClose}
+                isOnline={otherUserStatus.isOnline}
+                lastConnection={otherUserStatus.lastConnection}
             />
 
             {/* Messages */}

@@ -50,6 +50,8 @@ CREATE TABLE users (
     longitude FLOAT,
     city VARCHAR(100),
     geolocation_consent BOOLEAN DEFAULT FALSE,
+    is_online BOOLEAN DEFAULT FALSE,
+    last_connection TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
