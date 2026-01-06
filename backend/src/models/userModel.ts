@@ -387,6 +387,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             SELECT 
                 u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
                 u.latitude, u.longitude, u.city,
+                u.gender_id, -- Needed for filtering
+                u.sexual_preferences as raw_sexual_preferences, -- Needed for filtering
                 (
                     SELECT COALESCE(array_agg(g2.gender), '{}')
                     FROM unnest(u.sexual_preferences) as pref_id
@@ -444,17 +446,6 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 SELECT 1 FROM dislikes WHERE disliker_id = $4 AND disliked_id = u.id
             )
             ` : ''}
-            
-            ${mode === 'discover' ? `
-            -- 1. Target gender must be in my preferences
-            AND u.gender_id = ANY($5)
-            -- 2. My gender must be in target's preferences (or target has no prefs = bisexual)
-            AND (
-                cardinality(u.sexual_preferences) = 0 
-                OR 
-                $6 = ANY(u.sexual_preferences)
-            )
-            ` : ''}
             GROUP BY u.id, g.gender
         )
         SELECT *, count(*) OVER() as total_count
@@ -463,10 +454,24 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     `;
 
     const values: any[] = [centerLat, centerLon, userTags, currentUserId];
+    let paramIndex = 5;
+
+    // Apply strict availability filters for Discover mode
     if (mode === 'discover') {
-        values.push(myPrefs, myGenderId);
+        // 1. Target gender must be in my preferences
+        query += ` AND gender_id = ANY($${paramIndex})`;
+        values.push(myPrefs);
+        paramIndex++;
+
+        // 2. My gender must be in target's preferences (or target has no prefs = bisexual)
+        query += ` AND (
+            cardinality(raw_sexual_preferences) = 0 
+            OR 
+            $${paramIndex} = ANY(raw_sexual_preferences)
+        )`;
+        values.push(myGenderId);
+        paramIndex++;
     }
-    let paramIndex = values.length + 1;
 
     // Apply filters
     if (ageRange) {
