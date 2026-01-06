@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '../../../hooks/useFileDrop';
 import { useSocket } from '@context/SocketContext';
+import { useCall } from '@context/CallContext';
 import { HiPhone } from 'react-icons/hi';
 
 import ChatBubble from './ChatBubble';
-import CallModal from './CallModal';
+// CallModal removed
 
 interface ChatWindowProps {
     conversation: Conversation | null;
@@ -19,7 +20,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [newMessage, setNewMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+    
+    // Call Context
+    const { callUser } = useCall();
     
     // Voice Recording
     const [isRecording, setIsRecording] = useState(false);
@@ -249,8 +252,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 <div className="flex items-center gap-4">
                     {conversation.is_active && (
                     <button 
-                        onClick={() => setIsCallModalOpen(true)}
-                        className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        onClick={() => {
+                            console.log("Calling user from Conversation:", conversation);
+                            const otherId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
+                            console.log("Calculated otherId:", otherId);
+                            callUser(otherId, otherUsername, "");
+                        }}
+                        className="p-2 text-green-600 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200 dark:text-green-500 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        title="Start Video Call"
                     >
                         <HiPhone className="w-6 h-6" />
                     </button>
@@ -264,13 +273,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                     )}
                 </div>
             </div>
-
-            <CallModal 
-                isOpen={isCallModalOpen} 
-                onClose={() => setIsCallModalOpen(false)} 
-                otherUsername={otherUsername}
-                avatarUrl={`https://ui-avatars.com/api/?name=${otherUsername}&background=random`}
-            />
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">
