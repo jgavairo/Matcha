@@ -15,7 +15,12 @@ export const createUser = async (user: RegisterFormData) => {
     const values = [user.email, user.username, user.firstName, user.lastName, user.birthDate, hashedPassword, verificationToken, verificationTokenExpires];
     try {
         const result = await pool.query(query, values);
-        return { id: result.rows[0].id, email: user.email, verificationToken: verificationToken };
+        return { 
+            id: result.rows[0].id, 
+            email: user.email, 
+            username: user.username,
+            verificationToken: verificationToken 
+        };
     } catch (error) {
         console.error('Error creating user:', error);
         throw error;
