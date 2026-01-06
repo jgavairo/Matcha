@@ -49,7 +49,8 @@ const SearchPage: React.FC = () => {
     setError(null);
     
     try {
-      const { data, total } = await matchService.searchUsers(filters, pageNum);
+        const ITEMS_PER_PAGE = 12;
+      const { data, total } = await matchService.searchUsers(filters, pageNum, ITEMS_PER_PAGE);
       
       if (isNewFilter) {
         setUsers(data);
@@ -64,7 +65,7 @@ const SearchPage: React.FC = () => {
       // A safer check for hasMore:
       // If we received fewer items than the limit (12), we are done.
       // Or if (pageNum * 12) >= total.
-      setHasMore((pageNum * 12) < total);
+      setHasMore((pageNum * ITEMS_PER_PAGE) < total);
 
     } catch (err) {
       setError('Failed to load search results');

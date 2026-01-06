@@ -214,8 +214,20 @@ export const getUserById = async (id: number, currentUserId?: number) => {
             ) as is_liked,
             EXISTS (
                 SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = u.id)
-            ) as is_match
-            ` : ''}
+            ) as is_match,
+            -- Calculate distance (in km)
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $2))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $2)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $2)))
+                        ))
+                    )
+                )
+            ) as distance
+            ` : ', 0 as distance'}
         FROM users u
         LEFT JOIN genders g ON u.gender_id = g.id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -733,6 +745,17 @@ export const getLikedByUsers = async (userId: number) => {
         SELECT 
             u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
             u.latitude, u.longitude, u.city,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             (
@@ -773,7 +796,18 @@ export const getViewedByUsers = async (userId: number) => {
             (
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
-            ) as fame_rating
+            ) as fame_rating,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance
         FROM views v
         JOIN users u ON v.viewer_id = u.id
         LEFT JOIN genders g ON u.gender_id = g.id
@@ -802,7 +836,18 @@ export const getMatchedUsers = async (userId: number) => {
             (
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
-            ) as fame_rating
+            ) as fame_rating,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance
         FROM matches m
         JOIN users u ON (CASE WHEN m.user_id_1 = $1 THEN m.user_id_2 ELSE m.user_id_1 END) = u.id
         LEFT JOIN genders g ON u.gender_id = g.id
