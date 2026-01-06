@@ -1,4 +1,4 @@
-import { Button, Label, TextInput } from 'flowbite-react';
+import { Button, Label, TextInput, Datepicker } from 'flowbite-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
@@ -53,7 +53,7 @@ const RegisterForm = () => {
       </div>
 
       <div>
-        <Label htmlFor="username" className="mb-2 block">Nom d'utilisateur</Label>
+        <Label htmlFor="username" className="mb-2 block">Username</Label>
         <TextInput
           id="username"
           name="username"
@@ -67,7 +67,7 @@ const RegisterForm = () => {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="firstName" className="mb-2 block">Prénom</Label>
+          <Label htmlFor="firstName" className="mb-2 block">First Name</Label>
           <TextInput
             id="firstName"
             name="firstName"
@@ -79,7 +79,7 @@ const RegisterForm = () => {
           />
         </div>
         <div>
-          <Label htmlFor="lastName" className="mb-2 block">Nom</Label>
+          <Label htmlFor="lastName" className="mb-2 block">Last Name</Label>
           <TextInput
             id="lastName"
             name="lastName"
@@ -93,19 +93,24 @@ const RegisterForm = () => {
       </div>
 
       <div>
-        <Label htmlFor="birthDate" className="mb-2 block">Date de naissance</Label>
-        <TextInput
+        <Label htmlFor="birthDate" className="mb-2 block">Birth Date</Label>
+        <Datepicker
           id="birthDate"
-          name="birthDate"
-          type="date"
-          required
-          value={formData.birthDate}
-          onChange={handleChange}
+          className="w-full"
+          value={formData.birthDate ? new Date(formData.birthDate) : undefined}
+          onChange={(date: Date | null) => {
+            if (!date) return;
+            const offset = date.getTimezoneOffset();
+            const adjustedDate = new Date(date.getTime() - offset * 60 * 1000);
+            const dateString = adjustedDate.toISOString().split('T')[0];
+            setFormData(prev => ({ ...prev, birthDate: dateString }));
+          }}
+          maxDate={new Date()}
         />
       </div>
 
       <div>
-        <Label htmlFor="password" className="mb-2 block">Mot de passe</Label>
+        <Label htmlFor="password" className="mb-2 block">Password</Label>
         <TextInput
           id="password"
           name="password"
@@ -117,7 +122,7 @@ const RegisterForm = () => {
       </div>
 
       <div>
-        <Label htmlFor="confirmPassword" className="mb-2 block">Confirmer le mot de passe</Label>
+        <Label htmlFor="confirmPassword" className="mb-2 block">Confirm Password</Label>
         <TextInput
           id="confirmPassword"
           name="confirmPassword"
@@ -129,13 +134,13 @@ const RegisterForm = () => {
       </div>
 
       <Button type="submit" color="pink" className="mt-4">
-        S'inscrire
+        Register
       </Button>
 
       <p className="text-center text-sm text-gray-600">
-        Déjà un compte ?{' '}
+        Already have an account ?{' '}
         <Link to="/login" className="font-medium text-pink-600 hover:text-pink-500">
-          Se connecter
+          Login
         </Link>
       </p>
     </form>
