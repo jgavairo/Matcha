@@ -16,100 +16,88 @@ import { getMatchedUsers } from '../models/matchModel';
 import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs/promises';
 
 
 export class AuthController {
 
-    async register(req: Request, res: Response) {
-        const registerData: RegisterFormData = req.body;
+    private getTransporter(): Transporter {
+        return nodemailer.createTransport({
+            service: 'gmail',
+            from: 'matcha@noreply.com',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASSWORD,
+            },
+        });
+    }
+
+    private async sendEmail(params: {
+        to: string;
+        subject: string;
+        title: string;
+        subtitle: string;
+        message: string;
+        buttonText: string;
+        url: string;
+        logoCid: string;
+    }): Promise<void> {
+        const { to, subject, title, subtitle, message, buttonText, url, logoCid } = params;
+        const transporter = this.getTransporter();
+        const logoPath = path.resolve(__dirname, '../../assets/logo.png');
+        
+        // Déterminer le chemin du template selon l'environnement
+        // En dev (ts-node): __dirname = src/controllers → ../templates/email.html
+        // En prod (compilé): __dirname = dist/controllers → ../../src/templates/email.html
+        let templatePath = path.resolve(__dirname, '../templates/email.html');
+        let htmlTemplate: string;
+        
         try {
-            const user = await createUser(registerData);
+            // Essayer de lire le template depuis le chemin relatif (dev)
+            htmlTemplate = await fs.readFile(templatePath, 'utf-8');
+        } catch (error: any) {
+            // Si le fichier n'existe pas, essayer depuis src/ (prod compilé)
+            templatePath = path.resolve(__dirname, '../../src/templates/email.html');
+            try {
+                htmlTemplate = await fs.readFile(templatePath, 'utf-8');
+            } catch (error2: any) {
+                // Dernier essai depuis la racine du projet
+                templatePath = path.resolve(process.cwd(), 'src/templates/email.html');
+                htmlTemplate = await fs.readFile(templatePath, 'utf-8');
+            }
+        }
 
-            const transporter: Transporter = nodemailer.createTransport({
-                service: 'gmail',
-                from: 'matcha@noreply.com',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD,
-                },
-            });
+        console.log('Using email template from:', templatePath);
+        console.log('Template length before replacement:', htmlTemplate.length);
+        console.log('Template preview (first 200 chars):', htmlTemplate.substring(0, 200));
 
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-            const logoCid = 'matcha-logo';
-            // __dirname = /app/src/controllers → logo copié dans /app/assets/logo.png
-            const logoPath = path.resolve(__dirname, '../../assets/logo.png');
-            const verifyUrl = `${frontendUrl}/verify-email?token=${user.verificationToken}`;
+        try {
+            // Remplacer les variables dans le template
+            htmlTemplate = htmlTemplate
+                .replace(/{{SUBJECT}}/g, subject)
+                .replace(/{{TITLE}}/g, title)
+                .replace(/{{SUBTITLE}}/g, subtitle)
+                .replace(/{{MESSAGE}}/g, message)
+                .replace(/{{BUTTON_TEXT}}/g, buttonText)
+                .replace(/{{URL}}/g, url)
+                .replace(/{{LOGO_CID}}/g, logoCid)
+                .replace(/{{YEAR}}/g, new Date().getFullYear().toString());
+
+            console.log('Template length after replacement:', htmlTemplate.length);
+            console.log('Template contains position:relative:', htmlTemplate.includes('position:relative'));
+            console.log('Template contains LOGO_CID:', htmlTemplate.includes('{{LOGO_CID}}'));
+            
+            // Vérifier que le template a bien été lu (doit contenir du HTML)
+            if (!htmlTemplate.includes('<!DOCTYPE html>') && !htmlTemplate.includes('<html')) {
+                console.error('WARNING: Template does not appear to be valid HTML!');
+                console.error('Template content:', htmlTemplate.substring(0, 500));
+            }
 
             const mailOptions = {
                 from: 'Matcha <noreply@matcha.com>',
-                to: user.email,
-                subject: 'Welcome to Matcha – Verify your account',
-                html: `
-                <!DOCTYPE html>
-                <html lang="en">
-                  <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>Welcome to Matcha</title>
-                  </head>
-                  <body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:32px 0;">
-                      <tr>
-                        <td align="center">
-                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
-                            <tr>
-                              <td style="padding:32px 32px 16px 32px;background:linear-gradient(135deg,#ec4899,#db2777);text-align:center;">
-                                <div style="display:inline-block;width:140px;height:140px;background-color:#fdf2f8;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:10px;margin-bottom:16px;">
-                                  <img src="cid:${logoCid}" alt="Matcha" style="max-width:120px;height:auto;display:block;position:relative;margin:0auto;top:-3pt;left:6pt;"/>
-                                </div>
-                                <h1 style="margin:0;font-size:26px;line-height:1.3;color:#ffffff;">Bienvenue sur Matcha, ${user.username} !</h1>
-                                <p style="margin:12px 0 0 0;font-size:14px;color:#fde7f3;">
-                                  One last click to join the community 💕
-                                </p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding:28px 32px 8px 32px;">
-                                <p style="margin:0 0 16px 0;font-size:15px;color:#111827;">
-                                  Thank you for registering on <strong>Matcha</strong>. To secure your account and start discovering new profiles,
-                                  we need to verify your email address first.
-                                </p>
-                                <p style="margin:0 0 24px 0;font-size:15px;color:#374151;">
-                                  Click the button below to verify your account&nbsp;:
-                                </p>
-                                <div style="text-align:center;margin:0 0 28px 0;">
-                                  <a href="${verifyUrl}"
-                                     style="display:inline-block;background:linear-gradient(135deg,#ec4899,#db2777);color:#ffffff;text-decoration:none;
-                                            padding:12px 28px;border-radius:999px;font-size:15px;font-weight:600;">
-                                    Verify my email
-                                  </a>
-                                </div>
-                                <p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;">
-                                  If the button doesn't work, copy and paste this link in your browser&nbsp;:
-                                </p>
-                                <p style="margin:0;font-size:12px;color:#9ca3af;word-break:break-all;">
-                                  <a href="${verifyUrl}" style="color:#ec4899;text-decoration:underline;">${verifyUrl}</a>
-                                </p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding:16px 32px 24px 32px;border-top:1px solid #f3f4f6;">
-                                <p style="margin:0 0 4px 0;font-size:12px;color:#9ca3af;">
-                                  This email was sent automatically, please do not reply to it.
-                                </p>
-                                <p style="margin:0;font-size:12px;color:#9ca3af;">
-                                  © ${new Date().getFullYear()} Matcha. All rights reserved.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </body>
-                </html>
-                `,
+                to,
+                subject,
+                html: htmlTemplate,
                 attachments: [
                     {
                         filename: 'logo.png',
@@ -120,6 +108,32 @@ export class AuthController {
             };
 
             await transporter.sendMail(mailOptions);
+        } catch (error) {
+            console.error('Error reading email template:', error);
+            console.error('Template path:', templatePath);
+            throw error;
+        }
+    }
+
+    register = async (req: Request, res: Response) => {
+        const registerData: RegisterFormData = req.body;
+        try {
+            const user = await createUser(registerData);
+
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const verifyUrl = `${frontendUrl}/verify-email?token=${user.verificationToken}`;
+
+            await this.sendEmail({
+                to: user.email,
+                subject: 'Welcome to Matcha – Verify your account',
+                title: `Bienvenue sur Matcha, ${user.username} !`,
+                subtitle: 'One last click to join the community 💕',
+                message: 'Thank you for registering on <strong>Matcha</strong>. To secure your account and start discovering new profiles, we need to verify your email address first.',
+                buttonText: 'Verify my email',
+                url: verifyUrl,
+                logoCid: 'matcha-logo'
+            });
+
             res.status(201).json({ message: 'User created successfully, please check your email for verification' });
         } catch (error: any) {
             if (error.code === '23505') {
@@ -132,7 +146,7 @@ export class AuthController {
     }
 
 
-    async login(req: Request, res: Response) {
+    login = async (req: Request, res: Response) => {
         const loginData: LoginFormData = req.body;
         try {
             const user = await loginUser(loginData);
@@ -145,98 +159,19 @@ export class AuthController {
                 if (user.tokenExpired) {
                     const { token: newToken, email } = await generateVerificationToken(user.id);
                     
-                    // Envoyer le nouvel email de vérification
-                    const transporter: Transporter = nodemailer.createTransport({
-                        service: 'gmail',
-                        from: 'matcha@noreply.com',
-                        auth: {
-                            user: process.env.EMAIL_USER,
-                            pass: process.env.EMAIL_PASSWORD,
-                        },
-                    });
-
                     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-                    const logoCid = 'matcha-logo-renew';
-                    const logoPath = path.resolve(__dirname, '../../assets/logo.png');
                     const verifyUrl = `${frontendUrl}/verify-email?token=${newToken}`;
 
-                    const mailOptions = {
-                        from: 'Matcha <noreply@matcha.com>',
+                    await this.sendEmail({
                         to: email,
                         subject: 'New verification link – Matcha',
-                        html: `
-                        <!DOCTYPE html>
-                        <html lang="en">
-                          <head>
-                            <meta charset="UTF-8" />
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                            <title>New verification link</title>
-                          </head>
-                          <body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:32px 0;">
-                              <tr>
-                                <td align="center">
-                                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
-                                    <tr>
-                                      <td style="padding:32px 32px 16px 32px;background:linear-gradient(135deg,#ec4899,#db2777);text-align:center;">
-                                        <div style="display:inline-block;width:140px;height:140px;background-color:#fdf2f8;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:10px;margin-bottom:16px;">
-                                          <img src="cid:${logoCid}" alt="Matcha" style="max-width:120px;height:auto;display:block;margin:0 auto;" />
-                                        </div>
-                                        <h1 style="margin:0;font-size:26px;line-height:1.3;color:#ffffff;">New verification link</h1>
-                                        <p style="margin:12px 0 0 0;font-size:14px;color:#fde7f3;">
-                                          Your previous link has expired
-                                        </p>
-                                      </td>
-                                    </tr>
-                                    <tr>
-                                      <td style="padding:28px 32px 8px 32px;">
-                                        <p style="margin:0 0 16px 0;font-size:15px;color:#111827;">
-                                          Your previous verification link has expired. Here is a new link to verify your email address (valid for <strong>15 minutes</strong>).
-                                        </p>
-                                        <p style="margin:0 0 24px 0;font-size:15px;color:#374151;">
-                                          Click the button below to verify your account&nbsp;:
-                                        </p>
-                                        <div style="text-align:center;margin:0 0 28px 0;">
-                                          <a href="${verifyUrl}"
-                                             style="display:inline-block;background:linear-gradient(135deg,#ec4899,#db2777);color:#ffffff;text-decoration:none;
-                                                    padding:12px 28px;border-radius:999px;font-size:15px;font-weight:600;">
-                                            Verify my email
-                                          </a>
-                                        </div>
-                                        <p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;">
-                                          If the button doesn't work, copy and paste this link in your browser&nbsp;:
-                                        </p>
-                                        <p style="margin:0;font-size:12px;color:#9ca3af;word-break:break-all;">
-                                          <a href="${verifyUrl}" style="color:#ec4899;text-decoration:underline;">${verifyUrl}</a>
-                                        </p>
-                                      </td>
-                                    </tr>
-                                    <tr>
-                                      <td style="padding:16px 32px 24px 32px;border-top:1px solid #f3f4f6;">
-                                        <p style="margin:0 0 4px 0;font-size:12px;color:#9ca3af;">
-                                          This email was sent automatically, please do not reply to it.
-                                        </p>
-                                        <p style="margin:0;font-size:12px;color:#9ca3af;">
-                                          © ${new Date().getFullYear()} Matcha. All rights reserved.
-                                        </p>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
-                            </table>
-                          </body>
-                        </html>
-                        `,
-                        attachments: [
-                            {
-                                filename: 'logo.png',
-                                path: logoPath,
-                                cid: logoCid
-                            }
-                        ]
-                    };
-                    await transporter.sendMail(mailOptions);
+                        title: 'New verification link',
+                        subtitle: 'Your previous link has expired',
+                        message: 'Your previous verification link has expired. Here is a new link to verify your email address (valid for <strong>15 minutes</strong>).',
+                        buttonText: 'Verify my email',
+                        url: verifyUrl,
+                        logoCid: 'matcha-logo-renew'
+                    });
                     
                     res.status(401).json({ error: 'Verification link expired. A new verification email has been sent.' });
                     return;
@@ -265,12 +200,12 @@ export class AuthController {
         }   
     }
 
-    async logout(req: Request, res: Response) {
+    logout = async (req: Request, res: Response) => {
         res.clearCookie('token');
         res.status(200).json({ message: 'Logout successful' });
     }
 
-    async me(req: Request, res: Response) {
+    me = async (req: Request, res: Response) => {
         try {
             // @ts-ignore
             const userId = req.user?.id;
@@ -350,7 +285,7 @@ export class AuthController {
         }
     }
 
-    async forgotPassword(req: Request, res: Response) {
+    forgotPassword = async (req: Request, res: Response) => {
         const { email } = req.body;
         try {
             const user = await getUserByEmail(email);
@@ -361,97 +296,20 @@ export class AuthController {
             
             const { token } = await generateVerificationToken(user.id, 15);
             
-            const transporter: Transporter = nodemailer.createTransport({
-                service: 'gmail',
-                from: 'matcha@noreply.com',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD,
-                },
-            });
-
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-            const logoCid = 'matcha-logo-reset';
-            const logoPath = path.resolve(__dirname, '../../assets/logo.png');
             const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
-            const mailOptions = {
-                from: 'Matcha <noreply@matcha.com>',
+            await this.sendEmail({
                 to: email,
                 subject: 'Reset your password – Matcha',
-                html: `
-                <!DOCTYPE html>
-                <html lang="en">
-                  <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>Reset your password</title>
-                  </head>
-                  <body style="margin:0;padding:0;background-color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:32px 0;">
-                      <tr>
-                        <td align="center">
-                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
-                            <tr>
-                              <td style="padding:32px 32px 16px 32px;background:linear-gradient(135deg,#ec4899,#db2777);text-align:center;">
-                                <div style="display:inline-block;width:140px;height:140px;background-color:#fdf2f8;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:10px;margin-bottom:16px;">
-                                  <img src="cid:${logoCid}" alt="Matcha" style="max-width:120px;height:auto;display:block;margin:0 auto;" />
-                                </div>
-                                <h1 style="margin:0;font-size:26px;line-height:1.3;color:#ffffff;">Reset your password</h1>
-                                <p style="margin:12px 0 0 0;font-size:14px;color:#fde7f3;">
-                                  You requested to reset your password
-                                </p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding:28px 32px 8px 32px;">
-                                <p style="margin:0 0 16px 0;font-size:15px;color:#111827;">
-                                  Click the button below to choose a new password. This link is valid for <strong>15 minutes</strong>.
-                                </p>
-                                <p style="margin:0 0 24px 0;font-size:15px;color:#374151;">
-                                  If you didn't request a password reset, you can safely ignore this email.
-                                </p>
-                                <div style="text-align:center;margin:0 0 28px 0;">
-                                  <a href="${resetUrl}"
-                                     style="display:inline-block;background:linear-gradient(135deg,#ec4899,#db2777);color:#ffffff;text-decoration:none;
-                                            padding:12px 28px;border-radius:999px;font-size:15px;font-weight:600;">
-                                    Reset my password
-                                  </a>
-                                </div>
-                                <p style="margin:0 0 8px 0;font-size:13px;color:#6b7280;">
-                                  If the button doesn't work, copy and paste this link in your browser&nbsp;:
-                                </p>
-                                <p style="margin:0;font-size:12px;color:#9ca3af;word-break:break-all;">
-                                  <a href="${resetUrl}" style="color:#ec4899;text-decoration:underline;">${resetUrl}</a>
-                                </p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding:16px 32px 24px 32px;border-top:1px solid #f3f4f6;">
-                                <p style="margin:0 0 4px 0;font-size:12px;color:#9ca3af;">
-                                  This email was sent automatically, please do not reply to it.
-                                </p>
-                                <p style="margin:0;font-size:12px;color:#9ca3af;">
-                                  © ${new Date().getFullYear()} Matcha. All rights reserved.
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </body>
-                </html>
-                `,
-                attachments: [
-                    {
-                        filename: 'logo.png',
-                        path: logoPath,
-                        cid: logoCid
-                    }
-                ]
-            };
-            await transporter.sendMail(mailOptions);
+                title: 'Reset your password',
+                subtitle: 'You requested to reset your password',
+                message: 'Click the button below to choose a new password. This link is valid for <strong>15 minutes</strong>. If you didn\'t request a password reset, you can safely ignore this email.',
+                buttonText: 'Reset my password',
+                url: resetUrl,
+                logoCid: 'matcha-logo-reset'
+            });
+
             res.status(200).json({ message: 'Email sent successfully' });
         }
         catch (error) {
@@ -460,7 +318,7 @@ export class AuthController {
         }
     }
 
-    async verifyEmail(req: Request, res: Response) {
+    verifyEmail = async (req: Request, res: Response) => {
         const { token } = req.query;
         if (!token || typeof token !== 'string') {
             res.status(400).json({ error: 'Token is required' });
@@ -493,7 +351,7 @@ export class AuthController {
         }
     }
 
-    async resetPassword(req: Request, res: Response) {
+    resetPassword = async (req: Request, res: Response) => {
         const { token, newPassword } = req.body;
         
         if (!token || !newPassword) {
@@ -532,7 +390,7 @@ export class AuthController {
         }
     }
 
-    async checkToken(req: Request, res: Response) {
+    checkToken = async (req: Request, res: Response) => {
         const { token } = req.query;
         
         if (!token || typeof token !== 'string') {
