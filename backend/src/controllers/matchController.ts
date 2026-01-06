@@ -168,8 +168,6 @@ export class MatchController {
                 mode
             };
 
-            console.log('Search filters:', filters);
-
             const result = await searchUsers(userId, filters, page, limit);
             
             res.status(200).json({

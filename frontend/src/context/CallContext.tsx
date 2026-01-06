@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { useSocket } from './SocketContext';
 import CallModal from '../features/chat/components/CallModal';
+import { IncomingCallToast } from '../features/chat/components/IncomingCallToast';
 import { useAuth } from './AuthContext';
+import { useNotification } from './NotificationContext';
 
 interface CallContextType {
     callUser: (userId: number, username: string, avatar: string) => void;
     answerCall: () => void;
+    declineCall: () => void;
     endCall: () => void;
     callAccepted: boolean;
     callEnded: boolean;
@@ -22,6 +25,7 @@ const CallContext = createContext<CallContextType | undefined>(undefined);
 
 export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { socketService } = useSocket();
+    const { addToast } = useNotification();
     const { user } = useAuth();
     
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -35,6 +39,8 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     // For outgoing calls
     const [otherUser, setOtherUser] = useState<{name: string, avatar: string} | null>(null);
+
+    const [activeCallUserId, setActiveCallUserId] = useState<number | null>(null);
 
     const peerConnection = useRef<RTCPeerConnection | null>(null);
     
@@ -51,6 +57,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.log("Incoming call from", data.name);
             setIsReceivingCall(true);
             setCaller(data);
+            setActiveCallUserId(data.from);
             setOtherUser({ name: data.name, avatar: data.avatar });
         });
 
@@ -64,6 +71,23 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     console.error("Error setting remote description", e);
                 }
             }
+        });
+
+        socketService.on('call_declined', () => {
+            console.log("Call declined by remote user");
+            addToast("Call declined", 'info');
+            setIsCallActive(false);
+            setCallEnded(true);
+            setOtherUser(null);
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                setLocalStream(null);
+            }
+        });
+
+        socketService.on('call_ended', () => {
+             console.log("Call ended by remote user");
+             endCallLocalCleanup();
         });
 
         socketService.on('ice_candidate_incoming', async (candidate: any) => {
@@ -80,9 +104,11 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => {
             socketService.off('call_incoming');
             socketService.off('call_accepted');
+            socketService.off('call_declined');
+            socketService.off('call_ended');
             socketService.off('ice_candidate_incoming');
         };
-    }, [socketService]);
+    }, [socketService, localStream]); // Add localStream to dep if needed for cleanup, or use ref
 
     const setupPeerConnection = (isInitiator: boolean, remoteUserId: number) => {
         const pc = new RTCPeerConnection(rtcConfig);
@@ -113,6 +139,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const callUser = async (userId: number, username: string, avatar: string) => {
         setOtherUser({ name: username, avatar });
+        setActiveCallUserId(userId);
         setIsCallActive(true);
         setCallEnded(false);
         setCallAccepted(false);
@@ -230,7 +257,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const endCall = () => {
+    const endCallLocalCleanup = () => {
         setCallEnded(true);
         setIsCallActive(false);
         setIsReceivingCall(false);
@@ -250,15 +277,37 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setRemoteStream(null);
         setOtherUser(null);
         setCaller(null);
+        setActiveCallUserId(null);
+    };
+
+    const declineCall = () => {
+        setIsReceivingCall(false);
+        setCallAccepted(false);
         
-        // Reload/Reset window to clear any stuck states?
-        // window.location.reload(); // Too aggressive
+        const targetId = caller?.from || activeCallUserId;
+        if (targetId) {
+            socketService.emit('call_declined', { to: targetId });
+        }
+        setCaller(null);
+        setOtherUser(null);
+        setActiveCallUserId(null);
+    };
+
+    const endCall = () => {
+        // Emit end call signal to the other user
+        const targetId = caller?.from || activeCallUserId;
+        if (targetId) {
+             socketService.emit('call_ended', { to: targetId });
+        }
+        
+        endCallLocalCleanup();
     };
 
     return (
         <CallContext.Provider value={{
             callUser,
             answerCall,
+            declineCall,
             endCall,
             callAccepted,
             callEnded,
@@ -274,16 +323,12 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             {/* Incoming Call Overlay */}
             {isReceivingCall && !callAccepted && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-80">
-                   <div className="bg-gray-800 p-8 rounded-lg flex flex-col items-center">
-                        <h2 className="text-2xl text-white mb-4">{caller?.name} is calling...</h2>
-                        <img src={caller?.avatar || "https://via.placeholder.com/150"} className="w-24 h-24 rounded-full mb-6" alt="Caller"/>
-                        <div className="flex gap-4">
-                            <button onClick={answerCall} className="bg-green-500 text-white px-6 py-3 rounded-full font-bold">Answer</button>
-                            <button onClick={() => { setIsReceivingCall(false); setCaller(null); }} className="bg-red-500 text-white px-6 py-3 rounded-full font-bold">Decline</button>
-                        </div>
-                   </div>
-                </div>
+                <IncomingCallToast 
+                    callerName={caller?.name || "Unknown"}
+                    callerAvatar={caller?.avatar}
+                    onAnswer={answerCall}
+                    onDecline={declineCall}
+                />
             )}
 
             {/* Active Call Modal */}

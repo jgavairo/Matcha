@@ -46,7 +46,6 @@ export const initializeSocket = (httpServer: HttpServer) => {
   io.on('connection', async (socket) => {
     // @ts-ignore
     const userId = socket.userId;
-    console.log(`User connected: ${userId} (${socket.id})`);
     
     // Update user status to online
     try {
@@ -62,10 +61,8 @@ export const initializeSocket = (httpServer: HttpServer) => {
     }
 
     socket.join(`user_${userId}`);
-    console.log(`User ${userId} joined room user_${userId}`);
 
     socket.on('disconnect', async () => {
-      console.log(`User disconnected: ${userId}`);
       // Update user status to offline
       try {
           const now = new Date();
@@ -83,25 +80,28 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
     // WebRTC Signaling
     socket.on('call_user', (data: { userToCall: number; signalData: any; from: number; name: string; avatar: string }) => {
-      console.log(`[Signaling] Call from ${data.from} to ${data.userToCall}`);
       io.to(`user_${data.userToCall}`).emit('call_incoming', { 
         signal: data.signalData, 
         from: data.from,
         name: data.name,
         avatar: data.avatar
       });
-      console.log(`[Signaling] call_incoming emitted to user_${data.userToCall}`);
     });
 
     socket.on('answer_call', (data: { to: number; signal: any }) => {
-      console.log(`[Signaling] Call answered by ${userId} to ${data.to}`);
       io.to(`user_${data.to}`).emit('call_accepted', data.signal);
-      console.log(`[Signaling] call_accepted emitted to user_${data.to}`);
     });
 
     socket.on('ice_candidate', (data: { to: number; candidate: any }) => {
-        console.log(`[Signaling] ICE candidate from ${userId} to ${data.to}`);
         io.to(`user_${data.to}`).emit('ice_candidate_incoming',  data.candidate);
+    });
+
+    socket.on('call_declined', (data: { to: number }) => {
+        io.to(`user_${data.to}`).emit('call_declined');
+    });
+
+    socket.on('call_ended', (data: { to: number }) => {
+        io.to(`user_${data.to}`).emit('call_ended');
     });
   });
 

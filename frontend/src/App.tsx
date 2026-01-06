@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
 import { ChatProvider } from '@context/ChatContext';
+import { CallProvider } from '@context/CallContext';
 import { useAuth } from '@context/AuthContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
 import NotificationListener from '@features/notifications/components/NotificationListener';
@@ -29,6 +30,7 @@ function App() {
   return (
     <NotificationProvider>
       <ChatProvider>
+        <CallProvider>
         <ToastContainer />
         <NotificationListener />
         <Routes>
@@ -68,6 +70,7 @@ function App() {
           } />
         </Route>
       </Routes>
+      </CallProvider>
       </ChatProvider>
     </NotificationProvider>
   );

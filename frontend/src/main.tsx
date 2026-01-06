@@ -5,7 +5,6 @@ import '@/index.css'
 import { ThemeProvider as AppThemeProvider } from '@context/ThemeContext'
 import { AuthProvider } from '@context/AuthContext'
 import { SocketProvider } from '@context/SocketContext'
-import { CallProvider } from '@context/CallContext'
 import { createTheme, ThemeProvider as FlowbiteThemeProvider } from 'flowbite-react'
 
 const theme = createTheme({
@@ -25,9 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AppThemeProvider>
         <AuthProvider>
           <SocketProvider>
-            <CallProvider>
-              <App />
-            </CallProvider>
+            <App />
           </SocketProvider>
         </AuthProvider>
       </AppThemeProvider>
