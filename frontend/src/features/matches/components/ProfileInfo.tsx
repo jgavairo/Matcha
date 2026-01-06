@@ -1,10 +1,11 @@
 import React from 'react';
 import { Badge } from 'flowbite-react';
-import { HiLocationMarker, HiStar, HiClock, HiHeart, HiX, HiUser } from 'react-icons/hi';
+import { HiClock, HiHeart, HiX, HiUser } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import { getSexualOrientationLabel } from '../../../utils/userUtils';
 import ImageCarousel from './ImageCarousel';
 import ActionButton from '../../../components/ui/ActionButton';
+import { UserDistance, UserFame } from './UserMeta';
 
 interface ProfileInfoProps {
   user: UserProfile;
@@ -73,14 +74,14 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, onUn
                 {user.firstName} {user.lastName}
                 <span className="text-xl font-normal text-gray-500">, {user.age}</span>
               </h2>
-              <div className="flex items-center text-gray-500 dark:text-gray-400 mt-1">
-                <HiLocationMarker className="w-4 h-4 mr-1" />
-                {user.distance === 0 ? "less than 1" : user.distance} km away
-              </div>
-              <div className="flex items-center text-yellow-500 mt-1">
-                <HiStar className="w-4 h-4 mr-1" />
-                {user.fameRating} Fame Rating
-              </div>
+              <UserDistance 
+                distance={user.distance} 
+                className="text-gray-500 dark:text-gray-400 mt-1" 
+              />
+              <UserFame 
+                 rating={user.fameRating} 
+                 className="text-yellow-500 mt-1"
+              />
               {!user.isOnline && (
                 <div className="flex items-center text-gray-400 text-sm mt-1">
                   <HiClock className="w-4 h-4 mr-1" />

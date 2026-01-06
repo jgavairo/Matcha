@@ -101,7 +101,8 @@ export class MatchController {
                 sortOrder,
                 includeInteracted = false,
                 page = 1,
-                limit = 12
+                limit = 12,
+                mode = 'discover'
             } = req.body;
 
             const filters = {
@@ -116,8 +117,11 @@ export class MatchController {
                 locationCoords,
                 sortBy,
                 sortOrder,
-                includeInteracted
+                includeInteracted,
+                mode
             };
+
+            console.log('Search filters:', filters);
 
             const result = await searchUsers(userId, filters, page, limit);
             

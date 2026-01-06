@@ -33,7 +33,7 @@ export const matchService = {
     await api.delete(`/matches/${userId}/like`);
   },
 
-  searchUsers: async (filters: MatchFiltersState, page: number = 1, limit: number = 12): Promise<{ data: UserProfile[], total: number }> => {
+  searchUsers: async (filters: MatchFiltersState, page: number, limit: number): Promise<{ data: UserProfile[], total: number }> => {
     try {
       const response = await api.post('/matches/search', {
           ...filters,

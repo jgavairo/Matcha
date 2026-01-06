@@ -7,11 +7,10 @@ const mapUserSummary = (u: any) => ({
     age: u.age,
     gender: u.gender,
     biography: u.biography || '',
-    distance: 0,
+    distance: Math.round(u.distance || 0),
     location: {
         city: u.city || '',
-        latitude: u.latitude,
-        longitude: u.longitude
+        // Removed lat/long for privacy
     },
     tags: u.tags || [],
     images: u.images || [],
@@ -217,7 +216,7 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
             const matches = await getMatchedUsers(userId);
-            res.status(200).json(matches);
+            res.status(200).json(matches.map(mapUserSummary));
         } catch (error) {
             console.error('Error fetching matches:', error);
             res.status(500).json({ error: 'Internal server error' });

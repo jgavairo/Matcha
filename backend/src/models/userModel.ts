@@ -219,8 +219,20 @@ export const getUserById = async (id: number, currentUserId?: number) => {
             ) as is_liked,
             EXISTS (
                 SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = u.id)
-            ) as is_match
-            ` : ''}
+            ) as is_match,
+            -- Calculate distance (in km)
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $2))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $2)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $2)))
+                        ))
+                    )
+                )
+            ) as distance
+            ` : ', 0 as distance'}
         FROM users u
         LEFT JOIN genders g ON u.gender_id = g.id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -335,7 +347,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         locationCoords, 
         sortBy, 
         sortOrder,
-        includeInteracted
+        includeInteracted,
+        mode = 'discover'
     } = filters;
     const offset = (page - 1) * limit;
 
@@ -379,6 +392,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             SELECT 
                 u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
                 u.latitude, u.longitude, u.city,
+                u.gender_id, -- Needed for filtering
+                u.sexual_preferences as raw_sexual_preferences, -- Needed for filtering
                 (
                     SELECT COALESCE(array_agg(g2.gender), '{}')
                     FROM unnest(u.sexual_preferences) as pref_id
@@ -422,6 +437,30 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                     (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                     (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
                 ) as fame_rating
+                ${mode === 'discover' ? `,
+                -- Recommendation Score Calculation
+                (
+                    -- 1. Common Tags: Huge weight (40 pts per tag) to prioritize affinity
+                    ((
+                        SELECT COUNT(*)
+                        FROM user_interests ui2
+                        JOIN interests i2 ON ui2.interest_id = i2.id
+                        WHERE ui2.user_id = u.id AND i2.name = ANY($3)
+                    ) * 40) 
+                    +
+                    -- 2. Fame: Small bonus (10% of rating) to highlight active users
+                    (((SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 + (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)) * 0.1)
+                    -
+                    -- 3. Distance: Penalty (1 pt per km)
+                    (
+                        6371 * acos(
+                            LEAST(GREATEST(
+                            cos(radians($1)) * cos(radians(u.latitude)) * cos(radians(u.longitude) - radians($2)) +
+                            sin(radians($1)) * sin(radians(u.latitude))
+                            , -1.0), 1.0)
+                        )
+                    )
+                ) as recommendation_score` : ''}
             FROM users u
             LEFT JOIN genders g ON u.gender_id = g.id
             LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -436,14 +475,6 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 SELECT 1 FROM dislikes WHERE disliker_id = $4 AND disliked_id = u.id
             )
             ` : ''}
-            -- 1. Target gender must be in my preferences
-            AND u.gender_id = ANY($5)
-            -- 2. My gender must be in target's preferences (or target has no prefs = bisexual)
-            AND (
-                cardinality(u.sexual_preferences) = 0 
-                OR 
-                $6 = ANY(u.sexual_preferences)
-            )
             GROUP BY u.id, g.gender
         )
         SELECT *, count(*) OVER() as total_count
@@ -451,8 +482,25 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         WHERE 1=1
     `;
 
-    const values: any[] = [centerLat, centerLon, userTags, currentUserId, myPrefs, myGenderId];
-    let paramIndex = 7;
+    const values: any[] = [centerLat, centerLon, userTags, currentUserId];
+    let paramIndex = 5;
+
+    // Apply strict availability filters for Discover mode
+    if (mode === 'discover') {
+        // 1. Target gender must be in my preferences
+        query += ` AND gender_id = ANY($${paramIndex})`;
+        values.push(myPrefs);
+        paramIndex++;
+
+        // 2. My gender must be in target's preferences (or target has no prefs = bisexual)
+        query += ` AND (
+            cardinality(raw_sexual_preferences) = 0 
+            OR 
+            $${paramIndex} = ANY(raw_sexual_preferences)
+        )`;
+        values.push(myGenderId);
+        paramIndex++;
+    }
 
     // Apply filters
     if (ageRange) {
@@ -505,11 +553,21 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     }
 
     // Sorting
-    const sortColumn = sortBy === 'age' ? 'age' : 
-                       sortBy === 'fameRating' ? 'fame_rating' : 
-                       sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
+    let sortColumn = 'distance';
+    let sortDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
+
+    if (mode === 'discover' && sortBy === 'distance') {
+        // Default smart sort for Discover (high score first)
+        sortColumn = 'recommendation_score';
+        sortDirection = 'DESC';
+    } else {
+        // Normal sort mapping
+        sortColumn = sortBy === 'age' ? 'age' : 
+                     sortBy === 'fameRating' ? 'fame_rating' : 
+                     sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
+    }
     
-    query += ` ORDER BY ${sortColumn} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}`;
+    query += ` ORDER BY ${sortColumn} ${sortDirection}`;
 
     // Pagination
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
@@ -738,6 +796,17 @@ export const getLikedByUsers = async (userId: number) => {
         SELECT 
             u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
             u.latitude, u.longitude, u.city,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             (
@@ -778,7 +847,18 @@ export const getViewedByUsers = async (userId: number) => {
             (
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
-            ) as fame_rating
+            ) as fame_rating,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance
         FROM views v
         JOIN users u ON v.viewer_id = u.id
         LEFT JOIN genders g ON u.gender_id = g.id
@@ -807,7 +887,18 @@ export const getMatchedUsers = async (userId: number) => {
             (
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
-            ) as fame_rating
+            ) as fame_rating,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance
         FROM matches m
         JOIN users u ON (CASE WHEN m.user_id_1 = $1 THEN m.user_id_2 ELSE m.user_id_1 END) = u.id
         LEFT JOIN genders g ON u.gender_id = g.id

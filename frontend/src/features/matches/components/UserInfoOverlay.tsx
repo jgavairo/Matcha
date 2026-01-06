@@ -1,5 +1,5 @@
 import React from 'react';
-import { HiLocationMarker, HiStar } from 'react-icons/hi';
+import { UserDistance, UserFame } from './UserMeta';
 
 interface UserInfoOverlayProps {
   username: string;
@@ -14,14 +14,14 @@ const UserInfoOverlay: React.FC<UserInfoOverlayProps> = ({ username, age, distan
       <h5 className="text-2xl font-bold tracking-tight text-white">
         {username}, {age}
       </h5>
-      <div className="flex items-center text-gray-300 mt-1">
-        <HiLocationMarker className="w-4 h-4 mr-1" />
-        <span className="text-sm">{distance} km away</span>
-      </div>
-      <div className="flex items-center text-yellow-400 mt-1">
-        <HiStar className="w-4 h-4 mr-1" />
-        <span className="text-sm font-medium text-white">{fameRating}</span>
-      </div>
+      <UserDistance 
+        distance={distance} 
+        className="text-gray-300 mt-1" 
+      />
+      <UserFame 
+        rating={fameRating} 
+        className="text-yellow-400 mt-1" 
+      />
     </div>
   );
 };

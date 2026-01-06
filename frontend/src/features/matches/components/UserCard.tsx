@@ -1,7 +1,8 @@
 import React from 'react';
-import { HiX, HiHeart, HiLocationMarker, HiStar } from 'react-icons/hi';
+import { HiX, HiHeart } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import ActionButton from '@ui/ActionButton';
+import { UserDistance, UserFame } from './UserMeta';
 
 interface UserCardProps {
   user: UserProfile;
@@ -43,18 +44,16 @@ const UserCard: React.FC<UserCardProps> = ({
             <h2 className="text-3xl font-bold text-white drop-shadow-md">
               {user.firstName}, {user.age}
             </h2>
-            <div className="flex items-center text-yellow-400 mb-1 drop-shadow-md bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
-                <HiStar className="w-4 h-4 mr-1" />
-                <span className="text-sm font-bold">{user.fameRating}</span>
-            </div>
+            <UserFame 
+              rating={user.fameRating} 
+              className="text-yellow-400 mb-1 drop-shadow-md bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm" 
+            />
           </div>
 
-          <div className="flex items-center text-gray-200 mb-3 drop-shadow-md">
-            <HiLocationMarker className="w-4 h-4 mr-1" />
-            <span className="text-sm font-medium">
-              {user.distance > 0 ? `${user.distance} km away` : "Less than 1 km away"}
-            </span>
-          </div>
+          <UserDistance 
+            distance={user.distance}
+            className="text-gray-200 mb-3 drop-shadow-md"
+          />
         </div>
 
         {/* Action Buttons */}
