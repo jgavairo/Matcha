@@ -1,4 +1,5 @@
 import { pool } from '../config/database';
+import { PoolClient, QueryResult } from 'pg';
 
 /**
  * Security Helper
@@ -12,11 +13,37 @@ const assertIdentifier = (identifier: string): string => {
     return `"${identifier}"`; // Wrap in double quotes for Postgres
 };
 
+interface DbOptions {
+    client?: any; // Using any to avoid strict type issues if PoolClient isn't perfectly matched, but logic remains valid
+}
+
 export const db = {
+    /**
+     * Raw Query Execution
+     * Use this for complex JOINs or custom logic not covered by helpers.
+     */
+    query: async (text: string, params?: any[], options: DbOptions = {}) => {
+        try {
+            const executor = options.client || pool;
+            if (params) {
+                return await executor.query(text, params);
+            }
+            return await executor.query(text);
+        } catch (error) {
+            console.error(`Error in raw query: ${text}`, error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Security Helper (exposed)
+     */
+    assertIdentifier,
+
     /**
      * Finds a single record in a table matching the criteria
      */
-    findOne: async (table: string, criteria: { [key: string]: any }, columns: string[] = ['*']) => {
+    findOne: async (table: string, criteria: { [key: string]: any }, columns: string[] = ['*'], options: DbOptions = {}) => {
         const tableName = assertIdentifier(table);
         const keys = Object.keys(criteria);
         const values = Object.values(criteria);
@@ -30,7 +57,8 @@ export const db = {
         const query = `SELECT ${selectCols} FROM ${tableName} WHERE ${whereClause} LIMIT 1`;
         
         try {
-            const result = await pool.query(query, values);
+            const executor = options.client || pool;
+            const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
             console.error(`Error in findOne [${table}]:`, error);
@@ -39,9 +67,39 @@ export const db = {
     },
 
     /**
+     * Finds multiple records
+     */
+    findAll: async (table: string, criteria: { [key: string]: any } = {}, columns: string[] = ['*'], orderBy?: string, orderDir: 'ASC' | 'DESC' = 'ASC', options: DbOptions = {}) => {
+        const tableName = assertIdentifier(table);
+        const keys = Object.keys(criteria);
+        const values = Object.values(criteria);
+        
+        const selectCols = columns[0] === '*' ? '*' : columns.map(assertIdentifier).join(', ');
+
+        const whereClause = keys.length > 0 
+            ? 'WHERE ' + keys.map((key, index) => `${assertIdentifier(key)} = $${index + 1}`).join(' AND ')
+            : '';
+        
+        let query = `SELECT ${selectCols} FROM ${tableName} ${whereClause}`;
+        
+        if (orderBy) {
+            query += ` ORDER BY ${assertIdentifier(orderBy)} ${orderDir}`;
+        }
+        
+        try {
+            const executor = options.client || pool;
+            const result = await executor.query(query, values);
+            return result.rows;
+        } catch (error) {
+            console.error(`Error in findAll [${table}]:`, error);
+            throw error;
+        }
+    },
+
+    /**
      * Generic Insert
      */
-    insert: async (table: string, data: { [key: string]: any }) => {
+    insert: async (table: string, data: { [key: string]: any }, options: DbOptions = {}) => {
         const tableName = assertIdentifier(table);
         const keys = Object.keys(data);
         const values = Object.values(data);
@@ -52,7 +110,8 @@ export const db = {
         const query = `INSERT INTO ${tableName} (${colNames}) VALUES (${indices}) RETURNING *`;
         
         try {
-            const result = await pool.query(query, values);
+            const executor = options.client || pool;
+            const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
             console.error(`Error in insert [${table}]:`, error);
@@ -61,10 +120,9 @@ export const db = {
     },
 
     /**
-     * Generic Update
-     * Defines automatically SET col = $x based on data keys
+     * Update/Delete by ID convenience
      */
-    update: async (table: string, id: number, data: { [key: string]: any }) => {
+    update: async (table: string, id: number, data: { [key: string]: any }, options: DbOptions = {}) => {
         const tableName = assertIdentifier(table);
         // Filter out undefined keys to support partial updates
         const keys = Object.keys(data).filter(k => data[k] !== undefined);
@@ -82,18 +140,57 @@ export const db = {
         const query = `UPDATE ${tableName} SET ${setClause} WHERE id = $${idParamIndex} RETURNING *`;
 
         try {
-            const result = await pool.query(query, values);
+            const executor = options.client || pool;
+            const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
             console.error(`Error in update [${table}]:`, error);
             throw error;
         }
     },
+
+    /**
+     * Update with custom criteria
+     */
+    updateBy: async (table: string, criteria: { [key: string]: any }, data: { [key: string]: any }, options: DbOptions = {}) => {
+        const tableName = assertIdentifier(table);
+        const dataKeys = Object.keys(data).filter(k => data[k] !== undefined);
+        const criteriaKeys = Object.keys(criteria);
+        
+        if (dataKeys.length === 0) return [];
+
+        const values: any[] = [];
+        let paramIndex = 1;
+
+        const setClause = dataKeys.map(key => {
+            values.push(data[key]);
+            return `${assertIdentifier(key)} = $${paramIndex++}`;
+        }).join(', ');
+
+        const whereClause = criteriaKeys.length > 0 
+            ? 'WHERE ' + criteriaKeys.map(key => {
+                values.push(criteria[key]);
+                return `${assertIdentifier(key)} = $${paramIndex++}`;
+            }).join(' AND ')
+            : ''; // Warning: Updates all!
+
+        const query = `UPDATE ${tableName} SET ${setClause} ${whereClause} RETURNING *`;
+
+        try {
+            const executor = options.client || pool;
+            const result = await executor.query(query, values);
+            return result.rows;
+        } catch (error) {
+            console.error(`Error in updateBy [${table}]:`, error);
+            throw error;
+        }
+    },
     
     /**
      * Simple Delete
+
      */
-    delete: async (table: string, criteria: { [key: string]: any }) => {
+    delete: async (table: string, criteria: { [key: string]: any }, options: DbOptions = {}) => {
         const tableName = assertIdentifier(table);
         const keys = Object.keys(criteria);
         const values = Object.values(criteria);
@@ -103,7 +200,8 @@ export const db = {
         const query = `DELETE FROM ${tableName} WHERE ${whereClause}`;
         
         try {
-            await pool.query(query, values);
+            const executor = options.client || pool;
+            await executor.query(query, values);
         } catch (error) {
             console.error(`Error in delete [${table}]:`, error);
             throw error;

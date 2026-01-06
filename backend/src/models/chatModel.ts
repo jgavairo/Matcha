@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { db } from '../utils/db';
 
 export interface Conversation {
     id: number;
@@ -22,14 +22,7 @@ export interface Message {
 }
 
 export const createConversation = async (matchId: number) => {
-    const query = `
-        INSERT INTO conversations (match_id)
-        VALUES ($1)
-        RETURNING *
-    `;
-    const values = [matchId];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    return await db.insert('conversations', { match_id: matchId });
 };
 
 export const createMessage = async (conversationId: number, senderId: number, content: string) => {
@@ -40,7 +33,7 @@ export const createMessage = async (conversationId: number, senderId: number, co
         JOIN matches m ON c.match_id = m.id
         WHERE c.id = $1
     `;
-    const checkRes = await pool.query(checkQuery, [conversationId]);
+    const checkRes = await db.query(checkQuery, [conversationId]);
     
     if (checkRes.rows.length === 0) {
          throw new Error('Conversation not found');
@@ -50,18 +43,16 @@ export const createMessage = async (conversationId: number, senderId: number, co
         throw new Error('Conversation is not active');
     }
 
-    const query = `
-        INSERT INTO messages (conversation_id, sender_id, content)
-        VALUES ($1, $2, $3)
-        RETURNING *
-    `;
-    const values = [conversationId, senderId, content];
-    const result = await pool.query(query, values);
+    const message = await db.insert('messages', {
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content
+    });
     
     // Update conversation updated_at
-    await pool.query('UPDATE conversations SET updated_at = NOW() WHERE id = $1', [conversationId]);
+    await db.query('UPDATE conversations SET updated_at = NOW() WHERE id = $1', [conversationId]);
     
-    return result.rows[0];
+    return message;
 };
 
 export const getConversations = async (userId: number) => {
@@ -84,8 +75,7 @@ export const getConversations = async (userId: number) => {
         WHERE m.user_id_1 = $1 OR m.user_id_2 = $1
         ORDER BY c.updated_at DESC
     `;
-    const values = [userId];
-    const result = await pool.query(query, values);
+    const result = await db.query(query, [userId]);
     return result.rows;
 };
 
@@ -97,19 +87,12 @@ export const getMessages = async (conversationId: number, userId: number) => {
         JOIN matches m ON c.match_id = m.id
         WHERE c.id = $1 AND (m.user_id_1 = $2 OR m.user_id_2 = $2)
     `;
-    const authResult = await pool.query(authQuery, [conversationId, userId]);
+    const authResult = await db.query(authQuery, [conversationId, userId]);
     if (authResult.rows.length === 0) {
         throw new Error('Unauthorized');
     }
 
-    const query = `
-        SELECT * FROM messages
-        WHERE conversation_id = $1
-        ORDER BY created_at ASC
-    `;
-    const values = [conversationId];
-    const result = await pool.query(query, values);
-    return result.rows;
+    return await db.findAll('messages', { conversation_id: conversationId }, ['*'], 'created_at', 'ASC');
 };
 
 export const markMessagesAsRead = async (conversationId: number, userId: number) => {
@@ -118,8 +101,7 @@ export const markMessagesAsRead = async (conversationId: number, userId: number)
         SET is_read = TRUE
         WHERE conversation_id = $1 AND (sender_id != $2 OR sender_id IS NULL)
     `;
-    const values = [conversationId, userId];
-    await pool.query(query, values);
+    await db.query(query, [conversationId, userId]);
 };
 
 export const getConversationParticipants = async (conversationId: number) => {
@@ -129,6 +111,6 @@ export const getConversationParticipants = async (conversationId: number) => {
         JOIN matches m ON c.match_id = m.id
         WHERE c.id = $1
     `;
-    const result = await pool.query(query, [conversationId]);
+    const result = await db.query(query, [conversationId]);
     return result.rows[0];
 };

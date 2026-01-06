@@ -111,7 +111,7 @@ export const updateUserInterests = async (userId: number, tags: string[]) => {
         await client.query('BEGIN');
         
         // 1. Remove existing interests
-        await client.query('DELETE FROM user_interests WHERE user_id = $1', [userId]);
+        await db.delete('user_interests', { user_id: userId }, { client });
 
         // 2. Add new interests
         // First ensure tags exist in interests table (optional, but good for consistency)
@@ -120,14 +120,14 @@ export const updateUserInterests = async (userId: number, tags: string[]) => {
         // Get IDs for the tags
         if (tags.length > 0) {
             const tagQuery = `SELECT id FROM interests WHERE name = ANY($1)`;
-            const tagResult = await client.query(tagQuery, [tags]);
-            const tagIds = tagResult.rows.map(row => row.id);
+            const tagResult = await db.query(tagQuery, [tags], { client });
+            const tagIds = tagResult.rows.map((row: any) => row.id);
 
             // Insert into user_interests
             if (tagIds.length > 0) {
-                const values = tagIds.map((tagId, index) => `($1, $${index + 2})`).join(',');
+                const values = tagIds.map((tagId: any, index: number) => `($1, $${index + 2})`).join(',');
                 const insertQuery = `INSERT INTO user_interests (user_id, interest_id) VALUES ${values}`;
-                await client.query(insertQuery, [userId, ...tagIds]);
+                await db.query(insertQuery, [userId, ...tagIds], { client });
             }
         }
 
@@ -148,21 +148,20 @@ export const updatePassword = async (userId: number, newPassword: string) => {
 export const addImage = async (userId: number, filename: string) => {
     const url = `http://localhost:5000/uploads/${filename}`;
     const query = 'INSERT INTO images (user_id, url, is_profile_picture) VALUES ($1, $2, (SELECT COUNT(*) = 0 FROM images WHERE user_id = $1)) RETURNING *';
-    const result = await pool.query(query, [userId, url]);
+    const result = await db.query(query, [userId, url]);
     return result.rows[0];
 };
 
 export const removeImage = async (userId: number, url: string) => {
-    const query = 'DELETE FROM images WHERE user_id = $1 AND url = $2';
-    await pool.query(query, [userId, url]);
+    await db.delete('images', { user_id: userId, url: url });
 };
 
 export const setProfileImage = async (userId: number, url: string) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        await client.query('UPDATE images SET is_profile_picture = FALSE WHERE user_id = $1', [userId]);
-        await client.query('UPDATE images SET is_profile_picture = TRUE WHERE user_id = $1 AND url = $2', [userId, url]);
+        await db.updateBy('images', { user_id: userId }, { is_profile_picture: false }, { client });
+        await db.updateBy('images', { user_id: userId, url: url }, { is_profile_picture: true }, { client });
         await client.query('COMMIT');
     } catch (error) {
         await client.query('ROLLBACK');
@@ -230,7 +229,7 @@ export const getUserById = async (id: number, currentUserId?: number) => {
     `;
     const values = currentUserId ? [id, currentUserId] : [id];
     try {
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     } catch (error) {
         console.error('Error getting user by id:', error);
@@ -260,7 +259,7 @@ export const validateProfileCompletion = async (userId: number): Promise<{ isVal
     `;
     
     try {
-        const result = await pool.query(query, [userId]);
+        const result = await db.query(query, [userId]);
         const user = result.rows[0];
         
         if (!user) {
@@ -332,7 +331,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     const offset = (page - 1) * limit;
 
     // Get current user location and tags for distance and common tags calculation
-    const currentUserResult = await pool.query(
+    const currentUserResult = await db.query(
         `SELECT 
             u.latitude, 
             u.longitude, 
@@ -553,7 +552,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     values.push(limit, offset);
 
     try {
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
         
         return {
             users: result.rows,
@@ -577,7 +576,7 @@ export const recordView = async (viewerId: number, viewedId: number) => {
         )
     `;
     try {
-        await pool.query(query, [viewerId, viewedId]);
+        await db.query(query, [viewerId, viewedId]);
     } catch (error) {
         console.error('Error recording view:', error);
     }
@@ -806,7 +805,7 @@ export const getLikedByUsers = async (userId: number) => {
         WHERE l.liked_id = $1
         GROUP BY u.id, g.gender
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await db.query(query, [userId]);
     return result.rows;
 };
 
@@ -846,7 +845,7 @@ export const getViewedByUsers = async (userId: number) => {
         WHERE v.viewed_id = $1
         GROUP BY u.id, g.gender
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await db.query(query, [userId]);
     return result.rows;
 };
 
@@ -886,7 +885,7 @@ export const getMatchedUsers = async (userId: number) => {
         WHERE m.user_id_1 = $1 OR m.user_id_2 = $1
         GROUP BY u.id, g.gender
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await db.query(query, [userId]);
     return result.rows;
 };
 
