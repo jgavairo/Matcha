@@ -50,7 +50,8 @@ const SearchPage: React.FC = () => {
     
     try {
         const ITEMS_PER_PAGE = 12;
-      const { data, total } = await matchService.searchUsers(filters, pageNum, ITEMS_PER_PAGE);
+      const filtersToSend = { ...filters, mode: 'search' };
+      const { data, total } = await matchService.searchUsers(filtersToSend, pageNum, ITEMS_PER_PAGE);
       
       if (isNewFilter) {
         setUsers(data);

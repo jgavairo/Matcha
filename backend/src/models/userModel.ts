@@ -342,7 +342,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         locationCoords, 
         sortBy, 
         sortOrder,
-        includeInteracted
+        includeInteracted,
+        mode = 'discover'
     } = filters;
     const offset = (page - 1) * limit;
 
@@ -443,6 +444,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 SELECT 1 FROM dislikes WHERE disliker_id = $4 AND disliked_id = u.id
             )
             ` : ''}
+            
+            ${mode === 'discover' ? `
             -- 1. Target gender must be in my preferences
             AND u.gender_id = ANY($5)
             -- 2. My gender must be in target's preferences (or target has no prefs = bisexual)
@@ -451,6 +454,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 OR 
                 $6 = ANY(u.sexual_preferences)
             )
+            ` : ''}
             GROUP BY u.id, g.gender
         )
         SELECT *, count(*) OVER() as total_count
@@ -458,8 +462,11 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         WHERE 1=1
     `;
 
-    const values: any[] = [centerLat, centerLon, userTags, currentUserId, myPrefs, myGenderId];
-    let paramIndex = 7;
+    const values: any[] = [centerLat, centerLon, userTags, currentUserId];
+    if (mode === 'discover') {
+        values.push(myPrefs, myGenderId);
+    }
+    let paramIndex = values.length + 1;
 
     // Apply filters
     if (ageRange) {
