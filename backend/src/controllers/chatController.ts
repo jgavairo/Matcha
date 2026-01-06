@@ -28,6 +28,22 @@ export const getMessages = async (req: Request, res: Response) => {
     }
 };
 
+export const uploadFiles = async (req: Request, res: Response) => {
+    try {
+        if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        const files = req.files as Express.Multer.File[];
+        const urls = files.map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`);
+
+        res.json({ urls });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 export const sendMessage = async (req: Request, res: Response) => {
     try {
         // @ts-ignore

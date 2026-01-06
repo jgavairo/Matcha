@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import * as chatController from '../controllers/chatController';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { upload } from '../utils/fileUpload';
 
 const router = Router();
 
 router.use(authMiddleware);
+
+router.post('/upload', upload.array('files', 5), chatController.uploadFiles);
 
 
 router.get('/conversations', chatController.getConversations);
