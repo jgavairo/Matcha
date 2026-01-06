@@ -60,8 +60,8 @@ export const getConversations = async (userId: number) => {
         SELECT 
             c.id, 
             c.match_id,
-            m.user_id_1,
-            m.user_id_2,
+            m.user_id_1 as user1_id,
+            m.user_id_2 as user2_id,
             m.is_active,
             u1.username as user1_username,
             u2.username as user2_username,
