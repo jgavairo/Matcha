@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { NotificationProvider } from '@context/NotificationContext';
+import { ChatProvider } from '@context/ChatContext';
 import { useAuth } from '@context/AuthContext';
 import ToastContainer from '@features/notifications/components/ToastContainer';
 import NotificationListener from '@features/notifications/components/NotificationListener';
@@ -27,9 +28,10 @@ function App() {
 
   return (
     <NotificationProvider>
-      <ToastContainer />
-      <NotificationListener />
-      <Routes>
+      <ChatProvider>
+        <ToastContainer />
+        <NotificationListener />
+        <Routes>
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/search" element={<SearchPage />} />
@@ -66,6 +68,7 @@ function App() {
           } />
         </Route>
       </Routes>
+      </ChatProvider>
     </NotificationProvider>
   );
 }

@@ -5,6 +5,7 @@ import ChatWindow from '@features/chat/components/ChatWindow';
 import { chatService, Conversation, Message } from '@features/chat/services/chatService';
 import authService from '@features/auth/services/authService';
 import { useSocket } from '@context/SocketContext';
+import { useChatContext } from '@context/ChatContext';
 
 const ChatPage: React.FC = () => {
 
@@ -14,6 +15,21 @@ const ChatPage: React.FC = () => {
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const { socketService } = useSocket();
+    const { setActiveChatUserId } = useChatContext();
+
+    // Update active chat context when selected conversation changes
+    useEffect(() => {
+        if (selectedConversation && currentUserId) {
+            const otherUserId = selectedConversation.user1_id === currentUserId 
+                ? selectedConversation.user2_id 
+                : selectedConversation.user1_id;
+            setActiveChatUserId(otherUserId);
+        } else {
+            setActiveChatUserId(null);
+        }
+        
+        return () => setActiveChatUserId(null);
+    }, [selectedConversation, currentUserId, setActiveChatUserId]);
 
     useEffect(() => {
         const init = async () => {

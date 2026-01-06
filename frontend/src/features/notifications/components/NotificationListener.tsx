@@ -1,14 +1,23 @@
 import React, { useEffect } from 'react';
 import { useSocket } from '../../../context/SocketContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useChatContext } from '../../../context/ChatContext';
 
 const NotificationListener: React.FC = () => {
     const { socketService } = useSocket();
     const { addNotification } = useNotification();
+    const { activeChatUserId } = useChatContext();
 
     useEffect(() => {
         const handleNotification = (data: any) => {
             // Data structure from backend: { type, message, senderId, senderUsername, avatar }
+            
+            // Don't show message notification if we are in chat with this user
+            // Use loose equality or conversion to ensure type matching (string vs number)
+            if (data.type === 'message' && activeChatUserId && (Number(activeChatUserId) === Number(data.senderId))) {
+                return;
+            }
+
             addNotification({
                 type: data.type,
                 title: getTitleByType(data.type),
@@ -23,7 +32,7 @@ const NotificationListener: React.FC = () => {
         return () => {
             socketService.off('notification', handleNotification);
         };
-    }, [socketService, addNotification]);
+    }, [socketService, addNotification, activeChatUserId]);
 
     return null;
 };

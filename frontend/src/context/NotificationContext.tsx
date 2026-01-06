@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { ToastType, NotificationItem, ToastMessage, ToastAction } from '@app-types/notifications';
-import { MOCK_NOTIFICATIONS } from '@/data/mockNotifications';
 
 interface NotificationContextType {
   toasts: ToastMessage[];
@@ -20,7 +19,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const addToast = useCallback((message: string, type: ToastType, duration = 4000, options?: { title?: string, actions?: ToastAction[] }) => {
     const id = uuidv4();
