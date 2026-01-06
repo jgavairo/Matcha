@@ -20,7 +20,7 @@ export const createUser = async (user: RegisterFormData) => {
         verification_token_expires: verificationTokenExpires
     });
 
-    return { id: result.id, email: user.email, verificationToken: verificationToken };
+    return { id: result.id, email: user.email, username: user.username, verificationToken: verificationToken };
 };
 
 export const loginUser = async (user: LoginFormData) => {
