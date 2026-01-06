@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '../../../hooks/useFileDrop';
 import { useSocket } from '@context/SocketContext';
+import { HiPhone } from 'react-icons/hi';
 
 import ChatBubble from './ChatBubble';
+import CallModal from './CallModal';
 
 interface ChatWindowProps {
     conversation: Conversation | null;
@@ -17,6 +19,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [newMessage, setNewMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     
     // Voice Recording
     const [isRecording, setIsRecording] = useState(false);
@@ -243,14 +246,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             {/* Header */}
             <div className="p-4 border-b flex justify-between items-center bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">{otherUsername}</h2>
-                {onClose && (
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 md:hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                <div className="flex items-center gap-4">
+                    {conversation.is_active && (
+                    <button 
+                        onClick={() => setIsCallModalOpen(true)}
+                        className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                    >
+                        <HiPhone className="w-6 h-6" />
                     </button>
-                )}
+                    )}
+                    {onClose && (
+                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 md:hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
             </div>
+
+            <CallModal 
+                isOpen={isCallModalOpen} 
+                onClose={() => setIsCallModalOpen(false)} 
+                otherUsername={otherUsername}
+                avatarUrl={`https://ui-avatars.com/api/?name=${otherUsername}&background=random`}
+            />
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">
