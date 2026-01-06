@@ -432,6 +432,30 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                     (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                     (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
                 ) as fame_rating
+                ${mode === 'discover' ? `,
+                -- Recommendation Score Calculation
+                (
+                    -- 1. Common Tags: Huge weight (40 pts per tag) to prioritize affinity
+                    ((
+                        SELECT COUNT(*)
+                        FROM user_interests ui2
+                        JOIN interests i2 ON ui2.interest_id = i2.id
+                        WHERE ui2.user_id = u.id AND i2.name = ANY($3)
+                    ) * 40) 
+                    +
+                    -- 2. Fame: Small bonus (10% of rating) to highlight active users
+                    (((SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 + (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)) * 0.1)
+                    -
+                    -- 3. Distance: Penalty (1 pt per km)
+                    (
+                        6371 * acos(
+                            LEAST(GREATEST(
+                            cos(radians($1)) * cos(radians(u.latitude)) * cos(radians(u.longitude) - radians($2)) +
+                            sin(radians($1)) * sin(radians(u.latitude))
+                            , -1.0), 1.0)
+                        )
+                    )
+                ) as recommendation_score` : ''}
             FROM users u
             LEFT JOIN genders g ON u.gender_id = g.id
             LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -524,11 +548,21 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     }
 
     // Sorting
-    const sortColumn = sortBy === 'age' ? 'age' : 
-                       sortBy === 'fameRating' ? 'fame_rating' : 
-                       sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
+    let sortColumn = 'distance';
+    let sortDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
+
+    if (mode === 'discover' && sortBy === 'distance') {
+        // Default smart sort for Discover (high score first)
+        sortColumn = 'recommendation_score';
+        sortDirection = 'DESC';
+    } else {
+        // Normal sort mapping
+        sortColumn = sortBy === 'age' ? 'age' : 
+                     sortBy === 'fameRating' ? 'fame_rating' : 
+                     sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
+    }
     
-    query += ` ORDER BY ${sortColumn} ${sortOrder === 'desc' ? 'DESC' : 'ASC'}`;
+    query += ` ORDER BY ${sortColumn} ${sortDirection}`;
 
     // Pagination
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
