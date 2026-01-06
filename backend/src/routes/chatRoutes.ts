@@ -7,7 +7,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post('/upload', upload.array('files', 5), chatController.uploadFiles);
+router.post('/upload', upload.array('files', 10), chatController.uploadFiles);
 
 
 router.get('/conversations', chatController.getConversations);

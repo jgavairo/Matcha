@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message } from '../services/chatService';
 import { Dropdown, DropdownItem } from 'flowbite-react';
-import { HiDotsVertical } from 'react-icons/hi';
+import { HiDotsVertical, HiDownload, HiPlay, HiPause } from 'react-icons/hi';
 
 interface ChatBubbleProps {
     message: Message;
@@ -64,13 +64,23 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         }
     };
 
-    const handleDownload = (url: string) => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = url.split('/').pop() || 'download';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownload = async (url: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = url.split('/').pop() || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed', error);
+            window.open(url, '_blank');
+        }
     };
 
     const avatarUrl = `https://ui-avatars.com/api/?name=${isMe ? 'Me' : otherUsername}&background=random`;
@@ -94,14 +104,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                     <div className={`flex items-center space-x-1.5 rtl:space-x-reverse`}>
                        <button onClick={toggleAudio} className="inline-flex self-center items-center text-gray-900 dark:text-white hover:text-gray-600" type="button">
                           {isPlaying ? (
-                              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
-                              </svg>
+                              <HiPause className="w-6 h-6" />
                           ) : (
-                              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                              <HiPlay className="w-6 h-6" />
                           )}
                        </button>
                        <audio 
@@ -125,39 +130,51 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
             case 'image':
                 const urls = parsedContent.urls || [];
-                if (urls.length === 1) {
-                    return (
-                        <div className="group relative my-2.5">
-                            <div className="absolute w-full h-full bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                <button onClick={() => handleDownload(urls[0])} className="inline-flex items-center justify-center rounded-full h-10 w-10 bg-white/30 hover:bg-white/50 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50">
-                                  <svg className="w-5 h-5 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/></svg>
-                                </button>
-                            </div>
-                            <img src={urls[0]} className="rounded-lg max-w-full h-auto object-cover max-h-64" alt="Attachment" />
-                        </div>
-                    );
-                } else if (urls.length > 1) {
-                    return (
-                        <div className="grid gap-2 grid-cols-2 my-2.5">
-                            {urls.map((url, index) => (
-                                <div key={index} className={`group relative ${index === 2 && urls.length > 4 ? 'col-span-2' : ''}`}>
-                                    <div className="absolute w-full h-full bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                        <button onClick={() => handleDownload(url)} className="inline-flex items-center justify-center rounded-full h-8 w-8 bg-white/30 hover:bg-white/50 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50">
-                                            <svg className="w-5 h-5 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/></svg>
-                                        </button>
+                if (urls.length === 0) return null;
+
+                const displayImages = urls.slice(0, 4);
+                const remainingCount = urls.length - 4;
+
+                return (
+                    <div className="flex flex-col gap-2">
+                        {parsedContent.text && (
+                            <p className="text-sm font-normal text-gray-900 dark:text-white whitespace-pre-wrap break-all mb-2">
+                                {parsedContent.text}
+                            </p>
+                        )}
+                        <div className={`grid gap-2 grid-cols-2`}>
+                            {displayImages.map((url, index) => {
+                                const isLastItem = index === 3 && remainingCount > 0;
+                                
+                                return (
+                                    <div key={index} className="group/image relative aspect-square">
+                                        {/* Hover Overlay with Download Button (Only shows if NOT the +N item) */}
+                                        {!isLastItem && (
+                                            <div className="absolute inset-0 w-full h-full bg-gray-900/50 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center z-10">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDownload(url); }} 
+                                                    className="inline-flex items-center justify-center rounded-full h-8 w-8 bg-white/30 hover:bg-white/50 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50"
+                                                    title="Download"
+                                                >
+                                                    <HiDownload className="w-5 h-5 text-white" />
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* +N Overlay (Always visible for the last item if more exist) */}
+                                        {isLastItem && (
+                                            <button className="absolute inset-0 w-full h-full bg-gray-900/60 hover:bg-gray-900/40 transition-all duration-300 rounded-lg flex items-center justify-center z-20">
+                                                <span className="text-xl font-medium text-white">+{remainingCount + 1}</span>
+                                            </button>
+                                        )}
+                                        
+                                        <img src={url} className="rounded-lg w-full h-full object-cover" alt={`Attachment ${index}`} />
                                     </div>
-                                    <img src={url} className="rounded-lg w-full h-24 object-cover" alt={`Attachment ${index}`} />
-                                    {index === 3 && urls.length > 4 && (
-                                        <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center">
-                                            <span className="text-white font-bold text-xl">+{urls.length - 4}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
-                    );
-                }
-                return null;
+                    </div>
+                );
 
             default: // Text
                 return (
@@ -186,9 +203,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                     {renderContent()}
                 </div>
                 
-                <span className={`text-sm font-normal text-gray-500 dark:text-gray-400 ${isMe ? 'text-right' : ''}`}>
-                    {message.is_read ? 'Read' : 'Delivered'}
-                </span>
+                <div className={`flex items-center justify-between ${isMe ? 'flex-row-reverse' : ''}`}>
+                    <span className={`text-sm font-normal text-gray-500 dark:text-gray-400 ${isMe ? 'text-right' : ''}`}>
+                        {message.is_read ? 'Read' : 'Delivered'}
+                    </span>
+                    
+                    {parsedContent.type === 'image' && (parsedContent.urls || []).length > 2 && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (parsedContent.urls || []).forEach(url => handleDownload(url));
+                            }}
+                            className="text-sm text-blue-600 dark:text-blue-500 font-medium inline-flex items-center hover:underline"
+                            title="Download all"
+                        >
+                            <HiDownload className="w-4 h-4 me-1.5" />
+                            Save all
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Dropdown Menu */}

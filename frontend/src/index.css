@@ -15,6 +15,18 @@
   input[type='range']::-moz-range-thumb {
     @apply w-4 h-4 bg-pink-600 rounded-full border-none cursor-pointer;
   }
+
+  .scrollbar-visible::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-700 rounded-full;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-500 rounded-full border-2 border-transparent bg-clip-content;
+  }
 }
 
 @layer base {
