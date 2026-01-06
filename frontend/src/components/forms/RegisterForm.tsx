@@ -30,10 +30,19 @@ const RegisterForm = () => {
     try {
       await authService.register(formData);
       addToast('Register successful, please check your email for verification', 'success');
-      navigate('/login');
+        navigate('/login');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Error registering user';
-      addToast(errorMessage, 'error');
+      // Vérifier si ce sont des erreurs de validation
+      if (error.response?.data?.details) {
+        // Afficher toutes les erreurs de validation
+        const details = error.response.data.details;
+        const errorMessages = Object.values(details).join(', ');
+        addToast(`Validation errors: ${errorMessages}`, 'error');
+      } else {
+        // Erreur générale
+        const errorMessage = error.response?.data?.error || 'Error registering user';
+        addToast(errorMessage, 'error');
+      }
     }
   };
 

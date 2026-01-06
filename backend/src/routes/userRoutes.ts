@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/userController';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { completeProfileValidation } from '../middlewares/validation';
+import { handleValidationErrors } from '../middlewares/validationHandler';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -25,6 +27,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Route pour compléter le profil (tous les champs obligatoires)
+router.put('/profile/complete', 
+    authMiddleware, 
+    completeProfileValidation, 
+    handleValidationErrors, 
+    userController.updateProfile
+);
+
+// Route pour mettre à jour le profil (champs optionnels)
 router.put('/profile', authMiddleware, userController.updateProfile);
 router.put('/password', authMiddleware, userController.changePassword);
 

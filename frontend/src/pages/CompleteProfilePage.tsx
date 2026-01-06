@@ -215,7 +215,7 @@ export default function CompleteProfilePage() {
     try {
       // Exclude profileImage from the request as it's already uploaded separately
       const { profileImage, ...profileDataToSend } = profileData;
-      await api.put('/users/profile', {
+      await api.put('/users/profile/complete', {
         ...profileDataToSend,
         statusId: 2
       });
@@ -224,7 +224,14 @@ export default function CompleteProfilePage() {
       navigate('/');
     } catch (error: any) {
       console.error('Error completing profile:', error);
-      addToast(error.response?.data?.error || 'Failed to save profile', 'error');
+      // Gérer les erreurs de validation
+      if (error.response?.data?.details) {
+        const details = error.response.data.details;
+        const errorMessages = Object.values(details).join(', ');
+        addToast(`Validation errors: ${errorMessages}`, 'error');
+      } else {
+        addToast(error.response?.data?.error || 'Failed to save profile', 'error');
+      }
     }
   };
 

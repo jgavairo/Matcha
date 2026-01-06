@@ -6,10 +6,13 @@ import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
 import { authMiddleware } from './middlewares/authMiddleware';
+import { authLimiter, registerLimiter, passwordResetLimiter } from './middlewares/rateLimiter';
 import chatRoutes from './routes/chatRoutes';
 import tagRoutes from './routes/tagRoutes';
 import userRoutes from './routes/userRoutes';
 import matchRoutes from './routes/matchRoutes';
+import { validateRegister } from './middlewares/validation';
+import { handleValidationErrors } from './middlewares/validationHandler';
 
 // initializing ================================================================
 
@@ -42,19 +45,19 @@ app.use('/uploads', express.static('uploads'));
 
 // Authentication Routes ------------------------------------------------------
 
-app.post('/auth/register', authController.register);
+app.post('/auth/register', registerLimiter, validateRegister, handleValidationErrors, authController.register);
 
-app.post('/auth/login', authController.login);
+app.post('/auth/login', authLimiter, authController.login);
 
 app.get('/auth/me', authMiddleware, authController.me);
 
 app.post('/auth/logout', authMiddleware, authController.logout);
 
-app.post('/auth/forgot-password', authController.forgotPassword);
+app.post('/auth/forgot-password', passwordResetLimiter, authController.forgotPassword);
 
 app.get('/auth/verify-email', authController.verifyEmail);
 
-app.post('/auth/reset-password', authController.resetPassword);
+app.post('/auth/reset-password', passwordResetLimiter, authController.resetPassword);
 
 app.get('/auth/check-token', authController.checkToken);
 

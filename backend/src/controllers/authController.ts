@@ -46,22 +46,16 @@ export class AuthController {
         const transporter = this.getTransporter();
         const logoPath = path.resolve(__dirname, '../../assets/logo.png');
         
-        // Déterminer le chemin du template selon l'environnement
-        // En dev (ts-node): __dirname = src/controllers → ../templates/email.html
-        // En prod (compilé): __dirname = dist/controllers → ../../src/templates/email.html
         let templatePath = path.resolve(__dirname, '../templates/email.html');
         let htmlTemplate: string;
         
         try {
-            // Essayer de lire le template depuis le chemin relatif (dev)
             htmlTemplate = await fs.readFile(templatePath, 'utf-8');
         } catch (error: any) {
-            // Si le fichier n'existe pas, essayer depuis src/ (prod compilé)
             templatePath = path.resolve(__dirname, '../../src/templates/email.html');
             try {
                 htmlTemplate = await fs.readFile(templatePath, 'utf-8');
             } catch (error2: any) {
-                // Dernier essai depuis la racine du projet
                 templatePath = path.resolve(process.cwd(), 'src/templates/email.html');
                 htmlTemplate = await fs.readFile(templatePath, 'utf-8');
             }
@@ -72,7 +66,6 @@ export class AuthController {
         console.log('Template preview (first 200 chars):', htmlTemplate.substring(0, 200));
 
         try {
-            // Remplacer les variables dans le template
             htmlTemplate = htmlTemplate
                 .replace(/{{SUBJECT}}/g, subject)
                 .replace(/{{TITLE}}/g, title)

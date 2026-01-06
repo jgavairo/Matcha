@@ -23,6 +23,10 @@ const ProtectedRoute: React.FC = () => {
     return <Navigate to="/complete-profile" replace />;
   }
 
+  if (user && user.statusId === 2 && location.pathname === '/complete-profile') {
+    return <Navigate to="/" replace />;
+  }
+
   return <Outlet />;
 };
 
