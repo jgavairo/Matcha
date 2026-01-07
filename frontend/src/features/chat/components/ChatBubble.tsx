@@ -86,7 +86,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     const avatarUrl = `https://ui-avatars.com/api/?name=${isMe ? 'Me' : otherUsername}&background=random`;
     const timeString = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    if (message.sender_id === null) {
+    if (message.type === 'system') {
         return (
             <div className="flex justify-center my-4">
                 <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">

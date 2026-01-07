@@ -19,8 +19,9 @@ export interface Conversation {
 export interface Message {
     id: number;
     conversation_id: number;
-    sender_id: number;
+    sender_id: number | null;
     content: string;
+    type: 'text' | 'image' | 'audio' | 'system';
     is_read: boolean;
     created_at: Date;
 }
@@ -29,7 +30,7 @@ export const createConversation = async (matchId: number) => {
     return await db.insert('conversations', { match_id: matchId });
 };
 
-export const createMessage = async (conversationId: number, senderId: number, content: string) => {
+export const createMessage = async (conversationId: number, senderId: number | null, content: string, type: 'text' | 'image' | 'audio' | 'system' = 'text') => {
     // Check if match is active
     const checkQuery = `
         SELECT m.is_active 
@@ -50,7 +51,8 @@ export const createMessage = async (conversationId: number, senderId: number, co
     const message = await db.insert('messages', {
         conversation_id: conversationId,
         sender_id: senderId,
-        content
+        content,
+        type
     });
     
     // Update conversation updated_at
@@ -121,4 +123,15 @@ export const getConversationParticipants = async (conversationId: number) => {
     `;
     const result = await db.query(query, [conversationId]);
     return result.rows[0];
+};
+
+export const getConversationIdByUsers = async (userId1: number, userId2: number) => {
+    const query = `
+        SELECT c.id 
+        FROM conversations c
+        JOIN matches m ON c.match_id = m.id
+        WHERE (m.user_id_1 = $1 AND m.user_id_2 = $2) OR (m.user_id_1 = $2 AND m.user_id_2 = $1)
+    `;
+    const result = await db.query(query, [userId1, userId2]);
+    return result.rows[0]?.id;
 };

@@ -125,20 +125,6 @@ const ChatPage: React.FC = () => {
         loadConversations(); // Refresh to update unread counts/last message
     };
 
-    // For testing: Simulate a match
-    const handleSimulateMatch = async () => {
-        const targetId = prompt("Enter User ID to match with:");
-        if (targetId) {
-            try {
-                await chatService.createMatch(parseInt(targetId));
-                alert("Match created! Conversation should appear.");
-                loadConversations();
-            } catch (e) {
-                alert("Failed to create match (maybe already matched?)");
-            }
-        }
-    };
-
     const handleArchiveConversation = async (conversation: Conversation) => {
         try {
             if (conversation.is_archived) {
@@ -165,14 +151,6 @@ const ChatPage: React.FC = () => {
             <div className="w-full flex flex-grow overflow-hidden">
                 {/* Left Column: Conversation List */}
                 <div className="w-full md:w-1/3 flex flex-col h-full overflow-hidden border-r border-gray-200 dark:border-gray-700">
-                    <div className="p-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
-                        <button 
-                            onClick={handleSimulateMatch}
-                            className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm"
-                        >
-                            Simulate Match (Test)
-                        </button>
-                    </div>
                     <div className="flex-1 min-h-0">
                         <ConversationList 
                             conversations={conversations} 

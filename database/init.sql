@@ -141,6 +141,7 @@ CREATE TABLE messages (
     conversation_id INT REFERENCES conversations(id) ON DELETE CASCADE,
     sender_id INT REFERENCES users(id),
     content TEXT NOT NULL,
+    type VARCHAR(20) DEFAULT 'text',
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
