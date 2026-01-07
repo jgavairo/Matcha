@@ -4,7 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
 import authService from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
-import { EMAIL_PATTERN, USERNAME_PATTERN, NAME_PATTERN, PASSWORD_PATTERN } from '@utils/regexUtils';
+import { 
+  EMAIL_REGEX, 
+  USERNAME_REGEX, 
+  NAME_REGEX, 
+  PASSWORD_REGEX,
+  USERNAME_MAX,
+  NAME_MAX
+} from '@shared/validation';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -73,6 +80,7 @@ const RegisterForm = () => {
           placeholder="johndoe"
           pattern={USERNAME_PATTERN}
           required
+          maxLength={USERNAME_MAX}
           value={formData.username}
           onChange={handleChange}
         />
@@ -88,6 +96,7 @@ const RegisterForm = () => {
             placeholder="John"
             pattern={NAME_PATTERN}
             required
+            maxLength={NAME_MAX}
             value={formData.firstName}
             onChange={handleChange}
             
@@ -102,6 +111,7 @@ const RegisterForm = () => {
             placeholder="Doe"
             pattern={NAME_PATTERN}
             required
+            maxLength={NAME_MAX}
             value={formData.lastName}
             onChange={handleChange}
           />

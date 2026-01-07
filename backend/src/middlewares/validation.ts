@@ -1,5 +1,17 @@
 import { body, ValidationChain } from 'express-validator';
-import { EMAIL_REGEX, USERNAME_REGEX, NAME_REGEX, BIRTH_DATE_REGEX, PASSWORD_REGEX, BIOGRAPHY_REGEX } from '../utils/regexUtils';
+import { 
+    EMAIL_REGEX, 
+    USERNAME_REGEX, 
+    NAME_REGEX, 
+    BIRTH_DATE_REGEX, 
+    PASSWORD_REGEX, 
+    BIOGRAPHY_REGEX,
+    BIOGRAPHY_MIN,
+    BIOGRAPHY_MAX,
+    CITY_MIN,
+    CITY_MAX,
+    TAGS_MIN
+} from '@shared/validation';
 
 export const validateRegister: ValidationChain[] = [
     body('email')
@@ -54,16 +66,16 @@ export const completeProfileValidation: ValidationChain[] = [
     body('biography')
         .trim()
         .notEmpty().withMessage('Biography is required')
-        .isLength({ min: 10, max: 500 }).withMessage('Biography must be between 10 and 500 characters')
+        .isLength({ min: BIOGRAPHY_MIN, max: BIOGRAPHY_MAX }).withMessage(`Biography must be between ${BIOGRAPHY_MIN} and ${BIOGRAPHY_MAX} characters`)
         .matches(BIOGRAPHY_REGEX).withMessage('Invalid biography'),
 
     body('tags')
-        .isArray({ min: 1 }).withMessage('At least one tag is required'),
+        .isArray({ min: TAGS_MIN }).withMessage(`At least ${TAGS_MIN} tag is required`),
 
     body('city')
         .trim()
         .notEmpty().withMessage('City is required')
-        .isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
+        .isLength({ min: CITY_MIN, max: CITY_MAX }).withMessage(`City must be between ${CITY_MIN} and ${CITY_MAX} characters`),
 ];
 
 // Validation pour mettre à jour le profil (tous les champs optionnels mais valides si présents)
@@ -92,7 +104,7 @@ export const validateUpdateProfile: ValidationChain[] = [
     body('biography')
         .optional()
         .trim()
-        .isLength({ min: 10, max: 500 }).withMessage('Biography must be between 10 and 500 characters')
+        .isLength({ min: BIOGRAPHY_MIN, max: BIOGRAPHY_MAX }).withMessage(`Biography must be between ${BIOGRAPHY_MIN} and ${BIOGRAPHY_MAX} characters`)
         .matches(BIOGRAPHY_REGEX).withMessage('Invalid biography'),
     
     body('tags')
@@ -102,7 +114,7 @@ export const validateUpdateProfile: ValidationChain[] = [
     body('city')
         .optional()
         .trim()
-        .isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
+        .isLength({ min: CITY_MIN, max: CITY_MAX }).withMessage(`City must be between ${CITY_MIN} and ${CITY_MAX} characters`),
     
     body('gender')
         .optional()

@@ -4,6 +4,7 @@ import { db } from '../utils/db';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { activateMatch, deactivateMatch } from './matchModel';
+import { PHOTOS_MIN } from '@shared/validation';
 
 export const createUser = async (user: RegisterFormData) => {
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -196,6 +197,13 @@ export const addImage = async (userId: number, filename: string) => {
 };
 
 export const removeImage = async (userId: number, url: string) => {
+    const countQuery = 'SELECT COUNT(*) FROM images WHERE user_id = $1';
+    const countResult = await db.query(countQuery, [userId]);
+    const imageCount = parseInt(countResult.rows[0].count, 10);
+
+    if (imageCount <= PHOTOS_MIN) {
+        throw new Error(`You must have at least ${PHOTOS_MIN} photo${PHOTOS_MIN > 1 ? 's' : ''}`);
+    }
     await db.delete('images', { user_id: userId, url: url });
 };
 

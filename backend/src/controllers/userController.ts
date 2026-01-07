@@ -3,7 +3,7 @@ import { addReport, updateUser, completeProfileUser, updateUserInterests, update
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
 import { db } from '../utils/db';
-import { EMAIL_REGEX } from '../utils/regexUtils';
+import { EMAIL_REGEX } from '@shared/validation';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -122,8 +122,11 @@ export class UserController {
 
             await removeImage(userId, url);
             res.status(200).json({ message: 'Photo deleted successfully' });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting photo:', error);
+            if (error.message && error.message.includes('You must have at least')) {
+                return res.status(400).json({ error: error.message });
+            }
             res.status(500).json({ error: 'Internal server error' });
         }
     };

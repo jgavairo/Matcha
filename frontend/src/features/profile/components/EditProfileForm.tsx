@@ -5,7 +5,19 @@ import { CurrentUser } from '@app-types/user';
 import { api } from '../../../services/api';
 import { HiX } from 'react-icons/hi';
 import { useNotification } from '../../../context/NotificationContext';
-import { EMAIL_REGEX, USERNAME_REGEX, NAME_REGEX } from '@utils/regexUtils';
+import { 
+    EMAIL_REGEX, 
+    USERNAME_REGEX, 
+    NAME_REGEX, 
+    BIRTH_DATE_REGEX, 
+    BIOGRAPHY_REGEX,
+    USERNAME_MAX,
+    NAME_MAX,
+    BIOGRAPHY_MIN,
+    BIOGRAPHY_MAX,
+    CITY_MAX,
+    TAGS_MIN
+} from '@shared/validation';
 
 interface EditProfileFormProps {
     user: CurrentUser;
@@ -28,6 +40,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const { addToast } = useNotification();
 
     const { register, handleSubmit, formState: { errors }, watch, getValues, control, setValue } = useForm({
+        mode: "onChange",
         defaultValues: {
             username: user.username,
             firstName: user.firstName,
@@ -90,6 +103,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     };
 
     const handleRemoveTag = (tagToRemove: string) => {
+        if (selectedTags.length <= TAGS_MIN) {
+            addToast(`You must have at least ${TAGS_MIN} interest(s)`, 'error');
+            return;
+        }
         setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
     };
 
@@ -223,11 +240,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         <Label htmlFor="username">Username</Label>
                     </div>
                     <TextInput 
-                        id="username" 
+                        id="username"
+                        maxLength={USERNAME_MAX}
                         {...registerWithSave("username", { 
+                            pattern: { value: USERNAME_REGEX, message: "Invalid username" },
                             required: "Username is required", 
-                            pattern: { value: USERNAME_REGEX.source, message: "Invalid username" },
-                            maxLength: { value: 16, message: "Username must be less than 16 characters" }
+                            maxLength: { value: USERNAME_MAX, message: `Username must be less than ${USERNAME_MAX} characters` }
                         })} 
                         color={errors.username ? "failure" : "gray"}
                     />
@@ -243,10 +261,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="firstName" 
+                        maxLength={NAME_MAX}
                         {...registerWithSave("firstName", { 
                             required: "First name is required", 
-                            pattern: { value: NAME_REGEX.source, message: "Invalid first name" },
-                            maxLength: { value: 50, message: "First name must be less than 50 characters" }
+                            pattern: { value: NAME_REGEX, message: "Invalid first name" },
+                            maxLength: { value: NAME_MAX, message: `First name must be less than ${NAME_MAX} characters` }
                         })} 
                         color={errors.firstName ? "failure" : "gray"}
                     />
@@ -262,10 +281,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="lastName" 
+                        maxLength={NAME_MAX}
                         {...registerWithSave("lastName", { 
                             required: "Last name is required", 
-                            pattern: { value: NAME_REGEX.source, message: "Invalid last name" },
-                            maxLength: { value: 50, message: "Last name must be less than 50 characters" }
+                            pattern: { value: NAME_REGEX, message: "Invalid last name" },
+                            maxLength: { value: NAME_MAX, message: `Last name must be less than ${NAME_MAX} characters` }
                         })} 
                         color={errors.lastName ? "failure" : "gray"}
                     />
@@ -287,7 +307,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     {...registerWithSave("email", { 
                         required: "Email is required",
                         pattern: {
-                            value: EMAIL_REGEX.source,
+                            value: EMAIL_REGEX,
                             message: "Invalid email address"
                         }
                     })} 
@@ -309,6 +329,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         value={cityInput} 
                         onChange={(e) => setCityInput(e.target.value)}
                         onBlur={handleCityBlur}
+                        maxLength={100}
                         placeholder="City or Neighborhood"
                         className="flex-1" 
                         color={locationError ? "failure" : "gray"}
@@ -336,6 +357,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     <Controller
                         control={control}
                         name="birthDate"
+                        rules={{
+                            required: "Birth date is required",
+                            pattern: { value: BIRTH_DATE_REGEX, message: "Invalid date format" }
+                        }}
                         render={({ field: { onChange, value } }) => (
                             <Datepicker
                                 key={user.birthDate} // Force re-render when date changes from outside
@@ -381,7 +406,9 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 </div>
                 <div className="flex flex-wrap gap-4 p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
                     <div className="flex items-center gap-2">
-                        <Checkbox id="pref-male" value="male" {...register("sexualPreferences")} />
+                        <Checkbox id="pref-male" value="male" {...register("sexualPreferences", {
+                            validate: (value) => value && value.length > 0 || "At least one preference is required"
+                        })} />
                         <Label htmlFor="pref-male">Male</Label>
                     </div>
                     <div className="flex items-center gap-2">
@@ -393,13 +420,34 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         <Label htmlFor="pref-other">Other</Label>
                     </div>
                 </div>
+                {errors.sexualPreferences && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {errors.sexualPreferences.message as string}
+                    </p>
+                )}
             </div>
 
             <div>
                 <div className="mb-2 block">
                     <Label htmlFor="biography">Biography</Label>
                 </div>
-                <Textarea id="biography" rows={4} {...registerWithSave("biography")} />
+                <Textarea 
+                    id="biography" 
+                    maxLength={BIOGRAPHY_MAX}
+                    rows={4} 
+                    {...registerWithSave("biography", {
+                        required: "Biography is required",
+                        minLength: { value: BIOGRAPHY_MIN, message: `Biography must be at least ${BIOGRAPHY_MIN} characters` },
+                        maxLength: { value: BIOGRAPHY_MAX, message: `Biography must be less than ${BIOGRAPHY_MAX} characters` },
+                        pattern: { value: BIOGRAPHY_REGEX, message: "Invalid characters in biography" }
+                    })} 
+                    color={errors.biography ? "failure" : "gray"}
+                />
+                {errors.biography && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                        {errors.biography.message as string}
+                    </p>
+                )}
             </div>
 
             <div>

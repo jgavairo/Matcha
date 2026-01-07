@@ -97,15 +97,21 @@ const ProfilePage: React.FC = () => {
     const handlePhotoDelete = async (index: number) => {
         if (!user) return;
         const urlToDelete = user.images[index];
+        const previousImages = [...user.images];
+
+        // Optimistic update
+        const newImages = [...user.images];
+        newImages.splice(index, 1);
+        setUser({ ...user, images: newImages });
+
         try {
             await api.delete('/users/photos', { data: { url: urlToDelete } });
-            const newImages = [...user.images];
-            newImages.splice(index, 1);
-            setUser({ ...user, images: newImages });
             addToast("Photo deleted successfully", 'success');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to delete photo", error);
-            addToast("Failed to delete photo", 'error');
+            setUser({ ...user, images: previousImages }); // Revert
+            const errorMessage = error.response?.data?.error || "Failed to delete photo";
+            addToast(errorMessage, 'error');
         }
     };
 
