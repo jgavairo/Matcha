@@ -60,11 +60,12 @@ export const loginUser = async (user: LoginFormData) => {
     }
 };
 
+const genderMap: { [key: string]: number } = { male: 1, female: 2, other: 3 };
+
 export const updateUser = async (id: number, data: any) => {
     const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = data;
     
     // Map gender string to ID
-    const genderMap: { [key: string]: number } = { 'male': 1, 'female': 2, 'other': 3 };
     const genderId = gender ? (genderMap[gender] || null) : null;
 
     // Map sexual preferences string to IDs array
@@ -105,6 +106,47 @@ export const updateUser = async (id: number, data: any) => {
 
     return await db.update('users', id, updateData);
 };
+
+// Spécifique au parcours "complete-profile" : ne prend que les champs
+// venant de la page CompleteProfile et les insère dans la table users.
+export const completeUserProfile = async (
+    id: number,
+    data: {
+        gender: string;
+        sexualPreferences: string[];
+        biography: string;
+        latitude: number | null;
+        longitude: number | null;
+        city: string;
+        geolocationConsent: boolean;
+    }
+) => {
+    const { gender, sexualPreferences, biography, latitude, longitude, city, geolocationConsent } = data;
+
+    const genderId = gender ? (genderMap[gender] || null) : null;
+
+    let targetGenderIds: number[] | null = null;
+    if (Array.isArray(sexualPreferences) && sexualPreferences.length > 0) {
+        targetGenderIds = sexualPreferences
+            .map((pref: string) => genderMap[pref])
+            .filter((id: number | undefined) => id !== undefined) as number[];
+    }
+
+    const updateData = {
+        gender_id: genderId,
+        sexual_preferences: targetGenderIds,
+        biography,
+        latitude,
+        longitude,
+        city,
+        geolocation_consent: geolocationConsent
+    };
+
+    return await db.update('users', id, updateData);
+};
+
+// Alias utilisé par le contrôleur pour la route /profile/complete
+export const completeProfileUser = completeUserProfile;
 
 export const updateUserInterests = async (userId: number, tags: string[]) => {
     const client = await pool.connect();
@@ -801,3 +843,8 @@ export const generateVerificationToken = async (userId: number, expiresInMinutes
     
     return { token: newToken, email: result.email, expires: newExpires };
 };
+
+// Ancienne implémentation incomplète conservée en commentaire pour référence
+// export const completeProfileUser = async (userId: number, data: any) => {
+//     const user = await db.findOne('users', { id: userId }, ['id', 'status_id']);
+// };

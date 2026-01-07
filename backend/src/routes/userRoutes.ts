@@ -28,11 +28,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route pour compléter le profil (tous les champs obligatoires)
-router.put('/profile/complete', 
-    authMiddleware, 
-    completeProfileValidation, 
-    handleValidationErrors, 
-    userController.updateProfile
+router.put(
+    '/profile/complete',
+    authMiddleware,
+    completeProfileValidation,
+    handleValidationErrors,
+    userController.completeProfile
 );
 
 // Route pour mettre à jour le profil (champs optionnels)
