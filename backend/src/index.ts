@@ -11,6 +11,7 @@ import chatRoutes from './routes/chatRoutes';
 import tagRoutes from './routes/tagRoutes';
 import userRoutes from './routes/userRoutes';
 import matchRoutes from './routes/matchRoutes';
+import dateRoutes from './routes/dateRoutes';
 import { validateRegister } from './middlewares/validation';
 import { handleValidationErrors } from './middlewares/validationHandler';
 
@@ -76,6 +77,7 @@ app.use('/matches', matchRoutes);
 
 app.use('/tags', tagRoutes);
 app.use('/chat', chatRoutes);
+app.use('/dates', dateRoutes);
 
 
 

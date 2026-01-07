@@ -1,5 +1,5 @@
 import React from 'react';
-import { HiPhone, HiX } from 'react-icons/hi';
+import { HiPhone, HiX, HiCalendar } from 'react-icons/hi';
 import { Conversation } from '../services/chatService';
 
 interface ChatHeaderProps {
@@ -8,11 +8,13 @@ interface ChatHeaderProps {
     isOnline?: boolean;
     lastConnection?: string;
     onCallUser: () => void;
+    onToggleDatePlanner: () => void;
     onClose?: () => void;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, currentUserId, isOnline, lastConnection, onCallUser, onClose }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, currentUserId, isOnline, lastConnection, onCallUser, onToggleDatePlanner, onClose }) => {
     const otherUsername = conversation.user1_id === currentUserId ? conversation.user2_username : conversation.user1_username;
+    const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
 
     return (
         <div className="p-4 border-b flex justify-between items-center bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
@@ -28,6 +30,14 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, currentUserId, is
                 )}
             </div>
             <div className="flex items-center gap-4">
+                <button 
+                    onClick={onToggleDatePlanner}
+                    className="p-2 text-purple-600 rounded-lg hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-200 dark:text-purple-500 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                    title="Plan a Date"
+                >
+                    <HiCalendar className="w-6 h-6" />
+                </button>
+
                 {conversation.is_active && (
                     <button 
                         onClick={onCallUser}
