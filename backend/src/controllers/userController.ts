@@ -316,11 +316,11 @@ export class UserController {
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
-            const { reportedId, reason } = req.body;
-            if (!reportedId || !reason) {
+            const { reportedId, reasons } = req.body;
+            if (!reportedId || !reasons) {
                 return res.status(400).json({ error: 'Reported ID and reason are required' });
             }
-            const result = await addReport(userId, reportedId, reason);
+            const result = await addReport(userId, reportedId, reasons);
             if (result) {
                 return res.status(200).json({ message: 'User reported successfully' });
             } else {

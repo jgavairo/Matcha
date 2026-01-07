@@ -37,13 +37,14 @@ const DiscoverPage: React.FC = () => {
     }
   };
 
-  const handleReport = async (reason: string) => {
+  const handleReport = async (reasons: string[]) => {
     if (selectedUser) {
       if (selectedUser) {
         try {
+          console.log('Report user:', selectedUser.id, reasons);
           const response = await api.post(`/report`, {
             reportedId: selectedUser.id,
-            reason: reason
+            reasons: reasons
           });
   
           if (response.status === 200) {
