@@ -116,7 +116,27 @@ export const initializeSocket = (httpServer: HttpServer) => {
     });
 
     // WebRTC Signaling
-    socket.on('call_user', (data: { userToCall: number; signalData: any; from: number; name: string; avatar: string }) => {
+    socket.on('call_user', async (data: { userToCall: number; signalData: any; from: number; name: string; avatar: string }) => {
+      // Check if user is already in a call
+      if (activeCalls.has(data.userToCall)) {
+          io.to(socket.id).emit('call_busy', { userId: data.userToCall });
+          
+          // Log missed call (busy) - similar to call_declined logic but automatic
+          try {
+              const conversationId = await chatModel.getConversationIdByUsers(userId, data.userToCall);
+              if (conversationId) {
+                  const user = await userModel.getUserById(userId);
+                  const username = user?.username || 'Unknown';
+                  const message = await chatModel.createMessage(conversationId, null, `Call missed by ${username} (Line Busy)`, 'system');
+                  io.to(`user_${userId}`).emit('chat_message', message);
+                  io.to(`user_${data.userToCall}`).emit('chat_message', message);
+              }
+          } catch (error) {
+              console.error("Error logging busy call", error);
+          }
+          return;
+      }
+
       io.to(`user_${data.userToCall}`).emit('call_incoming', { 
         signal: data.signalData, 
         from: data.from,

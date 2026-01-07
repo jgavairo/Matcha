@@ -85,6 +85,18 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         });
 
+        socketService.on('call_busy', () => {
+            console.log("User is busy");
+            addToast("User is busy", 'warning');
+            setIsCallActive(false);
+            setCallEnded(true);
+            setOtherUser(null);
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                setLocalStream(null);
+            }
+        });
+
         socketService.on('call_ended', () => {
              console.log("Call ended by remote user/connection lost");
              addToast("Call ended", 'info');
