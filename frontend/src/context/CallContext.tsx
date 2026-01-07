@@ -150,8 +150,15 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
         } catch (err) {
-            console.error("Error accessing media devices, proceeding without local stream:", err);
-            // We proceed even if device is not found, to allow testing signaling or receive-only mode
+            console.error("Error accessing media devices, trying video-only fallback:", err);
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                setLocalStream(stream);
+                addToast("Microphone not found, starting with video only", 'info');
+            } catch (videoErr) {
+                 console.error("Error accessing video-only:", videoErr);
+                 addToast("Could not access camera or microphone", 'error');
+            }
         }
 
         try {
@@ -213,7 +220,15 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
         } catch (err) {
-            console.warn("Could not access local media for answering, proceeding anyway:", err);
+            console.warn("Could not access audio+video, trying video-only:", err);
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                setLocalStream(stream);
+                addToast("Microphone not found, answering with video only", 'info');
+            } catch (videoErr) {
+                 console.error("Error accessing video-only:", videoErr);
+                 addToast("Could not access camera or microphone", 'error');
+            }
         }
 
         try {
