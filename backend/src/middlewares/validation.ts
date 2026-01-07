@@ -1,12 +1,5 @@
 import { body, ValidationChain } from 'express-validator';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,16}$/;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-const NAME_REGEX = /^[a-zA-ZÀ-ÿ\s'-]{2,50}$/;
-const BIRTH_DATE_REGEX = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
-const BIOGRAPHY_REGEX = /^[a-zA-Z0-9À-ÿ\s.,!?;:()\-'"]{10,500}$/;
-
+import { EMAIL_REGEX, USERNAME_REGEX, NAME_REGEX, BIRTH_DATE_REGEX, PASSWORD_REGEX, BIOGRAPHY_REGEX } from '../utils/regexUtils';
 
 export const validateRegister: ValidationChain[] = [
     body('email')

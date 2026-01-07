@@ -3,6 +3,7 @@ import { updateUser, completeProfileUser, updateUserInterests, updatePassword, a
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
 import { db } from '../utils/db';
+import { EMAIL_REGEX } from '../utils/regexUtils';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -30,10 +31,9 @@ export class UserController {
 
             const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = req.body;
 
-            // Email validation if provided
             if (email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
+                const emailRegex = EMAIL_REGEX.source;
+                if (!email.match(emailRegex)) {
                     return res.status(400).json({ error: 'Invalid email format' });
                 }
             }

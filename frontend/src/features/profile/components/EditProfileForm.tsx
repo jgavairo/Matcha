@@ -5,6 +5,7 @@ import { CurrentUser } from '@app-types/user';
 import { api } from '../../../services/api';
 import { HiX } from 'react-icons/hi';
 import { useNotification } from '../../../context/NotificationContext';
+import { EMAIL_REGEX, USERNAME_REGEX, NAME_REGEX } from '@utils/regexUtils';
 
 interface EditProfileFormProps {
     user: CurrentUser;
@@ -223,7 +224,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="username" 
-                        {...registerWithSave("username", { required: "Username is required" })} 
+                        {...registerWithSave("username", { 
+                            required: "Username is required", 
+                            pattern: { value: USERNAME_REGEX.source, message: "Invalid username" },
+                            maxLength: { value: 16, message: "Username must be less than 16 characters" }
+                        })} 
                         color={errors.username ? "failure" : "gray"}
                     />
                     {errors.username && (
@@ -238,7 +243,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="firstName" 
-                        {...registerWithSave("firstName", { required: "First name is required" })} 
+                        {...registerWithSave("firstName", { 
+                            required: "First name is required", 
+                            pattern: { value: NAME_REGEX.source, message: "Invalid first name" },
+                            maxLength: { value: 50, message: "First name must be less than 50 characters" }
+                        })} 
                         color={errors.firstName ? "failure" : "gray"}
                     />
                     {errors.firstName && (
@@ -253,7 +262,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     </div>
                     <TextInput 
                         id="lastName" 
-                        {...registerWithSave("lastName", { required: "Last name is required" })} 
+                        {...registerWithSave("lastName", { 
+                            required: "Last name is required", 
+                            pattern: { value: NAME_REGEX.source, message: "Invalid last name" },
+                            maxLength: { value: 50, message: "Last name must be less than 50 characters" }
+                        })} 
                         color={errors.lastName ? "failure" : "gray"}
                     />
                     {errors.lastName && (
@@ -274,7 +287,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     {...registerWithSave("email", { 
                         required: "Email is required",
                         pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            value: EMAIL_REGEX.source,
                             message: "Invalid email address"
                         }
                     })} 
