@@ -8,8 +8,11 @@ import MatchFilters from '@features/matches/components/MatchFilters';
 import UserCard from '@features/matches/components/UserCard';
 import UserProfileDrawer from '@features/matches/components/UserProfileDrawer';
 import { DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
+import { api } from '@/services/api';
+import { useNotification } from '@context/NotificationContext';
 
 const SearchPage: React.FC = () => {
+  const { addToast } = useNotification();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -157,10 +160,22 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  const handleReport = (reason: string) => {
+  const handleReport = async (reason: string) => {
     if (selectedUser) {
-      console.log('Report user:', selectedUser.id, reason);
-      // Implement report logic here
+      try {
+        const response = await api.post(`/reports`, {
+          user_id: selectedUser.id,
+          reason: reason
+        });
+
+        if (response.status === 200) {
+          addToast('User reported successfully', 'success');
+        } else {
+          addToast('Failed to report user', 'error');
+        }
+      } catch (error) {
+        addToast('Failed to report user', 'error');
+      }
     }
   };
 
