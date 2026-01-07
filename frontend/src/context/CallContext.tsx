@@ -86,7 +86,8 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         socketService.on('call_ended', () => {
-             console.log("Call ended by remote user");
+             console.log("Call ended by remote user/connection lost");
+             addToast("Call ended", 'info');
              endCallLocalCleanup();
         });
 

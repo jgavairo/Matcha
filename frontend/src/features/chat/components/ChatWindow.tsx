@@ -231,18 +231,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">
                 {messages.map((msg) => {
-                    // System Message Render
-                    if (msg.type === 'system' || (msg.content && msg.content.startsWith('{') && JSON.parse(msg.content)?.type === 'system')) {
-                       // Fallback or explicit check
-                       return (
-                            <div key={msg.id} className="flex justify-center my-4 w-full">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 text-center italic">
-                                    {msg.content}
-                                </span>
-                            </div>
-                       );
-                    }
-
                     return (
                         <ChatBubble 
                             key={msg.id}
