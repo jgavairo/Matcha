@@ -10,7 +10,8 @@ import {
     BIOGRAPHY_MAX,
     CITY_MIN,
     CITY_MAX,
-    TAGS_MIN
+    TAGS_MIN,
+    MIN_AGE
 } from '@shared/validation';
 
 export const validateRegister: ValidationChain[] = [
@@ -38,7 +39,17 @@ export const validateRegister: ValidationChain[] = [
     body('birthDate')
         .trim()
         .notEmpty().withMessage('Birth date is required')
-        .matches(BIRTH_DATE_REGEX).withMessage('Invalid birth date'),
+        .matches(BIRTH_DATE_REGEX).withMessage('Invalid birth date')
+        .custom((value) => {
+            const birthDate = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age >= MIN_AGE;
+        }).withMessage(`You must be at least ${MIN_AGE} years old`),
     
     body('password')
         .trim()
@@ -132,8 +143,18 @@ export const validateUpdateProfile: ValidationChain[] = [
     
     body('birthDate')
         .optional()
-        .trim()
-        .matches(BIRTH_DATE_REGEX).withMessage('Invalid birth date format'),
+        .matches(BIRTH_DATE_REGEX).withMessage('Invalid birth date')
+        .custom((value) => {
+            if (!value) return true;
+            const birthDate = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age >= MIN_AGE;
+        }).withMessage(`You must be at least ${MIN_AGE} years old`),
     
     body('latitude')
         .optional()

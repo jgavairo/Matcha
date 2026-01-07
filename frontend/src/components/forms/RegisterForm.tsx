@@ -1,9 +1,12 @@
-import { Button, Label, TextInput, Datepicker } from 'flowbite-react';
-import { useState } from 'react';
+import { Button } from 'flowbite-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
 import { RegisterFormData } from '@app-types/forms';
 import authService from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
+import { FormInput } from '../ui/FormInput';
+import { FormDatePicker } from '../ui/FormDatePicker';
+import { validateAge } from '../../utils/validators';
 import { 
   EMAIL_REGEX, 
   USERNAME_REGEX, 
@@ -16,150 +19,131 @@ import {
 const RegisterForm = () => {
   const navigate = useNavigate();
   const { addToast } = useNotification();
-  const [formData, setFormData] = useState<RegisterFormData>({
-    email: '',
-    username: '',
-    firstName: '',
-    lastName: '',
-    birthDate: '',
-    password: '',
-    confirmPassword: '',
+  
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors }, 
+    watch, 
+    control
+  } = useForm<RegisterFormData>({
+    mode: "onChange"
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      await authService.register(formData);
+      await authService.register(data);
       addToast('Register successful, please check your email for verification', 'success');
-        navigate('/login');
+      navigate('/login');
     } catch (error: any) {
-      // Vérifier si ce sont des erreurs de validation
       if (error.response?.data?.details) {
-        // Afficher toutes les erreurs de validation
         const details = error.response.data.details;
         const errorMessages = Object.values(details).join(', ');
         addToast(`Validation errors: ${errorMessages}`, 'error');
       } else {
-        // Erreur générale
         const errorMessage = error.response?.data?.error || 'Error registering user';
         addToast(errorMessage, 'error');
       }
     }
   };
 
-  
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div>
-        <Label htmlFor="email" className="mb-2 block">Email</Label>
-        <TextInput
-          id="email"
-          name="email"
-          type="email"
-          pattern={EMAIL_REGEX.source}
-          placeholder="exemple@email.com"
-          required
-          value={formData.email}
-          onChange={handleChange}
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <FormInput
+        id="email"
+        label="Email"
+        placeholder="exemple@email.com"
+        {...register("email", { 
+          required: "Email is required",
+          pattern: { value: EMAIL_REGEX, message: "Invalid email format" }
+        })}
+        error={errors.email}
+      />
 
-      <div>
-        <Label htmlFor="username" className="mb-2 block">Username</Label>
-        <TextInput
-          id="username"
-          name="username"
-          type="text"
-          placeholder="johndoe"
-          pattern={USERNAME_REGEX.source}
-          required
-          maxLength={USERNAME_MAX}
-          value={formData.username}
-          onChange={handleChange}
-        />
-      </div>
+      <FormInput
+        id="username"
+        label="Username"
+        placeholder="johndoe"
+        maxLength={USERNAME_MAX}
+        {...register("username", { 
+          required: "Username is required",
+          pattern: { value: USERNAME_REGEX, message: "Username must be 3-16 alphanumeric characters" },
+          maxLength: { value: USERNAME_MAX, message: `Max ${USERNAME_MAX} characters` }
+        })}
+        error={errors.username}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="firstName" className="mb-2 block">First Name</Label>
-          <TextInput
+        <FormInput
             id="firstName"
-            name="firstName"
-            type="text"
+            label="First Name"
             placeholder="John"
-            pattern={NAME_REGEX.source}
-            required
             maxLength={NAME_MAX}
-            value={formData.firstName}
-            onChange={handleChange}
-            
-          />
-        </div>
-        <div>
-          <Label htmlFor="lastName" className="mb-2 block">Last Name</Label>
-          <TextInput
+            {...register("firstName", { 
+              required: "First name is required",
+              pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
+              maxLength: { value: NAME_MAX, message: `Max ${NAME_MAX} characters` }
+            })}
+            error={errors.firstName}
+        />
+        
+        <FormInput
             id="lastName"
-            name="lastName"
-            type="text"
+            label="Last Name"
             placeholder="Doe"
-            pattern={NAME_REGEX.source}
-            required
             maxLength={NAME_MAX}
-            value={formData.lastName}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="birthDate" className="mb-2 block">Birth Date</Label>
-        <Datepicker
-          id="birthDate"
-          className="w-full"
-          value={formData.birthDate ? new Date(formData.birthDate) : undefined}
-          onChange={(date: Date | null) => {
-            if (!date) return;
-            const offset = date.getTimezoneOffset();
-            const adjustedDate = new Date(date.getTime() - offset * 60 * 1000);
-            const dateString = adjustedDate.toISOString().split('T')[0];
-            setFormData(prev => ({ ...prev, birthDate: dateString }));
-          }}
-          maxDate={new Date()}
+            {...register("lastName", { 
+              required: "Last name is required",
+              pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
+              maxLength: { value: NAME_MAX, message: `Max ${NAME_MAX} characters` }
+            })}
+            error={errors.lastName}
         />
       </div>
 
-      <div>
-        <Label htmlFor="password" className="mb-2 block">Password</Label>
-        <TextInput
+      <Controller
+            control={control}
+            name="birthDate"
+            rules={{
+                required: "Birth date is required",
+                validate: validateAge
+            }}
+            render={({ field: { onChange, value } }) => (
+                <FormDatePicker
+                    id="birthDate"
+                    label="Birth Date"
+                    value={value}
+                    onChange={onChange}
+                    error={errors.birthDate}
+                />
+            )}
+        />
+
+      <FormInput
           id="password"
-          name="password"
+          label="Password"
           type="password"
-          pattern={PASSWORD_REGEX.source}
-          required
-          value={formData.password}
-          onChange={handleChange}
-        />
-      </div>
+          {...register("password", { 
+            required: "Password is required",
+            pattern: { value: PASSWORD_REGEX, message: "Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char" }
+          })}
+          error={errors.password}
+      />
 
-      <div>
-        <Label htmlFor="confirmPassword" className="mb-2 block">Confirm Password</Label>
-        <TextInput
+      <FormInput
           id="confirmPassword"
-          name="confirmPassword"
+          label="Confirm Password"
           type="password"
-          pattern={PASSWORD_REGEX.source}
-          required
-          value={formData.confirmPassword}
-          onChange={handleChange}
-        />
-      </div>
+          {...register("confirmPassword", { 
+            required: "Please confirm your password",
+            validate: (val) => {
+              if (watch('password') != val) {
+                return "Your passwords do no match";
+              }
+            },
+          })}
+          error={errors.confirmPassword}
+      />
 
       <Button type="submit" color="pink" className="mt-4">
         Register

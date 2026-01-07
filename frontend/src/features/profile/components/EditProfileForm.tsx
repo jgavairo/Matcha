@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Label, TextInput, Textarea, Select, Button, Badge, Checkbox, Datepicker } from 'flowbite-react';
+import { Label, TextInput, Textarea, Select, Button, Badge, Checkbox } from 'flowbite-react';
 import { CurrentUser } from '@app-types/user';
 import { api } from '../../../services/api';
 import { HiX } from 'react-icons/hi';
 import { useNotification } from '../../../context/NotificationContext';
+import { FormInput } from '../../../components/ui/FormInput';
+import { FormDatePicker } from '../../../components/ui/FormDatePicker';
+import { validateAge } from '../../../utils/validators';
 import { 
     EMAIL_REGEX, 
     USERNAME_REGEX, 
@@ -16,7 +19,8 @@ import {
     BIOGRAPHY_MIN,
     BIOGRAPHY_MAX,
     CITY_MAX,
-    TAGS_MIN
+    TAGS_MIN,
+    MIN_AGE
 } from '@shared/validation';
 
 interface EditProfileFormProps {
@@ -28,6 +32,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>(user.tags || []);
     const [searchTerm, setSearchTerm] = useState("");
+    
     const [showDropdown, setShowDropdown] = useState(false);
     const [location, setLocation] = useState({
         latitude: user.location?.latitude || 0,
@@ -236,88 +241,60 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
         <form onSubmit={handleSubmit(onFormSubmit)} className="flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                    <div className="mb-2 block">
-                        <Label htmlFor="username">Username</Label>
-                    </div>
-                    <TextInput 
+                    <FormInput
                         id="username"
+                        label="Username"
                         maxLength={USERNAME_MAX}
                         {...registerWithSave("username", { 
                             pattern: { value: USERNAME_REGEX, message: "Invalid username" },
                             required: "Username is required", 
                             maxLength: { value: USERNAME_MAX, message: `Username must be less than ${USERNAME_MAX} characters` }
-                        })} 
-                        color={errors.username ? "failure" : "gray"}
+                        })}
+                        error={errors.username}
                     />
-                    {errors.username && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            {errors.username.message as string}
-                        </p>
-                    )}
                 </div>
                 <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="firstName">First Name</Label>
-                    </div>
-                    <TextInput 
-                        id="firstName" 
+                    <FormInput
+                        id="firstName"
+                        label="First Name"
                         maxLength={NAME_MAX}
                         {...registerWithSave("firstName", { 
                             required: "First name is required", 
-                            pattern: { value: NAME_REGEX, message: "Invalid first name" },
+                            pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
                             maxLength: { value: NAME_MAX, message: `First name must be less than ${NAME_MAX} characters` }
-                        })} 
-                        color={errors.firstName ? "failure" : "gray"}
+                        })}
+                        error={errors.firstName}
                     />
-                    {errors.firstName && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            {errors.firstName.message as string}
-                        </p>
-                    )}
                 </div>
                 <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="lastName">Last Name</Label>
-                    </div>
-                    <TextInput 
-                        id="lastName" 
+                    <FormInput
+                        id="lastName"
+                        label="Last Name"
                         maxLength={NAME_MAX}
                         {...registerWithSave("lastName", { 
                             required: "Last name is required", 
-                            pattern: { value: NAME_REGEX, message: "Invalid last name" },
+                            pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
                             maxLength: { value: NAME_MAX, message: `Last name must be less than ${NAME_MAX} characters` }
-                        })} 
-                        color={errors.lastName ? "failure" : "gray"}
+                        })}
+                        error={errors.lastName}
                     />
-                    {errors.lastName && (
-                        <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            {errors.lastName.message as string}
-                        </p>
-                    )}
                 </div>
             </div>
 
             <div>
-                <div className="mb-2 block">
-                    <Label htmlFor="email">Email</Label>
-                </div>
-                <TextInput 
-                    id="email" 
-                    type="email" 
+                <FormInput
+                    id="email"
+                    label="Email"
+                    type="email"
                     {...registerWithSave("email", { 
                         required: "Email is required",
                         pattern: {
                             value: EMAIL_REGEX,
                             message: "Invalid email address"
                         }
-                    })} 
-                    color={errors.email ? "failure" : "gray"}
+                    })}
+                    error={errors.email}
                 />
-                {errors.email && (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                        {errors.email.message as string}
-                    </p>
-                )}
             </div>
 
             <div>
@@ -351,26 +328,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="birthDate">Date of Birth</Label>
-                    </div>
-                    <Controller
+                     <Controller
                         control={control}
                         name="birthDate"
                         rules={{
                             required: "Birth date is required",
-                            pattern: { value: BIRTH_DATE_REGEX, message: "Invalid date format" }
+                            pattern: { value: BIRTH_DATE_REGEX, message: "Invalid date format" },
+                            validate: validateAge
                         }}
                         render={({ field: { onChange, value } }) => (
-                            <Datepicker
+                            <FormDatePicker
                                 key={user.birthDate} // Force re-render when date changes from outside
                                 id="birthDate"
-                                value={value ? new Date(value) : undefined}
-                                onChange={(date: Date | null) => {
-                                    if (!date) return;
-                                    const offset = date.getTimezoneOffset();
-                                    const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000));
-                                    const dateString = adjustedDate.toISOString().split('T')[0];
+                                label="Date of Birth"
+                                value={value}
+                                onChange={(dateString: string) => {
                                     onChange(dateString);
                                     
                                     const userValue = user.birthDate || "";
@@ -378,53 +350,36 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                                         save();
                                     }
                                 }}
-                                color={errors.birthDate ? "failure" : "gray"}
+                                error={errors.birthDate}
                             />
                         )}
                     />
-                    {errors.birthDate && (
+                </div>
+
+                <div>
+                    <div className="mb-2 block">
+                        <Label>Sexual Preferences</Label>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                         <div className="flex items-center gap-2">
+                             <Checkbox id="pref-male" value="male" {...register("sexualPreferences")} />
+                             <Label htmlFor="pref-male">Male</Label>
+                         </div>
+                         <div className="flex items-center gap-2">
+                             <Checkbox id="pref-female" value="female" {...register("sexualPreferences")} />
+                             <Label htmlFor="pref-female">Female</Label>
+                         </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox id="pref-other" value="other" {...register("sexualPreferences")} />
+                            <Label htmlFor="pref-other">Other</Label>
+                        </div>
+                    </div>
+                    {errors.sexualPreferences && (
                         <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                            {errors.birthDate.message as string}
+                            {errors.sexualPreferences.message as string}
                         </p>
                     )}
                 </div>
-                <div>
-                    <div className="mb-2 block">
-                        <Label htmlFor="gender">Gender</Label>
-                    </div>
-                    <Select id="gender" {...registerWithSave("gender")}>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </Select>
-                </div>
-            </div>
-
-            <div>
-                <div className="mb-2 block">
-                    <Label>Interested In</Label>
-                </div>
-                <div className="flex flex-wrap gap-4 p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    <div className="flex items-center gap-2">
-                        <Checkbox id="pref-male" value="male" {...register("sexualPreferences", {
-                            validate: (value) => value && value.length > 0 || "At least one preference is required"
-                        })} />
-                        <Label htmlFor="pref-male">Male</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Checkbox id="pref-female" value="female" {...register("sexualPreferences")} />
-                        <Label htmlFor="pref-female">Female</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Checkbox id="pref-other" value="other" {...register("sexualPreferences")} />
-                        <Label htmlFor="pref-other">Other</Label>
-                    </div>
-                </div>
-                {errors.sexualPreferences && (
-                    <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                        {errors.sexualPreferences.message as string}
-                    </p>
-                )}
             </div>
 
             <div>
@@ -439,7 +394,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                         required: "Biography is required",
                         minLength: { value: BIOGRAPHY_MIN, message: `Biography must be at least ${BIOGRAPHY_MIN} characters` },
                         maxLength: { value: BIOGRAPHY_MAX, message: `Biography must be less than ${BIOGRAPHY_MAX} characters` },
-                        pattern: { value: BIOGRAPHY_REGEX, message: "Invalid characters in biography" }
+                        pattern: { value: BIOGRAPHY_REGEX, message: "Avoid multiple consecutive spaces. Must contain valid text." }
                     })} 
                     color={errors.biography ? "failure" : "gray"}
                 />
