@@ -844,9 +844,24 @@ export const generateVerificationToken = async (userId: number, expiresInMinutes
     return { token: newToken, email: result.email, expires: newExpires };
 };
 
-export const addReport = async (userId: number, reportedId: number, reason: string) => {
+export const addReport = async (userId: number, reportedId: number, reasons: string[]) => {
     try {
-        await db.insert('reports', { user_id: userId, reported_id: reportedId, reason: reason });
+        const existingReport = await db.findOne('reports', { 
+            user_id: userId, 
+            reported_id: reportedId 
+        });
+
+        if (existingReport) {
+            console.warn(`User ${userId} has already reported user ${reportedId}`);
+            return false;
+        }
+
+        await db.insert('reports', { 
+            user_id: userId, 
+            reported_id: reportedId, 
+            reason: reasons
+        });
+        
         return true;
     } catch (error) {
         console.error('Error adding report:', error);

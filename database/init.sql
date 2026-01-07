@@ -165,7 +165,7 @@ CREATE TABLE reports (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     reported_id INT REFERENCES users(id) ON DELETE CASCADE,
-    reason TEXT NOT NULL,
+    reason TEXT[] NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 

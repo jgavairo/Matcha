@@ -162,19 +162,21 @@ const SearchPage: React.FC = () => {
 
   const handleReport = async (reason: string) => {
     if (selectedUser) {
-      try {
-        const response = await api.post(`/reports`, {
-          user_id: selectedUser.id,
-          reason: reason
-        });
-
-        if (response.status === 200) {
-          addToast('User reported successfully', 'success');
-        } else {
-          addToast('Failed to report user', 'error');
+      if (selectedUser) {
+        try {
+          const response = await api.post(`/report`, {
+            reportedId: selectedUser.id,
+            reason: reason
+          });
+  
+          if (response.status === 200) {
+            addToast('User reported successfully', 'success');
+          } else {
+            addToast((response as any).response?.data?.error || 'Failed to report user', 'error');
+          }
+        } catch (error) {
+          addToast((error as any).response?.data?.error || 'Failed to report user', 'error');
         }
-      } catch (error) {
-        addToast('Failed to report user', 'error');
       }
     }
   };

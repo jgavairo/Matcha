@@ -14,11 +14,13 @@ import matchRoutes from './routes/matchRoutes';
 import dateRoutes from './routes/dateRoutes';
 import { validateRegister } from './middlewares/validation';
 import { handleValidationErrors } from './middlewares/validationHandler';
+import { UserController } from './controllers/userController';    
+
 
 // initializing ================================================================
 
 const authController = new AuthController();
-
+const userController = new UserController();
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -65,6 +67,8 @@ app.get('/auth/check-token', authController.checkToken);
 // User Routes ----------------------------------------------------------------
 
 app.use('/users', userRoutes);
+
+app.post('/report', authMiddleware, userController.reportUser);
 
 // Match Routes ---------------------------------------------------------------
 

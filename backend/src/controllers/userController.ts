@@ -317,8 +317,12 @@ export class UserController {
             if (!reportedId || !reason) {
                 return res.status(400).json({ error: 'Reported ID and reason are required' });
             }
-            await addReport(userId, reportedId, reason);
-            res.status(200).json({ message: 'User reported successfully' });
+            const result = await addReport(userId, reportedId, reason);
+            if (result) {
+                return res.status(200).json({ message: 'User reported successfully' });
+            } else {
+                return res.status(400).json({ error: 'User already reported' });
+            }
         } catch (error) {
             console.error('Error reporting user:', error);
             res.status(500).json({ error: 'Internal server error' });
