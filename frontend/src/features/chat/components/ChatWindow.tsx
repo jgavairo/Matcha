@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '../../../hooks/useFileDrop';
-import { useSocket } from '@context/SocketContext';
-import { useCall } from '@context/CallContext';
-import { useNotification } from '@context/NotificationContext';
+import { useSocket } from '../../../context/SocketContext';
+import { useCall } from '../../../context/CallContext';
+import { useNotification } from '../../../context/NotificationContext';
 import { HiCloudUpload } from 'react-icons/hi';
 
 import ChatBubble from './ChatBubble';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
+import DatePlanner from './DatePlanner';
 
 interface ChatWindowProps {
     conversation: Conversation | null;
@@ -23,6 +24,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [otherUserStatus, setOtherUserStatus] = useState<{ isOnline: boolean; lastConnection: string }>({ isOnline: false, lastConnection: '' });
+    const [showDatePlanner, setShowDatePlanner] = useState(false);
     
     // Call Context
     const { callUser } = useCall();
@@ -47,6 +49,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 isOnline: isUser1 ? conversation.user2_is_online : conversation.user1_is_online,
                 lastConnection: isUser1 ? conversation.user2_last_connection : conversation.user1_last_connection
             });
+            // Reset DatePlanner when conversation changes
+            setShowDatePlanner(false);
         } else {
             setMessages([]);
         }
@@ -226,6 +230,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 onClose={onClose}
                 isOnline={otherUserStatus.isOnline}
                 lastConnection={otherUserStatus.lastConnection}
+                onToggleDatePlanner={() => setShowDatePlanner(!showDatePlanner)}
+            />
+
+            <DatePlanner
+                targetUserId={conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id}
+                targetUsername={otherUsername}
+                isOpen={showDatePlanner}
+                onToggle={setShowDatePlanner}
             />
 
             {/* Messages */}

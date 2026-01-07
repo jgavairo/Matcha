@@ -146,6 +146,19 @@ CREATE TABLE messages (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Dates table --------------------------------------------------------------
+
+CREATE TABLE dates (
+    id SERIAL PRIMARY KEY,
+    sender_id INT REFERENCES users(id),
+    receiver_id INT REFERENCES users(id),
+    date_time TIMESTAMP NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Reports table --------------------------------------------------------------
 
 CREATE TABLE reports (
