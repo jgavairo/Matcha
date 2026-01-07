@@ -844,6 +844,15 @@ export const generateVerificationToken = async (userId: number, expiresInMinutes
     return { token: newToken, email: result.email, expires: newExpires };
 };
 
+export const addReport = async (userId: number, reportedId: number, reason: string) => {
+    try {
+        await db.insert('reports', { user_id: userId, reported_id: reportedId, reason: reason });
+        return true;
+    } catch (error) {
+        console.error('Error adding report:', error);
+        return false;
+    }
+};
 // Ancienne implémentation incomplète conservée en commentaire pour référence
 // export const completeProfileUser = async (userId: number, data: any) => {
 //     const user = await db.findOne('users', { id: userId }, ['id', 'status_id']);

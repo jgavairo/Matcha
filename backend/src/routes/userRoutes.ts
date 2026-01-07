@@ -50,6 +50,8 @@ router.get('/matches', authMiddleware, userController.getMatches);
 router.get('/liked-by', authMiddleware, userController.getLikedBy);
 router.get('/viewed-by', authMiddleware, userController.getViewedBy);
 
+router.post('/report', authMiddleware, userController.reportUser);
+
 router.get('/:id', authMiddleware, userController.getUser);
 
 export default router;

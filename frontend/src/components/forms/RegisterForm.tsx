@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { RegisterFormData } from '@app-types/forms';
 import authService from '@features/auth/services/authService';
 import { useNotification } from '@context/NotificationContext';
-import { EMAIL_REGEX, USERNAME_REGEX, NAME_REGEX, PASSWORD_REGEX } from '@utils/regexUtils';
+import { EMAIL_PATTERN, USERNAME_PATTERN, NAME_PATTERN, PASSWORD_PATTERN } from '@utils/regexUtils';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ const RegisterForm = () => {
           id="email"
           name="email"
           type="email"
-          pattern={EMAIL_REGEX.source}
+          pattern={EMAIL_PATTERN}
           placeholder="exemple@email.com"
           required
           value={formData.email}
@@ -71,7 +71,7 @@ const RegisterForm = () => {
           name="username"
           type="text"
           placeholder="johndoe"
-          pattern={USERNAME_REGEX.source}
+          pattern={USERNAME_PATTERN}
           required
           value={formData.username}
           onChange={handleChange}
@@ -86,7 +86,7 @@ const RegisterForm = () => {
             name="firstName"
             type="text"
             placeholder="John"
-            pattern={NAME_REGEX.source}
+            pattern={NAME_PATTERN}
             required
             value={formData.firstName}
             onChange={handleChange}
@@ -100,7 +100,7 @@ const RegisterForm = () => {
             name="lastName"
             type="text"
             placeholder="Doe"
-            pattern={NAME_REGEX.source}
+            pattern={NAME_PATTERN}
             required
             value={formData.lastName}
             onChange={handleChange}
@@ -131,7 +131,7 @@ const RegisterForm = () => {
           id="password"
           name="password"
           type="password"
-          pattern={PASSWORD_REGEX.source}
+          pattern={PASSWORD_PATTERN}
           required
           value={formData.password}
           onChange={handleChange}
@@ -144,7 +144,7 @@ const RegisterForm = () => {
           id="confirmPassword"
           name="confirmPassword"
           type="password"
-          pattern={PASSWORD_REGEX.source}
+          pattern={PASSWORD_PATTERN}
           required
           value={formData.confirmPassword}
           onChange={handleChange}
