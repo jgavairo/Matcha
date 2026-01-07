@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/userController';
 import { authMiddleware } from '../middlewares/authMiddleware';
-import { completeProfileValidation } from '../middlewares/validation';
+import { completeProfileValidation, validateUpdateProfile } from '../middlewares/validation';
 import { handleValidationErrors } from '../middlewares/validationHandler';
 import multer from 'multer';
 import path from 'path';
@@ -36,7 +36,7 @@ router.put('/profile/complete',
 );
 
 // Route pour mettre à jour le profil (champs optionnels)
-router.put('/profile', authMiddleware, userController.updateProfile);
+router.put('/profile', authMiddleware, validateUpdateProfile, handleValidationErrors, userController.updateProfile);
 router.put('/password', authMiddleware, userController.changePassword);
 
 router.post('/photos', authMiddleware, upload.single('image'), userController.uploadPhoto);
