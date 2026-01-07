@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Modal, ModalBody, ModalHeader, ModalFooter, Button } from 'flowbite-react';
+import { Modal, ModalBody, ModalHeader, ModalFooter, Button, Checkbox, Label } from 'flowbite-react';
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (reason: string) => void;
+  // Changement ici : on attend désormais un tableau de strings
+  onSubmit: (reasons: string[]) => void;
 }
 
 const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSubmit }) => {
-  const [reportReason, setReportReason] = useState<string>('');
+  // L'état devient un tableau vide au départ
+  const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
 
   const reportReasons = [
     "Fake profile",
@@ -19,9 +21,17 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSubmit }) 
     "Other"
   ];
 
+  const handleCheckboxChange = (reason: string) => {
+    setSelectedReasons((prev) =>
+      prev.includes(reason)
+        ? prev.filter((r) => r !== reason)
+        : [...prev, reason]
+    );
+  };
+
   const handleSubmit = () => {
-    onSubmit(reportReason);
-    setReportReason('');
+    onSubmit(selectedReasons);
+    setSelectedReasons([]);
     onClose();
   };
 
@@ -31,31 +41,35 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSubmit }) 
       <ModalBody>
         <div className="space-y-4">
           <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
-            Please select a reason for reporting this user:
+            Please select one or more reasons for reporting:
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {reportReasons.map((reason) => (
-              <div key={reason} className="flex items-center">
-                <input 
-                  id={`reason-${reason}`} 
-                  type="radio" 
-                  value={reason} 
-                  name="report-reason" 
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  onChange={(e) => setReportReason(e.target.value)}
-                  checked={reportReason === reason}
+              <div key={reason} className="flex items-center gap-2">
+                <Checkbox
+                  id={`reason-${reason}`}
+                  value={reason}
+                  checked={selectedReasons.includes(reason)}
+                  onChange={() => handleCheckboxChange(reason)}
                 />
-                <label htmlFor={`reason-${reason}`} className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                <Label htmlFor={`reason-${reason}`} className="cursor-pointer">
                   {reason}
-                </label>
+                </Label>
               </div>
             ))}
           </div>
         </div>
       </ModalBody>
       <ModalFooter>
-        <Button onClick={handleSubmit} disabled={!reportReason}>Submit Report</Button>
-        <Button color="gray" onClick={onClose}>Cancel</Button>
+        <Button 
+            onClick={handleSubmit} 
+            disabled={selectedReasons.length === 0}
+        >
+          Submit Report ({selectedReasons.length})
+        </Button>
+        <Button color="gray" onClick={onClose}>
+          Cancel
+        </Button>
       </ModalFooter>
     </Modal>
   );

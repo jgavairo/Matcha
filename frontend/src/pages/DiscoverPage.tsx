@@ -5,6 +5,8 @@ import { Spinner, Button } from 'flowbite-react';
 import UserProfileModal from '@features/matches/components/UserProfileDrawer';
 import MatchFilters from '@features/matches/components/MatchFilters';
 import { UserProfile } from '@app-types/user';
+import { api } from '@/services/api';
+import { useNotification } from '@context/NotificationContext';
 
 const DiscoverPage: React.FC = () => {
   const { 
@@ -21,7 +23,7 @@ const DiscoverPage: React.FC = () => {
   } = useMatches();
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-
+  const { addToast } = useNotification();
   const hasActiveFilters = useMemo(() => {
     const { sortBy, sortOrder, ...filterCriteria } = filters;
     const { sortBy: defaultSortBy, sortOrder: defaultSortOrder, ...defaultCriteria } = DEFAULT_FILTERS;
@@ -35,10 +37,24 @@ const DiscoverPage: React.FC = () => {
     }
   };
 
-  const handleReport = (reason: string) => {
+  const handleReport = async (reason: string) => {
     if (selectedUser) {
-      console.log('Report user:', selectedUser.id, reason);
-      // Implement report logic here
+      if (selectedUser) {
+        try {
+          const response = await api.post(`/report`, {
+            reportedId: selectedUser.id,
+            reason: reason
+          });
+  
+          if (response.status === 200) {
+            addToast('User reported successfully', 'success');
+          } else {
+            addToast((response as any).response?.data?.error || 'Failed to report user', 'error');
+          }
+        } catch (error) {
+          addToast((error as any).response?.data?.error || 'Failed to report user', 'error');
+        }
+      }
     }
   };
 
