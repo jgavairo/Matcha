@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { HiTrash, HiUpload, HiStar } from 'react-icons/hi';
 import ImageEditor from './ImageEditor';
+import { useNotification } from '../../../context/NotificationContext';
+import { PHOTOS_MIN } from '@shared/validation';
 
 interface PhotoUploadProps {
     images: string[];
@@ -12,6 +14,7 @@ interface PhotoUploadProps {
 const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, onSetProfile }) => {
     const [editingFile, setEditingFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const { addToast } = useNotification();
 
     const handleFileSelect = (file: File) => {
         if (file && file.type.startsWith('image/')) {
@@ -48,6 +51,14 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
         setEditingFile(null);
     };
 
+    const handleDelete = (index: number) => {
+        if (images.length <= PHOTOS_MIN) {
+            addToast(`You must have at least ${PHOTOS_MIN} photo(s)`, 'error');
+            return;
+        }
+        onDelete(index);
+    };
+
     return (
         <>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -67,7 +78,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
                                 </button>
                             )}
                             <button
-                                onClick={() => onDelete(index)}
+                                onClick={() => handleDelete(index)}
                                 className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                                 title="Delete Photo"
                             >

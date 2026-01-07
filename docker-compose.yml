@@ -12,7 +12,9 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     command: npm run dev
     ports:
       - "5000:5000"
@@ -26,11 +28,13 @@ services:
       - postgres
     volumes:
       - ./backend:/app
+      - ./shared:/shared
       - /app/node_modules
 
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
       target: build
     command: npm run dev
     ports:
@@ -39,6 +43,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
+      - ./shared:/shared
       - /app/node_modules
 
 volumes:
