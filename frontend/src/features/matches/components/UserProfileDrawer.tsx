@@ -46,8 +46,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
   }, [isOpen, user?.id]);
 
-  const handleReportSubmit = (reasons: string[]) => {
-    onReport(reasons.join(', '));
+  const handleReportSubmit = (reason: string) => {
+    onReport(reason);
     setIsReportModalOpen(false);
   };
 
