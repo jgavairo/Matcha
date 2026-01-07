@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { updateUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
+import { updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
+import { db } from '../utils/db';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -55,8 +56,6 @@ export class UserController {
                         missingFields: validation.missingFields
                     });
                 }
-                // Profile is valid, now update statusId
-                await updateUser(userId, { statusId: 2 });
             } else if (statusId !== undefined) {
                 // Allow updating to other statuses without validation
                 await updateUser(userId, { statusId });
@@ -266,4 +265,45 @@ export class UserController {
             res.status(500).json({ error: 'Internal server error' });
         }
     };
+
+    public completeProfile = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            // Vérifier que le statut actuel est 1 (vérifié)
+            const currentUser = await getUserById(userId);
+            if (!currentUser || currentUser.status_id !== 1) {
+                return res.status(400).json({ 
+                    error: 'User must be verified (status 1) to complete profile' 
+                });
+            }
+
+            const { gender, sexualPreferences, biography, latitude, longitude, city, geolocationConsent, tags } = req.body;
+
+            // Met à jour uniquement les champs du wizard "complete-profile"
+            await completeProfileUser(userId, {
+                gender,
+                sexualPreferences,
+                biography,
+                latitude,
+                longitude,
+                city,
+                geolocationConsent
+            });
+
+            // Met à jour les centres d'intérêt si fournis
+            if (tags && Array.isArray(tags) && tags.length > 0) {
+                await updateUserInterests(userId, tags);
+            }
+
+            db.update('users', userId, { status_id: 2 });
+            res.status(200).json({ message: 'Profile completed successfully' });
+        } catch (error) {
+            console.error('Error completing profile:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 }

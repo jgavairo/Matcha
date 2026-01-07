@@ -216,8 +216,7 @@ export default function CompleteProfilePage() {
       // Exclude profileImage from the request as it's already uploaded separately
       const { profileImage, ...profileDataToSend } = profileData;
       await api.put('/users/profile/complete', {
-        ...profileDataToSend,
-        statusId: 2
+        ...profileDataToSend
       });
       await login();
       addToast('Profile completed!', 'success');
