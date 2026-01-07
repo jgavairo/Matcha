@@ -9,7 +9,6 @@ import ChangePasswordForm from '@features/profile/components/ChangePasswordForm'
 import SecuritySettings from '@features/profile/components/SecuritySettings';
 import UserProfileModal from '@features/matches/components/UserProfileDrawer';
 import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
-import { mockUsers } from '@/data/mockUsers';
 import { api } from '@services/api';
 import { matchService } from '@features/matches/services/matchService';
 import { useNotification } from '@context/NotificationContext';

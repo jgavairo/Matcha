@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
 interface UseFileDropOptions {
-    onFileSelect: (file: File) => void;
+    onFileSelect: (files: File[]) => void;
     accept?: string; // Regex string or mime type prefix like 'image/'
 }
 
@@ -36,10 +36,12 @@ export const useFileDrop = ({ onFileSelect, accept = 'image/' }: UseFileDropOpti
         e.stopPropagation();
         setIsDragging(false);
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const file = e.dataTransfer.files[0];
-            if (!accept || file.type.startsWith(accept)) {
-                onFileSelect(file);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const files = Array.from(e.dataTransfer.files);
+            const validFiles = files.filter(file => !accept || file.type.startsWith(accept));
+            
+            if (validFiles.length > 0) {
+                onFileSelect(validFiles);
             }
         }
     }, [onFileSelect, accept]);
@@ -48,6 +50,7 @@ export const useFileDrop = ({ onFileSelect, accept = 'image/' }: UseFileDropOpti
         isDragging,
         dragHandlers: {
             onDragOver: handleDragOver,
+            onDragEnter: handleDragOver,
             onDragLeave: handleDragLeave,
             onDrop: handleDrop
         }

@@ -3,6 +3,8 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
+import { db } from '../utils/db';
+import * as matchModel from '../models/matchModel';
 
 let io: Server;
 
@@ -41,39 +43,65 @@ export const initializeSocket = (httpServer: HttpServer) => {
     next();
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     // @ts-ignore
     const userId = socket.userId;
-    console.log(`User connected: ${userId} (${socket.id})`);
     
-    socket.join(`user_${userId}`);
-    console.log(`User ${userId} joined room user_${userId}`);
+    // Update user status to online
+    try {
+        await db.query('UPDATE users SET is_online = true WHERE id = $1', [userId]);
+        
+        // Notify only engaged users
+        const friendIds = await matchModel.getMatchedUserIds(userId);
+        friendIds.forEach(friendId => {
+            io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: true });
+        });
+    } catch (error) {
+        console.error(`Failed to update user status for ${userId}`, error);
+    }
 
-    socket.on('disconnect', () => {
-      console.log(`User disconnected: ${userId}`);
+    socket.join(`user_${userId}`);
+
+    socket.on('disconnect', async () => {
+      // Update user status to offline
+      try {
+          const now = new Date();
+          await db.query('UPDATE users SET is_online = false, last_connection = $1 WHERE id = $2', [now, userId]);
+          
+          // Notify only engaged users
+          const friendIds = await matchModel.getMatchedUserIds(userId);
+          friendIds.forEach(friendId => {
+              io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: false, lastConnection: now });
+          });
+      } catch (error) {
+          console.error(`Failed to update user status for ${userId}`, error);
+      }
     });
 
     // WebRTC Signaling
     socket.on('call_user', (data: { userToCall: number; signalData: any; from: number; name: string; avatar: string }) => {
-      console.log(`[Signaling] Call from ${data.from} to ${data.userToCall}`);
       io.to(`user_${data.userToCall}`).emit('call_incoming', { 
         signal: data.signalData, 
         from: data.from,
         name: data.name,
         avatar: data.avatar
       });
-      console.log(`[Signaling] call_incoming emitted to user_${data.userToCall}`);
     });
 
     socket.on('answer_call', (data: { to: number; signal: any }) => {
-      console.log(`[Signaling] Call answered by ${userId} to ${data.to}`);
       io.to(`user_${data.to}`).emit('call_accepted', data.signal);
-      console.log(`[Signaling] call_accepted emitted to user_${data.to}`);
     });
 
     socket.on('ice_candidate', (data: { to: number; candidate: any }) => {
-        console.log(`[Signaling] ICE candidate from ${userId} to ${data.to}`);
         io.to(`user_${data.to}`).emit('ice_candidate_incoming',  data.candidate);
+    });
+
+    socket.on('call_declined', (data: { to: number }) => {
+        io.to(`user_${data.to}`).emit('call_declined');
+    });
+
+    socket.on('call_ended', (data: { to: number }) => {
+        io.to(`user_${data.to}`).emit('call_ended');
     });
   });
 

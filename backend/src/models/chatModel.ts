@@ -7,6 +7,10 @@ export interface Conversation {
     user2_id: number;
     user1_username: string;
     user2_username: string;
+    user1_is_online: boolean;
+    user2_is_online: boolean;
+    user1_last_connection: Date;
+    user2_last_connection: Date;
     last_message: string;
     last_message_date: Date;
     unread_count: number;
@@ -65,6 +69,10 @@ export const getConversations = async (userId: number) => {
             m.is_active,
             u1.username as user1_username,
             u2.username as user2_username,
+            u1.is_online as user1_is_online,
+            u2.is_online as user2_is_online,
+            u1.last_connection as user1_last_connection,
+            u2.last_connection as user2_last_connection,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
             (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_date,
             (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND (sender_id != $1 OR sender_id IS NULL) AND is_read = FALSE) as unread_count

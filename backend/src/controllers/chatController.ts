@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as chatModel from '../models/chatModel';
 import * as matchModel from '../models/matchModel';
 import { getIO } from '../config/socket';
+import { getUserById } from '../models/userModel';
 
 export const getConversations = async (req: Request, res: Response) => {
     try {
@@ -62,6 +63,18 @@ export const sendMessage = async (req: Request, res: Response) => {
 
             io.to(`user_${recipientId}`).emit('chat_message', message);
             io.to(`user_${userId}`).emit('chat_message', message);
+
+            // Notify recipient
+            const sender = await getUserById(userId);
+            if (sender) {
+                io.to(`user_${recipientId}`).emit('notification', {
+                    type: 'message',
+                    message: `New message from ${sender.username}`,
+                    senderId: userId,
+                    senderUsername: sender.username,
+                    avatar: sender.images[0]
+                });
+            }
         }
 
         res.json(message);
