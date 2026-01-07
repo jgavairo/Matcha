@@ -1,7 +1,7 @@
 import React from 'react';
 import { ToggleSwitch, Card } from 'flowbite-react';
-import { api } from '../../../services/api';
-import { useNotification } from '../../../context/NotificationContext';
+import { api } from '@services/api';
+import { useNotification } from '@context/NotificationContext';
 
 interface SecuritySettingsProps {
     consent: boolean;

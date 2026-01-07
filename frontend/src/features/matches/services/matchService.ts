@@ -1,6 +1,6 @@
 import { UserProfile } from '../../../types/user';
 import { MatchFiltersState } from '../types/match';
-import { api } from '../../../services/api';
+import { api } from '@services/api';
 
 // Simulating API calls
 export const matchService = {

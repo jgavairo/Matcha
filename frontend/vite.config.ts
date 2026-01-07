@@ -22,7 +22,7 @@ export default defineConfig({
       "@forms": path.resolve(__dirname, "./src/components/forms"),
       "@layout": path.resolve(__dirname, "./src/components/layout"),
       "@data": path.resolve(__dirname, "./src/data"),
-      "@shared": path.resolve(__dirname, "../shared"),
+          "@shared": path.resolve(__dirname, "../shared"),
     },
   },
   server: {

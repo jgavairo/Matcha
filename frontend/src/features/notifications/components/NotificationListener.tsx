@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { useSocket } from '../../../context/SocketContext';
-import { useNotification } from '../../../context/NotificationContext';
-import { useChatContext } from '../../../context/ChatContext';
+import { useSocket } from '@context/SocketContext';
+import { useNotification } from '@context/NotificationContext';
+import { useChatContext } from '@context/ChatContext';
 
 const NotificationListener: React.FC = () => {
     const { socketService } = useSocket();

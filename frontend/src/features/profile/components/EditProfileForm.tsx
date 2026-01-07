@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Label, TextInput, Textarea, Select, Button, Badge, Checkbox } from 'flowbite-react';
 import { CurrentUser } from '@app-types/user';
-import { api } from '../../../services/api';
+import { api } from '@services/api';
 import { HiX } from 'react-icons/hi';
-import { useNotification } from '../../../context/NotificationContext';
-import { FormInput } from '../../../components/ui/FormInput';
-import { FormDatePicker } from '../../../components/ui/FormDatePicker';
-import { validateAge } from '../../../utils/validators';
+import { useNotification } from '@context/NotificationContext';
+import { FormInput } from '@components/ui/FormInput';
+import { FormDatePicker } from '@components/ui/FormDatePicker';
+import { validateAge } from '@utils/validators';
 import { 
     EMAIL_REGEX, 
     USERNAME_REGEX, 

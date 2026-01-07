@@ -1,8 +1,8 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Label, TextInput, Button } from 'flowbite-react';
-import { api } from '../../../services/api';
-import { useNotification } from '../../../context/NotificationContext';
+import { api } from '@services/api';
+import { useNotification } from '@context/NotificationContext';
 
 const ChangePasswordForm: React.FC = () => {
     const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();

@@ -3,9 +3,9 @@ import { Button, Label, RangeSlider, Select, TextInput, Badge, Checkbox } from '
 import { HiAdjustments, HiSortAscending, HiSortDescending, HiX, HiLocationMarker } from 'react-icons/hi';
 import { MatchFiltersState } from '../types/match';
 import { DEFAULT_FILTERS } from '../hooks/useMatches';
-import { api } from '../../../services/api';
-import { useNotification } from '../../../context/NotificationContext';
-import { useAuth } from '../../../context/AuthContext';
+import { api } from '@services/api';
+import { useNotification } from '@context/NotificationContext';
+import { useAuth } from '@context/AuthContext';
 
 interface MatchFiltersProps {
   filters: MatchFiltersState;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DateProposal, dateService } from '../services/dateService';
-import { useAuth } from '../../../context/AuthContext';
-import { useSocket } from '../../../context/SocketContext';
-import { useNotification } from '../../../context/NotificationContext';
+import { useAuth } from '@context/AuthContext';
+import { useSocket } from '@context/SocketContext';
+import { useNotification } from '@context/NotificationContext';
 import { HiCalendar, HiCheck, HiX, HiPencil, HiTrash, HiLocationMarker, HiClock } from 'react-icons/hi';
 import { Button, Label, TextInput, Textarea } from 'flowbite-react';
 

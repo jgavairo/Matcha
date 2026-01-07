@@ -2,9 +2,9 @@ import React from 'react';
 import { Badge } from 'flowbite-react';
 import { HiClock, HiHeart, HiX, HiUser } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
-import { getSexualOrientationLabel } from '../../../utils/userUtils';
+import { getSexualOrientationLabel } from '@utils/userUtils';
 import ImageCarousel from './ImageCarousel';
-import ActionButton from '../../../components/ui/ActionButton';
+import ActionButton from '@components/ui/ActionButton';
 import { UserDistance, UserFame } from './UserMeta';
 
 interface ProfileInfoProps {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HiTrash, HiUpload, HiStar } from 'react-icons/hi';
 import ImageEditor from './ImageEditor';
-import { useNotification } from '../../../context/NotificationContext';
+import { useNotification } from '@context/NotificationContext';
 import { PHOTOS_MIN } from '@shared/validation';
 
 interface PhotoUploadProps {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, chatService } from '../services/chatService';
-import { useFileDrop } from '../../../hooks/useFileDrop';
-import { useSocket } from '../../../context/SocketContext';
-import { useCall } from '../../../context/CallContext';
-import { useNotification } from '../../../context/NotificationContext';
+import { useFileDrop } from '@hooks/useFileDrop';
+import { useSocket } from '@context/SocketContext';
+import { useCall } from '@context/CallContext';
+import { useNotification } from '@context/NotificationContext';
 import { HiCloudUpload } from 'react-icons/hi';
 
 import ChatBubble from './ChatBubble';

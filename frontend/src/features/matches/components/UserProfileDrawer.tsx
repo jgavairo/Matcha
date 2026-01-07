@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import AppDrawer from '../../../components/ui/AppDrawer';
+import AppDrawer from '@components/ui/AppDrawer';
 import { UserProfile } from '@app-types/user';
 import ReportModal from './ReportModal';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfo from './ProfileInfo';
-import { api } from '../../../services/api';
+import { api } from '@services/api';
 
 interface UserProfileModalProps {
   user: UserProfile | null;
