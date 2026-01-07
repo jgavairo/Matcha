@@ -63,7 +63,7 @@ const RegisterForm = () => {
           id="email"
           name="email"
           type="email"
-          pattern={EMAIL_PATTERN}
+          pattern={EMAIL_REGEX.source}
           placeholder="exemple@email.com"
           required
           value={formData.email}
@@ -78,7 +78,7 @@ const RegisterForm = () => {
           name="username"
           type="text"
           placeholder="johndoe"
-          pattern={USERNAME_PATTERN}
+          pattern={USERNAME_REGEX.source}
           required
           maxLength={USERNAME_MAX}
           value={formData.username}
@@ -94,7 +94,7 @@ const RegisterForm = () => {
             name="firstName"
             type="text"
             placeholder="John"
-            pattern={NAME_PATTERN}
+            pattern={NAME_REGEX.source}
             required
             maxLength={NAME_MAX}
             value={formData.firstName}
@@ -109,7 +109,7 @@ const RegisterForm = () => {
             name="lastName"
             type="text"
             placeholder="Doe"
-            pattern={NAME_PATTERN}
+            pattern={NAME_REGEX.source}
             required
             maxLength={NAME_MAX}
             value={formData.lastName}
@@ -141,7 +141,7 @@ const RegisterForm = () => {
           id="password"
           name="password"
           type="password"
-          pattern={PASSWORD_PATTERN}
+          pattern={PASSWORD_REGEX.source}
           required
           value={formData.password}
           onChange={handleChange}
@@ -154,7 +154,7 @@ const RegisterForm = () => {
           id="confirmPassword"
           name="confirmPassword"
           type="password"
-          pattern={PASSWORD_PATTERN}
+          pattern={PASSWORD_REGEX.source}
           required
           value={formData.confirmPassword}
           onChange={handleChange}
