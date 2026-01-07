@@ -14,7 +14,7 @@ interface UserProfileModalProps {
   onDislike: () => void;
   onUnlike?: () => void;
   onBlock: () => void;
-  onReport: (reason: string) => void;
+  onReport: (reasons: string[]) => void;
   showPassButton?: boolean;
   hideActions?: boolean;
 }
@@ -46,8 +46,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
   }, [isOpen, user?.id]);
 
-  const handleReportSubmit = (reason: string) => {
-    onReport(reason);
+  const handleReportSubmit = (reasons: string[]) => {
+    onReport(reasons);
     setIsReportModalOpen(false);
   };
 
