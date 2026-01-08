@@ -132,9 +132,30 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const handleUnblock = (blockedUser: any) => {
-        // TODO: Unblock user
-        console.log("Unblock", blockedUser);
+    const handleUnblock = async (blockedUser: any) => {
+        if (!user) return;
+        
+        // Optimistic update: remove from list immediately
+        const previousBlockedUsers = [...user.blockedUsers];
+        setUser(prev => prev ? {
+            ...prev,
+            blockedUsers: prev.blockedUsers.filter(u => u.id !== blockedUser.id)
+        } : null);
+
+        try {
+            const response = await api.post('/unblock', { unblockedId: blockedUser.id });
+            if (response.status === 200) {
+                addToast("User unblocked successfully", 'success');
+            } else {
+                // Revert on error
+                setUser(prev => prev ? { ...prev, blockedUsers: previousBlockedUsers } : null);
+                addToast((response as any).response?.data?.error || 'Failed to unblock user', 'error');
+            }
+        } catch (error) {
+            // Revert on error
+            setUser(prev => prev ? { ...prev, blockedUsers: previousBlockedUsers } : null);
+            addToast((error as any).response?.data?.error || 'Failed to unblock user', 'error');
+        }
     };
 
     const handleUserClick = async (summary: UserSummary) => {

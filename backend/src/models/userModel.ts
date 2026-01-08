@@ -880,3 +880,84 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
 // export const completeProfileUser = async (userId: number, data: any) => {
 //     const user = await db.findOne('users', { id: userId }, ['id', 'status_id']);
 // };
+
+export const blockUser = async (userId: number, blockedId: number) => {
+    try {
+        const blockedUsers = await db.findOne('users', { id: userId }, ['blocked_users']);
+        if (blockedUsers.blocked_users.includes(blockedId)) {
+            return false;
+        }
+        await db.update('users', userId, { blocked_users: [...blockedUsers.blocked_users, blockedId] });
+        return true;
+    } catch (error) {
+        console.error('Error blocking user:', error);
+        return false;
+    }
+};
+
+
+export const getBlockedUsers = async (userId: number) => {
+    // First get the array of blocked user IDs
+    const userQuery = `
+        SELECT blocked_users FROM users WHERE id = $1
+    `;
+    const userResult = await db.query(userQuery, [userId]);
+    const blockedUserIds = userResult.rows[0]?.blocked_users || [];
+    
+    // If no blocked users, return empty array
+    if (!blockedUserIds || blockedUserIds.length === 0) {
+        return [];
+    }
+    
+    // Fetch full user data for each blocked user
+    const query = `
+        SELECT 
+            u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
+            u.latitude, u.longitude, u.city,
+            (
+                ROUND(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, 
+                            cos(radians(u.latitude)) * cos(radians((SELECT latitude FROM users WHERE id = $1))) * 
+                            cos(radians((SELECT longitude FROM users WHERE id = $1)) - radians(u.longitude)) + 
+                            sin(radians(u.latitude)) * sin(radians((SELECT latitude FROM users WHERE id = $1)))
+                        ))
+                    )
+                )
+            ) as distance,
+            EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
+            g.gender,
+            (
+                SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
+                FROM images 
+                WHERE user_id = u.id
+            ) as images,
+            COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
+            (
+                (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
+                (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
+            ) as fame_rating
+        FROM users u
+        LEFT JOIN genders g ON u.gender_id = g.id
+        LEFT JOIN user_interests ui ON u.id = ui.user_id
+        LEFT JOIN interests t ON ui.interest_id = t.id
+        WHERE u.id = ANY($2::int[])
+        GROUP BY u.id, g.gender
+    `;
+    const result = await db.query(query, [userId, blockedUserIds]);
+    return result.rows;
+};
+
+export const unblockUser = async (userId: number, unblockedId: number) => {
+    try {
+        const blockedUsers = await db.findOne('users', { id: userId }, ['blocked_users']);
+        if (!blockedUsers.blocked_users.includes(unblockedId)) {
+            return false;
+        }
+        await db.update('users', userId, { blocked_users: blockedUsers.blocked_users.filter((id: any) => id !== unblockedId) });
+        return true;
+    } catch (error) {
+        console.error('Error unblocking user:', error);
+        return false;
+    }
+};

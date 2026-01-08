@@ -153,12 +153,24 @@ const SearchPage: React.FC = () => {
     }
   };
 
-  const handleBlock = () => {
+  const handleBlock = async () => {
     if (selectedUser) {
       console.log('Block user:', selectedUser.id);
-      // Implement block logic here
+      try {
+        const response = await api.post(`/block`, {
+          blockedId: selectedUser.id
+        });
+        if (response.status === 200) {
+          addToast('User blocked successfully', 'success');
+          setSelectedUser(null);
+        } else {
+          addToast((response as any).response?.data?.error || 'Failed to block user', 'error');
+        }
     }
-  };
+    catch (error) {
+      addToast((error as any).response?.data?.error || 'Failed to block user', 'error');
+    }
+  }};
 
    const handleReport = async (reasons: string[]) => {
     if (selectedUser) {

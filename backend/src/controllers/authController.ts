@@ -10,7 +10,8 @@ import {
     getUserByVerificationToken,
     updateUserStatus,
     generateVerificationToken,
-    updatePassword
+    updatePassword,
+    getBlockedUsers
 } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { generateToken } from '../utils/jwt';
@@ -219,6 +220,7 @@ export class AuthController {
             const likedBy = await getLikedByUsers(user.id);
             const viewedBy = await getViewedByUsers(user.id);
             const matches = await getMatchedUsers(user.id);
+            const blockedUsers = await getBlockedUsers(user.id);
 
             const mapUserSummary = (u: any) => ({
                 id: u.id,
@@ -268,7 +270,7 @@ export class AuthController {
                 likedBy: likedBy.map(mapUserSummary),
                 viewedBy: viewedBy.map(mapUserSummary),
                 matches: matches.map(mapUserSummary),
-                blockedUsers: []
+                blockedUsers: blockedUsers.map(mapUserSummary)
             };
 
             res.status(200).json(formattedUser);

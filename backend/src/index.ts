@@ -70,6 +70,10 @@ app.use('/users', userRoutes);
 
 app.post('/report', authMiddleware, userController.reportUser);
 
+app.post('/block', authMiddleware, userController.blockUser);
+
+app.post('/unblock', authMiddleware, userController.unblockUser);
+
 // Match Routes ---------------------------------------------------------------
 
 app.use('/matches', matchRoutes);
