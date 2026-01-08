@@ -23,6 +23,7 @@ const authController = new AuthController();
 const userController = new UserController();
 const app = express();
 const port = process.env.PORT || 5000;
+const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
 
 // Create HTTP server
 const httpServer = createServer(app);
@@ -38,7 +39,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(uploadDir));
 
 
 

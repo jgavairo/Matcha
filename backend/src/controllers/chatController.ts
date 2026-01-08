@@ -36,7 +36,9 @@ export const uploadFiles = async (req: Request, res: Response) => {
         }
 
         const files = req.files as Express.Multer.File[];
-        const urls = files.map(file => `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/${file.filename}`);
+        // On s'assure que l'URL pointe vers /uploads/nom-du-fichier
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+        const urls = files.map(file => `${backendUrl}/uploads/${file.filename}`);
 
         res.json({ urls });
     } catch (error) {

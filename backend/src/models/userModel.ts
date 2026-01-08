@@ -190,7 +190,8 @@ export const updatePassword = async (userId: number, newPassword: string) => {
 };
 
 export const addImage = async (userId: number, filename: string) => {
-    const url = `http://localhost:5000/uploads/${filename}`;
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const url = `${backendUrl}/uploads/${filename}`;
     const query = 'INSERT INTO images (user_id, url, is_profile_picture) VALUES ($1, $2, (SELECT COUNT(*) = 0 FROM images WHERE user_id = $1)) RETURNING *';
     const result = await db.query(query, [userId, url]);
     return result.rows[0];
