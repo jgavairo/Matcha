@@ -97,14 +97,30 @@ export const useMatches = () => {
     const targetId = userId ? Number(userId) : users[currentIndex]?.id;
     if (!targetId) return;
 
+    const isCurrentUser = !userId || Number(userId) === users[currentIndex]?.id;
+    const previousUsers = [...users];
+
+    // Remove user from list immediately (optimistic update)
+    setUsers(prev => prev.filter(u => u.id !== targetId));
+    
+    // Adjust currentIndex if we removed the current user
+    if (isCurrentUser && currentIndex > 0) {
+      setCurrentIndex(prev => Math.max(0, prev - 1));
+    }
+
     try {
       await matchService.dislikeUser(targetId);
-      // Only advance index if we disliked the current user
-      if (!userId || Number(userId) === users[currentIndex]?.id) {
+      // Advance to next user if we disliked the current one
+      if (isCurrentUser) {
         nextUser();
       }
     } catch (err) {
       console.error('Error disliking user:', err);
+      // Revert on error
+      setUsers(previousUsers);
+      if (isCurrentUser) {
+        setCurrentIndex(prev => Math.min(prev, previousUsers.length - 1));
+      }
     }
   }, [users, currentIndex, nextUser]);
 

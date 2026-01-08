@@ -381,13 +381,14 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     } = filters;
     const offset = (page - 1) * limit;
 
-    // Get current user location and tags for distance and common tags calculation
+    // Get current user location, tags, and blocked users for distance and common tags calculation
     const currentUserResult = await db.query(
         `SELECT 
             u.latitude, 
             u.longitude, 
             u.gender_id, 
             u.sexual_preferences,
+            u.blocked_users,
             COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
         FROM users u
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -398,6 +399,9 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     );
     const currentUser = currentUserResult.rows[0];
     if (!currentUser) throw new Error('User not found');
+    
+    // Get blocked users array (default to empty array if null)
+    const blockedUserIds = currentUser.blocked_users || [];
 
     // Determine center for distance calculation
     let centerLat = currentUser.latitude || 0;
@@ -414,6 +418,9 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     const myPrefs = (!currentUser.sexual_preferences || currentUser.sexual_preferences.length === 0) 
         ? [1, 2, 3] 
         : currentUser.sexual_preferences;
+    
+    // Calculate paramIndex for blocked users (starts at 5 if blocked users exist)
+    const blockedUsersParamIndex = blockedUserIds.length > 0 ? 5 : 0;
 
     // Base query
     let query = `
@@ -495,6 +502,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             LEFT JOIN user_interests ui ON u.id = ui.user_id
             LEFT JOIN interests t ON ui.interest_id = t.id
             WHERE u.id != $4 -- Exclude current user
+            ${blockedUserIds.length > 0 ? `AND u.id != ALL($${blockedUsersParamIndex}::int[])` : ''}
             ${!includeInteracted ? `
             -- Exclude users already liked or disliked
             AND NOT EXISTS (
@@ -512,7 +520,13 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     `;
 
     const values: any[] = [centerLat, centerLon, userTags, currentUserId];
-    let paramIndex = 5;
+    
+    // Add blocked users to values if any
+    if (blockedUserIds.length > 0) {
+        values.push(blockedUserIds);
+    }
+    
+    let paramIndex = blockedUserIds.length > 0 ? 6 : 5;
 
     // Apply strict availability filters for Discover mode
     if (mode === 'discover') {
