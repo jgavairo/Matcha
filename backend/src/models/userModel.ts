@@ -381,7 +381,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     } = filters;
     const offset = (page - 1) * limit;
 
-    // Get current user location, tags, and blocked users for distance and common tags calculation
+    // Get current user location, tags, blocked users, and users who blocked us
     const currentUserResult = await db.query(
         `SELECT 
             u.latitude, 
@@ -389,6 +389,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             u.gender_id, 
             u.sexual_preferences,
             u.blocked_users,
+            u.blocked_by_users,
             COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
         FROM users u
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -400,8 +401,14 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     const currentUser = currentUserResult.rows[0];
     if (!currentUser) throw new Error('User not found');
     
-    // Get blocked users array (default to empty array if null)
+    // Get blocked users array (users I blocked) - default to empty array if null
     const blockedUserIds = currentUser.blocked_users || [];
+    
+    // Get users who blocked me - default to empty array if null
+    const blockedByUserIds = currentUser.blocked_by_users || [];
+    
+    // Combine both lists to exclude from results
+    const allBlockedIds = [...new Set([...blockedUserIds, ...blockedByUserIds])];
 
     // Determine center for distance calculation
     let centerLat = currentUser.latitude || 0;
@@ -419,8 +426,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         ? [1, 2, 3] 
         : currentUser.sexual_preferences;
     
-    // Calculate paramIndex for blocked users (starts at 5 if blocked users exist)
-    const blockedUsersParamIndex = blockedUserIds.length > 0 ? 5 : 0;
+    // Calculate paramIndex for blocked users (starts at 5 if any blocked users exist)
+    const blockedUsersParamIndex = allBlockedIds.length > 0 ? 5 : 0;
 
     // Base query
     let query = `
@@ -502,7 +509,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             LEFT JOIN user_interests ui ON u.id = ui.user_id
             LEFT JOIN interests t ON ui.interest_id = t.id
             WHERE u.id != $4 -- Exclude current user
-            ${blockedUserIds.length > 0 ? `AND u.id != ALL($${blockedUsersParamIndex}::int[])` : ''}
+            ${allBlockedIds.length > 0 ? `AND u.id != ALL($${blockedUsersParamIndex}::int[])` : ''}
             ${!includeInteracted ? `
             -- Exclude users already liked or disliked
             AND NOT EXISTS (
@@ -521,12 +528,12 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
 
     const values: any[] = [centerLat, centerLon, userTags, currentUserId];
     
-    // Add blocked users to values if any
-    if (blockedUserIds.length > 0) {
-        values.push(blockedUserIds);
+    // Add all blocked users (both blocked_users and blocked_by_users) to values if any
+    if (allBlockedIds.length > 0) {
+        values.push(allBlockedIds);
     }
     
-    let paramIndex = blockedUserIds.length > 0 ? 6 : 5;
+    let paramIndex = allBlockedIds.length > 0 ? 6 : 5;
 
     // Apply strict availability filters for Discover mode
     if (mode === 'discover') {
@@ -897,11 +904,21 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
 
 export const blockUser = async (userId: number, blockedId: number) => {
     try {
-        const blockedUsers = await db.findOne('users', { id: userId }, ['blocked_users']);
-        if (blockedUsers.blocked_users.includes(blockedId)) {
-            return false;
+        // Get the user who is blocking (userId)
+        const blockingUser = await db.findOne('users', { id: userId }, ['blocked_users']);
+        if (blockingUser.blocked_users.includes(blockedId)) {
+            return false; // Already blocked
         }
-        await db.update('users', userId, { blocked_users: [...blockedUsers.blocked_users, blockedId] });
+        
+        // Get the user who is being blocked (blockedId)
+        const blockedUser = await db.findOne('users', { id: blockedId }, ['blocked_by_users']);
+        
+        // Update blocking user: add blockedId to their blocked_users list
+        await db.update('users', userId, { blocked_users: [...blockingUser.blocked_users, blockedId] });
+        
+        // Update blocked user: add userId to their blocked_by_users list
+        await db.update('users', blockedId, { blocked_by_users: [...(blockedUser.blocked_by_users || []), userId] });
+        
         return true;
     } catch (error) {
         console.error('Error blocking user:', error);
