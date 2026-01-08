@@ -36,10 +36,58 @@ export const uploadFiles = async (req: Request, res: Response) => {
         }
 
         const files = req.files as Express.Multer.File[];
-        // On s'assure que l'URL pointe vers /uploads/nom-du-fichier
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-        const urls = files.map(file => `${backendUrl}/uploads/${file.filename}`);
+        
+        // Traiter les images avec Sharp pour la sécurité
+        const processedFiles = await Promise.all(
+            files.map(async (file) => {
+                if (file.mimetype.startsWith('image/')) {
+                    const { processImage, getOptimalFormat, validateImage } = await import('../utils/imageProcessor');
+                    const pathModule = await import('path');
+                    const fs = await import('fs/promises');
+                    const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
+                    const originalPath = file.path;
+                    
+                    // Créer un chemin temporaire différent pour éviter le conflit input/output
+                    const originalExt = pathModule.extname(originalPath);
+                    const baseName = pathModule.basename(originalPath, originalExt);
+                    const tempPath = pathModule.join(uploadDir, `${baseName}.tmp.jpg`);
+                    const finalPath = pathModule.join(uploadDir, `${baseName}.jpg`);
 
+                    // Valider que c'est bien une image valide
+                    const isValid = await validateImage(originalPath);
+                    if (!isValid) {
+                        await fs.unlink(originalPath).catch(() => {});
+                        throw new Error(`Invalid image file: ${file.originalname}`);
+                    }
+
+                    try {
+                        // Traiter l'image vers le fichier temporaire
+                        await processImage(originalPath, tempPath, {
+                            maxWidth: 1920,
+                            maxHeight: 1920,
+                            quality: 85,
+                            format: getOptimalFormat(file.mimetype)
+                        });
+
+                        // Renommer le fichier temporaire vers le nom final
+                        await fs.rename(tempPath, finalPath);
+
+                        // Mettre à jour le nom de fichier
+                        file.filename = pathModule.basename(finalPath);
+                    } catch (processError: any) {
+                        // Si le traitement échoue, supprimer les fichiers et rejeter
+                        await fs.unlink(originalPath).catch(() => {});
+                        await fs.unlink(tempPath).catch(() => {});
+                        await fs.unlink(finalPath).catch(() => {});
+                        throw new Error(`Invalid image file: ${processError.message || 'Unable to process image'}`);
+                    }
+                }
+                return file;
+            })
+        );
+
+        const urls = processedFiles.map(file => `${backendUrl}/uploads/${file.filename}`);
         res.json({ urls });
     } catch (error) {
         console.error('Upload error:', error);

@@ -190,7 +190,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                     finalLocation.longitude = parseFloat(geoData[0].lon);
                 } else {
                     setLocationError("Location not found.");
-                    return; // Stop submission
+                    return;
                 }
              } catch (e) {
                  // ignore or handle

@@ -90,7 +90,7 @@ export default function CompleteProfilePage() {
       
       if (data && data.length > 0) {
         const { lat, lon, display_name } = data[0];
-        const cleanCityName = display_name.split(',')[0]; // On garde juste le nom principal
+        const cleanCityName = display_name.split(',')[0];
         
         setProfileData(prev => ({
           ...prev,

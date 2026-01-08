@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
@@ -100,11 +101,64 @@ export class UserController {
                 return res.status(400).json({ error: 'No file uploaded' });
             }
 
+            // Traiter l'image avec Sharp pour la sécuriser
+            if (req.file.mimetype.startsWith('image/')) {
+                const { processImage, getOptimalFormat, validateImage } = await import('../utils/imageProcessor');
+                const fs = await import('fs/promises');
+                const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
+                const originalPath = req.file.path;
+                
+                // Créer un chemin temporaire différent pour éviter le conflit input/output
+                const pathModule = await import('path');
+                const originalExt = pathModule.extname(originalPath);
+                const baseName = pathModule.basename(originalPath, originalExt);
+                const tempPath = pathModule.join(uploadDir, `${baseName}.tmp.jpg`);
+                const finalPath = pathModule.join(uploadDir, `${baseName}.jpg`);
+
+                // Valider que c'est bien une image valide
+                const isValid = await validateImage(originalPath);
+                if (!isValid) {
+                    // Supprimer le fichier invalide
+                    await fs.unlink(originalPath).catch(() => {});
+                    return res.status(400).json({ error: 'Invalid image file' });
+                }
+
+                try {
+                    // Traiter l'image (redimensionner, convertir, nettoyer) vers le fichier temporaire
+                    await processImage(originalPath, tempPath, {
+                        maxWidth: 1920,
+                        maxHeight: 1920,
+                        quality: 85,
+                        format: getOptimalFormat(req.file.mimetype)
+                    });
+
+                    // Renommer le fichier temporaire vers le nom final
+                    await fs.rename(tempPath, finalPath);
+                    
+                    // Mettre à jour le nom de fichier pour utiliser le fichier traité
+                    req.file.filename = pathModule.basename(finalPath);
+                } catch (processError: any) {
+                    // Si le traitement échoue, supprimer les fichiers et rejeter
+                    await fs.unlink(originalPath).catch(() => {});
+                    await fs.unlink(tempPath).catch(() => {});
+                    await fs.unlink(finalPath).catch(() => {});
+                    return res.status(400).json({ 
+                        error: 'Invalid image file: ' + (processError.message || 'Unable to process image') 
+                    });
+                }
+            }
+
             const image = await addImage(userId, req.file.filename);
             res.status(201).json(image);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading photo:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            // Supprimer le fichier en cas d'erreur
+            if (req.file) {
+                const fs = await import('fs/promises');
+                await fs.unlink(req.file.path).catch(() => {});
+            }
+            const errorMessage = error.message || 'Internal server error';
+            res.status(500).json({ error: errorMessage });
         }
     };
 

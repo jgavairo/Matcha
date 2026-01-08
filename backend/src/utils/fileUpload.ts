@@ -17,11 +17,15 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         // Nettoyage du nom de fichier pour éviter les espaces/caractères spéciaux
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+        // Pour les images, on utilisera .jpg après traitement Sharp
+        // Pour l'audio, on garde l'extension originale
+        const ext = file.mimetype.startsWith('image/') ? '.jpg' : path.extname(file.originalname);
+        cb(null, uniqueSuffix + ext);
     }
 });
 
 const fileFilter = (req: any, file: any, cb: any) => {
+    // Accepter seulement les images et l'audio
     if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
         cb(null, true);
     } else {

@@ -32,20 +32,31 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
     useEffect(() => {
         if (file) {
             const img = new Image();
-            img.src = URL.createObjectURL(file);
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
             img.onload = () => {
-                setImage(img);
-                // Fit image to canvas initially
-                const canvasWidth = 400;
-                const canvasHeight = 500;
-                const scaleX = canvasWidth / img.width;
-                const scaleY = canvasHeight / img.height;
-                const initialScale = Math.max(scaleX, scaleY); // Cover
-                
-                setScale(initialScale);
-                setRotation(0);
-                setFilter('none');
-                setPosition({ x: 0, y: 0 });
+                // Vérifier que l'image a des dimensions valides
+                if (img.width > 0 && img.height > 0) {
+                    setImage(img);
+                    // Fit image to canvas initially
+                    const canvasWidth = 400;
+                    const canvasHeight = 500;
+                    const scaleX = canvasWidth / img.width;
+                    const scaleY = canvasHeight / img.height;
+                    const initialScale = Math.max(scaleX, scaleY); // Cover
+                    
+                    setScale(initialScale);
+                    setRotation(0);
+                    setFilter('none');
+                    setPosition({ x: 0, y: 0 });
+                } else {
+                    URL.revokeObjectURL(objectUrl);
+                    console.error('Invalid image: zero dimensions');
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                console.error('Failed to load image');
             };
         }
     }, [file]);
@@ -139,12 +150,15 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
         const canvas = canvasRef.current;
         if (!canvas || !file) return;
         
+        // Toujours exporter en JPEG pour garantir un format sûr et valide
         canvas.toBlob((blob) => {
             if (blob) {
-                const newFile = new File([blob], file.name, { type: file.type });
+                // Forcer le type MIME à image/jpeg et changer l'extension
+                const fileName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+                const newFile = new File([blob], fileName, { type: 'image/jpeg' });
                 onSave(newFile);
             }
-        }, file.type);
+        }, 'image/jpeg', 0.92); // Qualité 92% pour JPEG
     };
 
     return (

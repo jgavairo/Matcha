@@ -16,9 +16,58 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
     const [isDragging, setIsDragging] = useState(false);
     const { addToast } = useNotification();
 
-    const handleFileSelect = (file: File) => {
-        if (file && file.type.startsWith('image/')) {
+    const handleFileSelect = async (file: File) => {
+        if (!file || !file.type.startsWith('image/')) {
+            addToast('Please select a valid image file', 'error');
+            return;
+        }
+
+        // Valider que c'est bien une vraie image en essayant de la charger
+        try {
+            // Vérifier les types MIME valides
+            const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validMimeTypes.includes(file.type.toLowerCase())) {
+                addToast('Invalid image format. Only JPEG, PNG, GIF, and WebP are allowed.', 'error');
+                return;
+            }
+
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+            
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error('Image loading timeout'));
+                }, 5000); // 5 secondes timeout
+
+                img.onload = () => {
+                    clearTimeout(timeout);
+                    URL.revokeObjectURL(objectUrl);
+                    // Vérifier que l'image a des dimensions valides et raisonnables
+                    if (img.width > 0 && img.height > 0 && img.width <= 10000 && img.height <= 10000) {
+                        // Vérifier que l'image a vraiment été chargée (pas juste un placeholder)
+                        if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+                            resolve(true);
+                        } else {
+                            reject(new Error('Image failed to load completely'));
+                        }
+                    } else {
+                        reject(new Error('Invalid image dimensions'));
+                    }
+                };
+                img.onerror = () => {
+                    clearTimeout(timeout);
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error('Failed to load image - file may be corrupted or not a valid image'));
+                };
+                img.src = objectUrl;
+            });
+
+            // Si on arrive ici, l'image est valide
             setEditingFile(file);
+        } catch (error) {
+            addToast('Invalid image file. Please select a valid image file (JPEG, PNG, GIF, or WebP).', 'error');
+            console.error('Image validation error:', error);
         }
     };
 
