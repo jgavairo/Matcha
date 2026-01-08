@@ -9,6 +9,7 @@ interface FormDatePickerProps {
   error?: FieldError;
   minDate?: Date;
   maxDate?: Date;
+  disabled?: boolean;
 }
 
 export const FormDatePicker = ({ 
@@ -18,7 +19,8 @@ export const FormDatePicker = ({
     onChange, 
     error, 
     minDate = new Date(1900, 0, 1), 
-    maxDate 
+    maxDate,
+    disabled = false
 }: FormDatePickerProps) => {
   return (
       <div>
@@ -42,6 +44,7 @@ export const FormDatePicker = ({
               onChange(dateString);
           }}
           color={error ? "failure" : "gray"}
+          disabled={disabled}
         />
         {error && (
             <p className="mt-2 text-sm text-red-600 dark:text-red-500 font-medium">

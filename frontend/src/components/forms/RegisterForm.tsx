@@ -1,4 +1,4 @@
-import { Button } from 'flowbite-react';
+import { Button, Spinner } from 'flowbite-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { RegisterFormData } from '@app-types/forms';
@@ -7,6 +7,7 @@ import { useNotification } from '@context/NotificationContext';
 import { FormInput } from '../ui/FormInput';
 import { FormDatePicker } from '../ui/FormDatePicker';
 import { validateAge } from '../../utils/validators';
+import { useState, useEffect } from 'react';
 import { 
   EMAIL_REGEX, 
   USERNAME_REGEX, 
@@ -16,9 +17,19 @@ import {
   NAME_MAX
 } from '@shared/validation';
 
-const RegisterForm = () => {
+interface RegisterFormProps {
+  onLoadingChange?: (isLoading: boolean) => void;
+}
+
+const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
   const navigate = useNavigate();
   const { addToast } = useNotification();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    onLoadingChange?.(isLoading);
+  }, [isLoading, onLoadingChange]);
   
   const { 
     register, 
@@ -31,6 +42,7 @@ const RegisterForm = () => {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
+    setIsLoading(true);
     try {
       await authService.register(data);
       addToast('Register successful, please check your email for verification', 'success');
@@ -44,6 +56,8 @@ const RegisterForm = () => {
         const errorMessage = error.response?.data?.error || 'Error registering user';
         addToast(errorMessage, 'error');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,6 +67,7 @@ const RegisterForm = () => {
         id="email"
         label="Email"
         placeholder="exemple@email.com"
+        disabled={isLoading}
         {...register("email", { 
           required: "Email is required",
           pattern: { value: EMAIL_REGEX, message: "Invalid email format" }
@@ -65,6 +80,7 @@ const RegisterForm = () => {
         label="Username"
         placeholder="johndoe"
         maxLength={USERNAME_MAX}
+        disabled={isLoading}
         {...register("username", { 
           required: "Username is required",
           pattern: { value: USERNAME_REGEX, message: "Username must be 3-16 alphanumeric characters" },
@@ -79,6 +95,7 @@ const RegisterForm = () => {
             label="First Name"
             placeholder="John"
             maxLength={NAME_MAX}
+            disabled={isLoading}
             {...register("firstName", { 
               required: "First name is required",
               pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
@@ -92,6 +109,7 @@ const RegisterForm = () => {
             label="Last Name"
             placeholder="Doe"
             maxLength={NAME_MAX}
+            disabled={isLoading}
             {...register("lastName", { 
               required: "Last name is required",
               pattern: { value: NAME_REGEX, message: "Use only letters. No numbers or consecutive spaces." },
@@ -115,6 +133,7 @@ const RegisterForm = () => {
                     value={value}
                     onChange={onChange}
                     error={errors.birthDate}
+                    disabled={isLoading}
                 />
             )}
         />
@@ -123,6 +142,7 @@ const RegisterForm = () => {
           id="password"
           label="Password"
           type="password"
+          disabled={isLoading}
           {...register("password", { 
             required: "Password is required",
             pattern: { value: PASSWORD_REGEX, message: "Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char" }
@@ -134,6 +154,7 @@ const RegisterForm = () => {
           id="confirmPassword"
           label="Confirm Password"
           type="password"
+          disabled={isLoading}
           {...register("confirmPassword", { 
             required: "Please confirm your password",
             validate: (val) => {
@@ -145,8 +166,15 @@ const RegisterForm = () => {
           error={errors.confirmPassword}
       />
 
-      <Button type="submit" color="pink" className="mt-4">
-        Register
+      <Button type="submit" color="pink" className="mt-4" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Spinner size="sm" className="mr-2" />
+            Registering...
+          </>
+        ) : (
+          'Register'
+        )}
       </Button>
 
       <p className="text-center text-sm text-gray-600">
