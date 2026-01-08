@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Textarea, TextInput } from 'flowbite-react';
+import { Textarea, TextInput } from 'flowbite-react';
 import { useAuth } from '@context/AuthContext';
 import { useNotification } from '@context/NotificationContext';
 import { api } from '@services/api';
@@ -71,21 +71,10 @@ export default function CompleteProfilePage() {
     }, 300);
   };
 
-  const nextStep = () => {
-    if (step < totalSteps - 1) {
-      goToStep(step + 1);
-    }
-  };
+  const nextStep = () => step < totalSteps - 1 && goToStep(step + 1);
+  const prevStep = () => step > 0 && goToStep(step - 1);
 
-  const prevStep = () => {
-    if (step > 0) {
-      goToStep(step - 1);
-    }
-  };
-
-  const handleGenderSelect = (gender: string) => {
-    setProfileData(prev => ({ ...prev, gender }));
-  };
+  const handleGenderSelect = (gender: string) => setProfileData(prev => ({ ...prev, gender }));
 
   const handlePreferenceSelect = (pref: string) => {
     setProfileData(prev => ({
@@ -113,43 +102,13 @@ export default function CompleteProfilePage() {
         const response = await api.post('/users/photos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        // Assuming response.data is the image object with url
         const imageUrl = response.data.url || response.data;
         setProfileData(prev => ({ ...prev, profileImage: imageUrl }));
         addToast('Photo de profil uploadée avec succès', 'success');
       } catch (error) {
-        console.error('Failed to upload photo', error);
         addToast('Échec de l\'upload de la photo', 'error');
       }
     }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleRemovePhoto = () => {
-    setProfileData(prev => ({ ...prev, profileImage: null }));
   };
 
   const getCurrentLocation = () => {
@@ -157,80 +116,35 @@ export default function CompleteProfilePage() {
       setLocationError('Localisation not supported by your browser');
       return;
     }
-
     setIsGettingLocation(true);
-    setLocationError(null);
-
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
         try {
-          // Reverse geocoding to get city name
-          const response = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`
-          );
+          const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`);
           const data = await response.json();
-          const city = data.city || data.locality || 'Unknown';
-
-          setProfileData(prev => ({
-            ...prev,
-            latitude,
-            longitude,
-            city,
-            geolocationConsent: true
-          }));
+          setProfileData(prev => ({ ...prev, latitude, longitude, city: data.city || data.locality || 'Unknown', geolocationConsent: true }));
           addToast('Location retrieved successfully', 'success');
         } catch (error) {
-          console.error('Error getting city name:', error);
-          setProfileData(prev => ({
-            ...prev,
-            latitude,
-            longitude,
-            city: 'Unknown',
-            geolocationConsent: true
-          }));
-          addToast('Location retrieved, but unable to determine the city', 'warning');
-        } finally {
-          setIsGettingLocation(false);
-        }
+          setProfileData(prev => ({ ...prev, latitude, longitude, city: 'Unknown', geolocationConsent: true }));
+        } finally { setIsGettingLocation(false); }
       },
-      (error) => {
-        console.error('Error getting location:', error);
-        setLocationError('Unable to retrieve your location. Please enter your city manually.');
+      () => {
+        setLocationError('Unable to retrieve location. Please enter manually.');
         setIsGettingLocation(false);
       }
     );
   };
 
-  const handleCityChange = (city: string) => {
-    setProfileData(prev => ({
-      ...prev,
-      city,
-      geolocationConsent: false
-    }));
-  };
-
   const handleSubmit = async () => {
     try {
-      // Exclude profileImage from the request as it's already uploaded separately
       const { profileImage, ...profileDataToSend } = profileData;
-      await api.put('/users/profile/complete', {
-        ...profileDataToSend
-      });
+      await api.put('/users/profile/complete', profileDataToSend);
       await login();
       addToast('Profile completed!', 'success');
       navigate('/');
     } catch (error: any) {
-      console.error('Error completing profile:', error);
-      // Gérer les erreurs de validation
-      if (error.response?.data?.details) {
-        const details = error.response.data.details;
-        const errorMessages = Object.values(details).join(', ');
-        addToast(`Validation errors: ${errorMessages}`, 'error');
-      } else {
-        addToast(error.response?.data?.error || 'Failed to save profile', 'error');
-      }
+      addToast('Failed to save profile', 'error');
     }
   };
 
@@ -246,68 +160,42 @@ export default function CompleteProfilePage() {
     }
   };
 
-
   return (
-    <div className="flex-1 bg-gradient-to-br from-pink-400 via-pink-500 to-rose-600 overflow-hidden relative">
-      {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-2 bg-white/20 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-pink-400 via-pink-500 to-rose-600 flex flex-col relative">
+      {/* Progress bar - Sticky top */}
+      <div className="sticky top-0 left-0 right-0 h-1.5 bg-white/20 z-30">
         <div 
           className="h-full bg-white transition-all duration-500 ease-out"
-          style={{ width: `${((step) / totalSteps) * 100}%` }}
+          style={{ width: `${((step) / (totalSteps - 1)) * 100}%` }}
         />
       </div>
 
-      {/* Step indicator */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {Array.from({ length: totalSteps }).map((_, i) => (
-          <div
-            key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === step ? 'bg-white w-6' : i < step ? 'bg-white/80' : 'bg-white/30'
-            }`}
-          />
-        ))}
-      </div>
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col items-center justify-start px-6 pt-12 pb-32">
+        {/* Step dots */}
+        <div className="flex gap-2 mb-8">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'bg-white w-8' : 'bg-white/30 w-4'}`} />
+          ))}
+        </div>
 
-      {/* Content container */}
-      <div className="h-full flex items-center justify-center p-6 pt-16">
-        <div 
-          className={`w-full max-w-lg transition-all duration-300 ease-out ${
-            isAnimating 
-              ? direction === 'next' 
-                ? 'opacity-0 translate-x-12' 
-                : 'opacity-0 -translate-x-12'
-              : 'opacity-100 translate-x-0'
-          }`}
-        >
+        <div className={`w-full max-w-md transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
           {/* Step 0: Welcome */}
           {step === 0 && (
-            <div className="text-white text-center">
-              <h1 className="text-4xl font-bold mb-4 animate-pulse">Welcome to Matcha!</h1>
-              <p className="text-xl text-white/80 mb-8">
-                Let's set up your profile in just a few steps
-              </p>
+            <div className="text-white text-center py-10">
+              <h1 className="text-4xl font-extrabold mb-4">Welcome to Matcha!</h1>
+              <p className="text-lg text-white/90">Let's set up your profile in just a few steps to find your best matches.</p>
             </div>
           )}
 
           {/* Step 1: Gender */}
           {step === 1 && (
-            <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">I am a...</h1>
-              <p className="text-white/70 mb-8">Select your gender</p>
-              
-              <div className="flex flex-col gap-4 mb-8">
+            <div className="text-white">
+              <h1 className="text-3xl font-bold mb-6 text-center">I am a...</h1>
+              <div className="grid gap-4">
                 {GENDERS.map(g => (
-                  <button
-                    key={g.id}
-                    onClick={() => handleGenderSelect(g.id)}
-                    className={`p-4 rounded-2xl text-left flex items-center gap-4 transition-all duration-200 ${
-                      profileData.gender === g.id
-                        ? 'bg-white text-pink-600 shadow-lg scale-105'
-                        : 'bg-white/20 hover:bg-white/30'
-                    }`}
-                  >
-                    <span className="text-xl font-medium">{g.label}</span>
+                  <button key={g.id} onClick={() => handleGenderSelect(g.id)} className={`p-5 rounded-2xl text-left font-semibold text-lg transition-all ${profileData.gender === g.id ? 'bg-white text-pink-600 shadow-xl' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
+                    {g.label}
                   </button>
                 ))}
               </div>
@@ -316,22 +204,12 @@ export default function CompleteProfilePage() {
 
           {/* Step 2: Preferences */}
           {step === 2 && (
-            <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">I'm interested in...</h1>
-              <p className="text-white/70 mb-8">Who would you like to meet?</p>
-              
-              <div className="flex flex-col gap-4 mb-8">
+            <div className="text-white">
+              <h1 className="text-3xl font-bold mb-6 text-center">I'm interested in...</h1>
+              <div className="grid gap-4">
                 {PREFERENCES.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handlePreferenceSelect(p.id)}
-                    className={`p-4 rounded-2xl text-left flex items-center gap-4 transition-all duration-200 ${
-                      profileData.sexualPreferences.includes(p.id)
-                        ? 'bg-white text-pink-600 shadow-lg scale-105'
-                        : 'bg-white/20 hover:bg-white/30'
-                    }`}
-                  >
-                    <span className="text-xl font-medium">{p.label}</span>
+                  <button key={p.id} onClick={() => handlePreferenceSelect(p.id)} className={`p-5 rounded-2xl text-left font-semibold text-lg transition-all ${profileData.sexualPreferences.includes(p.id) ? 'bg-white text-pink-600 shadow-xl' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
+                    {p.label}
                   </button>
                 ))}
               </div>
@@ -340,93 +218,55 @@ export default function CompleteProfilePage() {
 
           {/* Step 3: Biography */}
           {step === 3 && (
-            <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">Tell us about yourself</h1>
-              <p className="text-white/70 mb-8">Write a short bio (min. 10 characters)</p>
-              
+            <div className="text-white">
+              <h1 className="text-3xl font-bold mb-2 text-center">About me</h1>
+              <p className="text-white/80 text-center mb-6 text-sm">Min. 10 characters to express yourself</p>
               <Textarea
                 value={profileData.biography}
                 onChange={(e) => setProfileData(prev => ({ ...prev, biography: e.target.value }))}
-                placeholder="I love hiking, cooking, and exploring new places..."
-                rows={4}
-                className="mb-4 bg-white/20 border-white/30 text-white placeholder-white/50 focus:border-white focus:ring-white rounded-2xl"
+                placeholder="Share your passions, your vibe..."
+                rows={5}
+                className="w-full bg-white text-gray-900 rounded-2xl border-none focus:ring-4 focus:ring-white/50 p-4"
               />
-              
-              <p className="text-white/60 text-sm mb-6">
-                {profileData.biography.length}/10 characters minimum
-              </p>
+              <p className="mt-2 text-right text-xs opacity-70">{profileData.biography.length} characters</p>
             </div>
           )}
 
           {/* Step 4: Tags */}
           {step === 4 && (
             <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">Your interests</h1>
-              <p className="text-white/70 mb-8">Select at least one interest</p>
-              
-              <div className="flex flex-wrap justify-center gap-3 mb-8">
+              <h1 className="text-3xl font-bold mb-6">Interests</h1>
+              <div className="flex flex-wrap justify-center gap-3">
                 {AVAILABLE_TAGS.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      profileData.tags.includes(tag)
-                        ? 'bg-white text-pink-600 shadow-lg scale-105'
-                        : 'bg-white/20 hover:bg-white/30'
-                    }`}
-                  >
-                    {tag}
+                  <button key={tag} onClick={() => handleTagToggle(tag)} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${profileData.tags.includes(tag) ? 'bg-white text-pink-600' : 'bg-white/10 border border-white/30'}`}>
+                    #{tag}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Step 5: Profile Photo */}
+          {/* Step 5: Photo */}
           {step === 5 && (
             <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">Your profile photo</h1>
-              <p className="text-white/70 mb-8">Add a photo to your profile</p>
-              
+              <h1 className="text-3xl font-bold mb-6">Profile Photo</h1>
               {profileData.profileImage ? (
-                <div className="mb-8">
-                  <div className="relative inline-block">
-                    <img 
-                      src={profileData.profileImage} 
-                      alt="Profile" 
-                      className="w-48 h-48 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-                    />
-                    <button
-                      onClick={handleRemovePhoto}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
-                      title="Remove photo"
-                    >
-                      <HiX className="w-5 h-5" />
-                    </button>
-                  </div>
+                <div className="relative inline-block group">
+                  <img src={profileData.profileImage} alt="Profile" className="w-48 h-48 md:w-64 md:h-64 rounded-3xl object-cover border-4 border-white shadow-2xl" />
+                  <button onClick={() => setProfileData(prev => ({...prev, profileImage: null}))} className="absolute -top-3 -right-3 bg-red-500 p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                    <HiX className="w-6 h-6" />
+                  </button>
                 </div>
               ) : (
                 <div 
-                  className={`w-full max-w-md mx-auto aspect-square rounded-2xl border-2 border-dashed flex items-center justify-center transition-colors cursor-pointer relative mb-8 ${
-                    isDragging 
-                      ? 'border-white bg-white/30' 
-                      : 'border-white/50 bg-white/10 hover:bg-white/20'
-                  }`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
+                  className={`w-full aspect-square max-h-[320px] rounded-3xl border-4 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer relative ${isDragging ? 'bg-white/30 border-white scale-105' : 'bg-white/10 border-white/40'}`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]); }}
                 >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="flex flex-col items-center text-white text-center p-2">
-                    <HiUpload className="w-12 h-12 mb-4" />
-                    <span className="text-lg font-medium">Upload Photo</span>
-                    <span className="text-sm mt-2 opacity-80">or drag and drop</span>
-                  </div>
+                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
+                  <HiUpload className="w-16 h-16 mb-4 opacity-50" />
+                  <p className="font-bold">Click or drag photo</p>
                 </div>
               )}
             </div>
@@ -434,93 +274,49 @@ export default function CompleteProfilePage() {
 
           {/* Step 6: Location */}
           {step === 6 && (
-            <div className="text-white text-center">
-              <h1 className="text-3xl font-bold mb-2">Your location</h1>
-              <p className="text-white/70 mb-8">Allow geolocation or enter your city</p>
-              
-              <div className="flex flex-col gap-4 mb-8">
-                <button
-                  onClick={getCurrentLocation}
-                  disabled={isGettingLocation}
-                  className="p-4 rounded-2xl bg-white/20 hover:bg-white/30 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
-                >
-                  <HiLocationMarker className="w-6 h-6" />
-                  <span className="text-xl font-medium">
-                    {isGettingLocation ? 'Retrieving your position...' : 'Allow geolocation'}
-                  </span>
-                </button>
-
-                {locationError && (
-                  <p className="text-red-200 text-sm">{locationError}</p>
-                )}
-
-                <div className="relative">
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-transparent text-white/70">or</span>
-                  </div>
-                </div>
-
-                <div>
-                  <TextInput
-                    type="text"
-                    placeholder="Entrez votre ville"
-                    value={profileData.city}
-                    onChange={(e) => handleCityChange(e.target.value)}
-                    className="bg-white/20 border-white/30 text-white placeholder-white/50 focus:border-white focus:ring-white rounded-2xl"
-                  />
-                </div>
-
-                {profileData.city && (
-                  <div className="mt-4 p-4 bg-white/10 rounded-2xl">
-                    <p className="text-white/80 text-sm">
-                      {profileData.geolocationConsent 
-                        ? `Ville détectée : ${profileData.city}` 
-                        : `Ville renseignée : ${profileData.city}`}
-                    </p>
-                  </div>
-                )}
+            <div className="text-white">
+              <h1 className="text-3xl font-bold mb-6 text-center">Where are you?</h1>
+              <button onClick={getCurrentLocation} disabled={isGettingLocation} className="w-full p-4 mb-6 rounded-2xl bg-white text-pink-600 font-bold flex items-center justify-center gap-2 hover:bg-pink-50 transition-colors disabled:opacity-50">
+                <HiLocationMarker className="w-5 h-5" />
+                {isGettingLocation ? 'Finding you...' : 'Use My Current Location'}
+              </button>
+              <div className="relative flex items-center mb-6">
+                <div className="flex-grow border-t border-white/30"></div>
+                <span className="px-4 text-sm opacity-60 uppercase tracking-widest">or</span>
+                <div className="flex-grow border-t border-white/30"></div>
               </div>
+              <TextInput
+                placeholder="Enter your city manually"
+                value={profileData.city}
+                onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value, geolocationConsent: false }))}
+                className="rounded-2xl"
+              />
             </div>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* Navigation buttons */}
-      <div className="absolute bottom-8 left-0 right-0 px-6 z-10">
-        <div className="max-w-lg mx-auto flex justify-between items-center gap-4">
-          <button
-            onClick={prevStep}
-            disabled={step === 0}
-            className={`bg-white text-pink-600 hover:bg-white/90 px-8 py-3 text-lg font-semibold rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              step === 0 ? 'opacity-0 pointer-events-none' : ''
-            }`}
-          >
-            ← Previous
-          </button>
-          
-          {step === totalSteps - 1 ? (
-            <button
-              onClick={handleSubmit}
-              disabled={!canProceed()}
-              className="bg-white text-pink-600 hover:bg-white/90 px-8 py-3 text-lg font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              Complete ✓
-            </button>
-          ) : (
-            <button
-              onClick={nextStep}
-              disabled={!canProceed()}
-              className="bg-white text-pink-600 hover:bg-white/90 px-8 py-3 text-lg font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              Next →
+      {/* Navigation - Fixed Bottom */}
+      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-rose-700 via-rose-600/90 to-transparent z-20">
+        <div className="max-w-md mx-auto flex gap-4">
+          {step > 0 && (
+            <button onClick={prevStep} className="flex-1 py-4 px-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold hover:bg-white/20 transition-all">
+              Back
             </button>
           )}
+          <button
+            onClick={step === totalSteps - 1 ? handleSubmit : nextStep}
+            disabled={!canProceed()}
+            className={`py-4 px-10 rounded-2xl font-bold text-lg shadow-xl transition-all ${
+              canProceed() 
+                ? 'bg-white text-pink-600 scale-100 hover:scale-[1.02]' 
+                : 'bg-white/50 text-white/50 cursor-not-allowed'
+            } ${step === 0 ? 'w-full' : 'flex-[2]'}`}
+          >
+            {step === 0 ? "Let's Start" : step === totalSteps - 1 ? "Finish ✓" : "Continue"}
+          </button>
         </div>
-      </div>
-
-      {/* Decorative elements */}
-      <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-      <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+      </footer>
     </div>
   );
 }
