@@ -9,9 +9,12 @@ interface ChatBubbleProps {
     otherUsername: string;
     otherUserImage?: string | null;
     currentUserImage?: string | null;
+    otherUserId?: number;
+    currentUserId?: number;
     onReply?: (message: Message) => void;
     onCopy?: (content: string) => void;
     onDelete?: (messageId: number) => void;
+    onProfileClick?: (userId: number) => void;
 }
 
 interface ParsedContent {
@@ -28,9 +31,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     otherUsername,
     otherUserImage,
     currentUserImage,
+    otherUserId,
+    currentUserId,
     onReply,
     onCopy,
-    onDelete
+    onDelete,
+    onProfileClick
 }) => {
     const [parsedContent, setParsedContent] = useState<ParsedContent>({ type: 'text', text: message.content });
     const [isPlaying, setIsPlaying] = useState(false);
@@ -192,9 +198,23 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         }
     };
 
+    const handleAvatarClick = () => {
+        if (onProfileClick) {
+            const userId = isMe ? currentUserId : otherUserId;
+            if (userId) {
+                onProfileClick(userId);
+            }
+        }
+    };
+
     return (
         <div className={`flex items-start gap-2.5 ${isMe ? 'flex-row-reverse' : ''} group mb-4`}>
-            <img className="w-8 h-8 rounded-full object-cover" src={avatarUrl} alt="User avatar" />
+            <img 
+                className={`w-8 h-8 rounded-full object-cover ${onProfileClick ? 'cursor-pointer hover:ring-2 hover:ring-pink-500 transition-all' : ''}`} 
+                src={avatarUrl} 
+                alt="User avatar"
+                onClick={handleAvatarClick}
+            />
             
             <div className="flex flex-col gap-1 w-full max-w-[320px]">
                 <div className={`flex items-center space-x-2 rtl:space-x-reverse ${isMe ? 'justify-end' : ''}`}>
