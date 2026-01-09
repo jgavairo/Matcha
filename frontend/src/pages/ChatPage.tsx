@@ -58,11 +58,14 @@ const ChatPage: React.FC = () => {
                 const updatedConversations = [...prev];
                 const conversation = updatedConversations[index];
                 
+                // S'assurer que unread_count est un nombre
+                const currentUnreadCount = Number(conversation.unread_count) || 0;
+                
                 updatedConversations[index] = {
                     ...conversation,
                     last_message: msg.content,
                     last_message_date: msg.created_at,
-                    unread_count: (selectedConversation?.id === conversation.id) ? conversation.unread_count : conversation.unread_count + 1
+                    unread_count: (selectedConversation?.id === conversation.id) ? currentUnreadCount : currentUnreadCount + 1
                 };
 
                 // Move to top
@@ -108,7 +111,12 @@ const ChatPage: React.FC = () => {
     const loadConversations = async () => {
         try {
             const data = await chatService.getConversations();
-            setConversations(data);
+            // S'assurer que unread_count est toujours un nombre
+            const normalizedData = data.map(conv => ({
+                ...conv,
+                unread_count: Number(conv.unread_count) || 0
+            }));
+            setConversations(normalizedData);
         } catch (error) {
             console.error('Failed to load conversations', error);
         }

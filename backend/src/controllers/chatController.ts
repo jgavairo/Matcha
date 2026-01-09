@@ -9,7 +9,12 @@ export const getConversations = async (req: Request, res: Response) => {
         // @ts-ignore
         const userId = req.user.id;
         const conversations = await chatModel.getConversations(userId);
-        res.json(conversations);
+        // S'assurer que unread_count est toujours un nombre (PostgreSQL COUNT retourne parfois une string)
+        const normalizedConversations = conversations.map((conv: any) => ({
+            ...conv,
+            unread_count: parseInt(conv.unread_count, 10) || 0
+        }));
+        res.json(normalizedConversations);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
