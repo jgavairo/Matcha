@@ -88,7 +88,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
       className={`flex px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${!notification.read ? 'bg-blue-50 dark:bg-gray-700/50' : ''} group relative`}
     >
       <div className="shrink-0 relative">
-        <img className="rounded-full w-11 h-11" src={notification.avatar || "https://flowbite.com/docs/images/people/profile-picture-5.jpg"} alt="avatar" />
+        <img 
+          className="rounded-full w-11 h-11 object-cover" 
+          src={notification.avatar || `https://ui-avatars.com/api/?name=${notification.sender || 'User'}&background=random`} 
+          alt="avatar" 
+        />
         {getIcon(notification.type)}
       </div>
       <div className="w-full ps-3">

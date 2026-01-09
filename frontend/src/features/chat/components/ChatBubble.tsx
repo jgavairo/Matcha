@@ -7,6 +7,8 @@ interface ChatBubbleProps {
     message: Message;
     isMe: boolean;
     otherUsername: string;
+    otherUserImage?: string | null;
+    currentUserImage?: string | null;
     onReply?: (message: Message) => void;
     onCopy?: (content: string) => void;
     onDelete?: (messageId: number) => void;
@@ -24,6 +26,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     message, 
     isMe, 
     otherUsername,
+    otherUserImage,
+    currentUserImage,
     onReply,
     onCopy,
     onDelete
@@ -83,7 +87,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         }
     };
 
-    const avatarUrl = `https://ui-avatars.com/api/?name=${isMe ? 'Me' : otherUsername}&background=random`;
+    // Use profile photos if available, otherwise fallback to generated avatar
+    const avatarUrl = isMe 
+        ? (currentUserImage || `https://ui-avatars.com/api/?name=Me&background=random`)
+        : (otherUserImage || `https://ui-avatars.com/api/?name=${otherUsername}&background=random`);
     const timeString = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     if (message.type === 'system') {
@@ -187,7 +194,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
     return (
         <div className={`flex items-start gap-2.5 ${isMe ? 'flex-row-reverse' : ''} group mb-4`}>
-            <img className="w-8 h-8 rounded-full" src={avatarUrl} alt="User avatar" />
+            <img className="w-8 h-8 rounded-full object-cover" src={avatarUrl} alt="User avatar" />
             
             <div className="flex flex-col gap-1 w-full max-w-[320px]">
                 <div className={`flex items-center space-x-2 rtl:space-x-reverse ${isMe ? 'justify-end' : ''}`}>

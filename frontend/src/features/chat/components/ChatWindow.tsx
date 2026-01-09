@@ -4,6 +4,7 @@ import { useFileDrop } from '@hooks/useFileDrop';
 import { useSocket } from '@context/SocketContext';
 import { useCall } from '@context/CallContext';
 import { useNotification } from '@context/NotificationContext';
+import { useAuth } from '@context/AuthContext';
 import { HiCloudUpload } from 'react-icons/hi';
 
 import ChatBubble from './ChatBubble';
@@ -29,6 +30,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     // Call Context
     const { callUser } = useCall();
     const { addToast } = useNotification();
+    const { user } = useAuth();
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { socketService } = useSocket();
@@ -207,6 +209,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     }
 
     const otherUsername = conversation.user1_id === currentUserId ? conversation.user2_username : conversation.user1_username;
+    const otherUserImage = conversation.user1_id === currentUserId ? conversation.user2_image : conversation.user1_image;
+    const currentUserImage = user?.images?.[0] || null;
 
     return (
         <div 
@@ -226,7 +230,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             <ChatHeader 
                 conversation={conversation}
                 currentUserId={currentUserId}
-                onCallUser={() => callUser(conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id, otherUsername, "")}
+                onCallUser={() => callUser(conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id, otherUsername, otherUserImage || "")}
                 onClose={onClose}
                 isOnline={otherUserStatus.isOnline}
                 lastConnection={otherUserStatus.lastConnection}
@@ -249,6 +253,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                             message={msg}
                             isMe={msg.sender_id === currentUserId}
                             otherUsername={otherUsername}
+                            otherUserImage={otherUserImage}
+                            currentUserImage={currentUserImage}
                             onCopy={(content) => navigator.clipboard.writeText(content)}
                             onReply={(msg) => setNewMessage(`Replying to: "${msg.content.substring(0, 20)}..." `)}
                             onDelete={(id) => console.log('Delete message', id)}

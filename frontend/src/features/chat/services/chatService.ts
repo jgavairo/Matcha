@@ -11,6 +11,8 @@ export interface Conversation {
     user2_is_online: boolean;
     user1_last_connection: string;
     user2_last_connection: string;
+    user1_image?: string | null;
+    user2_image?: string | null;
     last_message: string;
     last_message_date: string;
     unread_count: number;

@@ -213,7 +213,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 signalData: offer,
                 from: user?.id,
                 name: user?.username || "Unknown",
-                avatar: "https://via.placeholder.com/150" // You might want to pass real avatar from user context
+                avatar: user?.images?.[0] || ""
             });
 
         } catch (err) {

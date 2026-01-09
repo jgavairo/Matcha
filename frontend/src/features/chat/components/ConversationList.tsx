@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Conversation } from '../services/chatService';
-import { Avatar, Badge, Tooltip } from 'flowbite-react';
+import { Badge, Tooltip } from 'flowbite-react';
 import { HiArchive, HiInbox } from 'react-icons/hi';
 
 interface ConversationListProps {
@@ -86,8 +86,9 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                         {filteredConversations.map((conversation) => {
                             const otherUsername = conversation.user1_id === currentUserId ? conversation.user2_username : conversation.user1_username;
-                            // Placeholder avatar since we don't have it in the Conversation type yet
-                            const avatarUrl = `https://ui-avatars.com/api/?name=${otherUsername}&background=random`;
+                            // Use profile photo if available, otherwise fallback to generated avatar
+                            const otherUserImage = conversation.user1_id === currentUserId ? conversation.user2_image : conversation.user1_image;
+                            const avatarUrl = otherUserImage || `https://ui-avatars.com/api/?name=${otherUsername}&background=random`;
 
                             return (
                                 <li 
@@ -96,8 +97,15 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                     className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors group relative"
                                 >
                                     <div className="flex items-center space-x-4">
-                                        <div className="flex-shrink-0">
-                                            <Avatar img={avatarUrl} rounded status={conversation.unread_count > 0 ? "online" : undefined} statusPosition="bottom-right" />
+                                        <div className="flex-shrink-0 relative">
+                                            <img 
+                                                src={avatarUrl} 
+                                                alt={otherUsername}
+                                                className="w-10 h-10 rounded-full object-cover"
+                                            />
+                                            {conversation.unread_count > 0 && (
+                                                <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-800"></span>
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-1">

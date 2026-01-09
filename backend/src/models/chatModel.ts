@@ -75,6 +75,8 @@ export const getConversations = async (userId: number) => {
             u2.is_online as user2_is_online,
             u1.last_connection as user1_last_connection,
             u2.last_connection as user2_last_connection,
+            (SELECT url FROM images WHERE user_id = u1.id ORDER BY is_profile_picture DESC, created_at ASC LIMIT 1) as user1_image,
+            (SELECT url FROM images WHERE user_id = u2.id ORDER BY is_profile_picture DESC, created_at ASC LIMIT 1) as user2_image,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
             (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_date,
             (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND (sender_id != $1 OR sender_id IS NULL) AND is_read = FALSE) as unread_count

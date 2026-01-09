@@ -55,7 +55,7 @@ export const matchService = {
               distance: Math.round(user.distance || 0),
               isOnline: false, // Placeholder
               lastConnection: new Date().toISOString(), // Placeholder
-              images: user.profile_picture ? [user.profile_picture] : ['https://via.placeholder.com/150'],
+              images: user.profile_picture ? [user.profile_picture] : (user.images && user.images.length > 0 ? user.images : []),
               location: {
                   city: user.city || '',
                   latitude: user.latitude || 0,
