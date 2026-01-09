@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import { Conversation } from '../services/chatService';
 import { Badge, Tooltip } from 'flowbite-react';
 import { HiArchive, HiInbox } from 'react-icons/hi';
-import UserProfileModal from '@features/matches/components/UserProfileDrawer';
-import { UserProfile } from '@app-types/user';
-import { api } from '@services/api';
-import { useNotification } from '@context/NotificationContext';
 
 interface ConversationListProps {
     conversations: Conversation[];
@@ -16,8 +12,6 @@ interface ConversationListProps {
 
 const ConversationList: React.FC<ConversationListProps> = ({ conversations, currentUserId, onSelectConversation, onArchiveConversation }) => {
     const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'archived'>('all');
-    const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-    const { addToast } = useNotification();
 
     const filteredConversations = conversations.filter(c => {
         if (activeTab === 'archived') {
@@ -42,70 +36,6 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
         return date.toLocaleDateString();
-    };
-
-    const handleProfileClick = async (e: React.MouseEvent, userId: number) => {
-        e.stopPropagation(); // Empêcher la sélection de la conversation
-        try {
-            const response = await api.get(`/users/${userId}`);
-            const data = response.data;
-            
-            // Transformer les données de l'API pour correspondre à l'interface UserProfile
-            const fullProfile: UserProfile = {
-                id: data.id,
-                username: data.username,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                age: data.age,
-                gender: data.gender,
-                biography: data.biography || '',
-                tags: data.tags || [],
-                fameRating: data.fame_rating || 0,
-                distance: data.distance || 0,
-                isOnline: false,
-                lastConnection: new Date().toISOString(),
-                images: data.images || [],
-                location: {
-                    city: data.city || '',
-                    latitude: data.latitude || 0,
-                    longitude: data.longitude || 0
-                },
-                sexualPreferences: data.sexual_preferences || [],
-                birthDate: data.birth_date,
-                hasLikedYou: data.has_liked_you || false,
-                isLiked: data.is_liked || false,
-                isMatch: data.is_match || false
-            };
-
-            setSelectedUser(fullProfile);
-        } catch (error) {
-            console.error("Failed to fetch user profile", error);
-            addToast("Failed to load user profile", 'error');
-        }
-    };
-
-    const handleBlock = async () => {
-        if (selectedUser) {
-            try {
-                await api.post('/block', { blockedId: selectedUser.id });
-                addToast('User blocked successfully', 'success');
-                setSelectedUser(null);
-            } catch (error: any) {
-                addToast((error.response?.data?.error || 'Failed to block user'), 'error');
-            }
-        }
-    };
-
-    const handleReport = async (reasons: string[]) => {
-        if (selectedUser) {
-            try {
-                await api.post('/report', { reportedId: selectedUser.id, reasons });
-                addToast('User reported successfully', 'success');
-                setSelectedUser(null);
-            } catch (error: any) {
-                addToast((error.response?.data?.error || 'Failed to report user'), 'error');
-            }
-        }
     };
 
     return (
@@ -171,11 +101,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                             <img 
                                                 src={avatarUrl} 
                                                 alt={otherUsername}
-                                                className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-pink-500 transition-all"
-                                                onClick={(e) => {
-                                                    const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
-                                                    handleProfileClick(e, otherUserId);
-                                                }}
+                                                className="w-10 h-10 rounded-full object-cover"
                                             />
                                             {conversation.unread_count > 0 && (
                                                 <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-800"></span>
@@ -223,18 +149,6 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                     </ul>
                 )}
             </div>
-
-            {/* User Profile Modal */}
-            <UserProfileModal
-                user={selectedUser}
-                isOpen={!!selectedUser}
-                onClose={() => setSelectedUser(null)}
-                onLike={() => {}} // Pas de like/dislike dans une conversation (déjà match)
-                onDislike={() => {}}
-                onBlock={handleBlock}
-                onReport={handleReport}
-                hideActions={false}
-            />
         </div>
     );
 };

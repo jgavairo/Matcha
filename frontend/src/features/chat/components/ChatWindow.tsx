@@ -3,12 +3,8 @@ import { Conversation, Message, chatService } from '../services/chatService';
 import { useFileDrop } from '@hooks/useFileDrop';
 import { useSocket } from '@context/SocketContext';
 import { useCall } from '@context/CallContext';
-import { useNotification } from '@context/NotificationContext';
 import { useAuth } from '@context/AuthContext';
 import { HiCloudUpload } from 'react-icons/hi';
-import UserProfileModal from '@features/matches/components/UserProfileDrawer';
-import { UserProfile } from '@app-types/user';
-import { api } from '@services/api';
 
 import ChatBubble from './ChatBubble';
 import ChatHeader from './ChatHeader';
@@ -29,11 +25,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [otherUserStatus, setOtherUserStatus] = useState<{ isOnline: boolean; lastConnection: string }>({ isOnline: false, lastConnection: '' });
     const [showDatePlanner, setShowDatePlanner] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     
     // Call Context
     const { callUser } = useCall();
-    const { addToast } = useNotification();
     const { user } = useAuth();
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -217,69 +211,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const currentUserImage = user?.images?.[0] || null;
     const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
 
-    const handleProfileClick = async (userId: number) => {
-        try {
-            const response = await api.get(`/users/${userId}`);
-            const data = response.data;
-            
-            // Transformer les données de l'API pour correspondre à l'interface UserProfile
-            const fullProfile: UserProfile = {
-                id: data.id,
-                username: data.username,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                age: data.age,
-                gender: data.gender,
-                biography: data.biography || '',
-                tags: data.tags || [],
-                fameRating: data.fame_rating || 0,
-                distance: data.distance || 0,
-                isOnline: false,
-                lastConnection: new Date().toISOString(),
-                images: data.images || [],
-                location: {
-                    city: data.city || '',
-                    latitude: data.latitude || 0,
-                    longitude: data.longitude || 0
-                },
-                sexualPreferences: data.sexual_preferences || [],
-                birthDate: data.birth_date,
-                hasLikedYou: data.has_liked_you || false,
-                isLiked: data.is_liked || false,
-                isMatch: data.is_match || false
-            };
-
-            setSelectedUser(fullProfile);
-        } catch (error) {
-            console.error("Failed to fetch user profile", error);
-            addToast("Failed to load user profile", 'error');
-        }
-    };
-
-    const handleBlock = async () => {
-        if (selectedUser) {
-            try {
-                await api.post('/block', { blockedId: selectedUser.id });
-                addToast('User blocked successfully', 'success');
-                setSelectedUser(null);
-            } catch (error: any) {
-                addToast((error.response?.data?.error || 'Failed to block user'), 'error');
-            }
-        }
-    };
-
-    const handleReport = async (reasons: string[]) => {
-        if (selectedUser) {
-            try {
-                await api.post('/report', { reportedId: selectedUser.id, reasons });
-                addToast('User reported successfully', 'success');
-                setSelectedUser(null);
-            } catch (error: any) {
-                addToast((error.response?.data?.error || 'Failed to report user'), 'error');
-            }
-        }
-    };
-
     return (
         <div 
             className={`flex flex-col h-full bg-white dark:bg-gray-800 relative ${isDragging ? 'ring-4 ring-blue-500 ring-inset' : ''} ${className}`}
@@ -328,7 +259,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                             onCopy={(content) => navigator.clipboard.writeText(content)}
                             onReply={(msg) => setNewMessage(`Replying to: "${msg.content.substring(0, 20)}..." `)}
                             onDelete={(id) => console.log('Delete message', id)}
-                            onProfileClick={handleProfileClick}
                         />
                     );
                 })}
@@ -346,18 +276,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 onFileRemove={removeSelectedFile}
                 onSendVoice={sendVoiceMessage}
                 isActive={conversation.is_active}
-            />
-
-            {/* User Profile Modal */}
-            <UserProfileModal
-                user={selectedUser}
-                isOpen={!!selectedUser}
-                onClose={() => setSelectedUser(null)}
-                onLike={() => {}} // Pas de like/dislike dans une conversation (déjà match)
-                onDislike={() => {}}
-                onBlock={handleBlock}
-                onReport={handleReport}
-                hideActions={false}
             />
         </div>
     );
