@@ -5,6 +5,7 @@ import { useSocket } from '@context/SocketContext';
 import { useCall } from '@context/CallContext';
 import { useAuth } from '@context/AuthContext';
 import { HiCloudUpload } from 'react-icons/hi';
+import { useNotification } from '@context/NotificationContext';
 
 import ChatBubble from './ChatBubble';
 import ChatHeader from './ChatHeader';
@@ -29,7 +30,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     // Call Context
     const { callUser } = useCall();
     const { user } = useAuth();
-    
+    const { addToast } = useNotification();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { socketService } = useSocket();
 

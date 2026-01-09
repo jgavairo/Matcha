@@ -4,7 +4,7 @@ import { useAuth } from '@context/AuthContext';
 import { useSocket } from '@context/SocketContext';
 import { useNotification } from '@context/NotificationContext';
 import { HiCalendar, HiCheck, HiX, HiPencil, HiTrash, HiLocationMarker, HiClock } from 'react-icons/hi';
-import { Button, Label, TextInput, Textarea } from 'flowbite-react';
+import { Button, Label, TextInput, Textarea, Datepicker } from 'flowbite-react';
 
 interface DatePlannerProps {
     targetUserId: number;
@@ -20,7 +20,8 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
     const [date, setDate] = useState<DateProposal | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
-        dateTime: '',
+        date: '',
+        time: '',
         location: '',
         description: ''
     });
@@ -65,15 +66,26 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Combine date and time into datetime string
+            const dateTime = formData.date && formData.time 
+                ? `${formData.date}T${formData.time}:00`
+                : formData.date || '';
+            
+            const submitData = {
+                dateTime,
+                location: formData.location,
+                description: formData.description
+            };
+
             if (date) {
                 // Modify existing
-                await dateService.modifyDate(date.id, formData);
+                await dateService.modifyDate(date.id, submitData);
                 addToast('Date updated successfully', 'success');
             } else {
                 // Create new
                 await dateService.proposeDate({
                     receiverId: targetUserId,
-                    ...formData
+                    ...submitData
                 });
                 addToast('Date proposal sent', 'success');
             }
@@ -106,14 +118,16 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
     const startEdit = () => {
         if (date) {
             const d = new Date(date.date_time);
-            const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            const dateStr = d.toISOString().split('T')[0];
+            const timeStr = d.toTimeString().slice(0, 5);
             setFormData({
-                dateTime: localIso,
+                date: dateStr,
+                time: timeStr,
                 location: date.location,
                 description: date.description
             });
         } else {
-             setFormData({ dateTime: '', location: '', description: '' });
+             setFormData({ date: '', time: '', location: '', description: '' });
         }
         setIsEditing(true);
     };
@@ -146,8 +160,35 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
             {isEditing && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <div className="mb-1 block"><Label htmlFor="dp-datetime">When?</Label></div>
-                        <TextInput id="dp-datetime" type="datetime-local" required value={formData.dateTime} onChange={e => setFormData({...formData, dateTime: e.target.value})} />
+                        <div className="mb-1 block"><Label htmlFor="dp-date">When?</Label></div>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <Datepicker
+                                    id="dp-date"
+                                    className="w-full"
+                                    minDate={new Date()}
+                                    value={formData.date ? new Date(formData.date) : undefined}
+                                    onChange={(selectedDate: Date | null) => {
+                                        if (selectedDate) {
+                                            const dateStr = selectedDate.toISOString().split('T')[0];
+                                            setFormData({...formData, date: dateStr});
+                                        } else {
+                                            setFormData({...formData, date: ''});
+                                        }
+                                    }}
+                                    required
+                                />
+                            </div>
+                            <div className="w-32">
+                                <TextInput 
+                                    id="dp-time" 
+                                    type="time" 
+                                    required 
+                                    value={formData.time} 
+                                    onChange={e => setFormData({...formData, time: e.target.value})} 
+                                />
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <div className="mb-1 block"><Label htmlFor="dp-location">Where?</Label></div>
