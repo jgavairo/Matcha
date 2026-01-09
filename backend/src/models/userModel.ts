@@ -208,6 +208,17 @@ export const removeImage = async (userId: number, url: string) => {
     await db.delete('images', { user_id: userId, url: url });
 };
 
+export const removeImageComplete = async (userId: number, url: string) => {
+    const countQuery = 'SELECT COUNT(*) FROM images WHERE user_id = $1';
+    const countResult = await db.query(countQuery, [userId]);
+    const count = parseInt(countResult.rows[0].count, 10);
+    if (count < 1) {
+        throw new Error(`You must have at least one photo`);
+    }
+
+    await db.delete('images', { user_id: userId, url: url });
+};
+
 export const setProfileImage = async (userId: number, url: string) => {
     const client = await pool.connect();
     try {

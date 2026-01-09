@@ -115,7 +115,7 @@ export default function CompleteProfilePage() {
       const formData = new FormData();
       formData.append('image', file);
       try {
-        const response = await api.post('/users/photos', formData, {
+        const response = await api.post('/users/photos', formData, { 
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         const imageUrl = response.data.url || response.data;
@@ -124,6 +124,25 @@ export default function CompleteProfilePage() {
       } catch (error) {
         addToast('Échec de l\'upload', 'error');
       }
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    if (!profileData.profileImage) return;
+    
+    const urlToDelete = profileData.profileImage;
+    const previousImage = profileData.profileImage;
+
+    // Optimistic update
+    setProfileData(prev => ({ ...prev, profileImage: null }));
+
+    try {
+      await api.delete('/users/photos/complete', { data: { url: urlToDelete } });
+    } catch (error: any) {
+      console.error("Failed to delete photo", error);
+      setProfileData(prev => ({ ...prev, profileImage: previousImage }));
+      const errorMessage = error.response?.data?.error || "Échec de la suppression de la photo";
+      addToast(errorMessage, 'error');
     }
   };
 
@@ -267,7 +286,7 @@ export default function CompleteProfilePage() {
               {profileData.profileImage ? (
                 <div className="relative inline-block group">
                   <img src={profileData.profileImage} alt="Profile" className="w-48 h-48 md:w-64 md:h-64 rounded-3xl object-cover border-4 border-white shadow-2xl" />
-                  <button onClick={() => setProfileData(prev => ({...prev, profileImage: null}))} className="absolute -top-3 -right-3 bg-red-500 p-2 rounded-full shadow-lg">
+                  <button onClick={handlePhotoDelete} className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 p-2 rounded-full shadow-lg transition-colors">
                     <HiX className="w-6 h-6" />
                   </button>
                 </div>

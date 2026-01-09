@@ -25,6 +25,7 @@ router.put('/password', authMiddleware, userController.changePassword);
 router.post('/photos', authMiddleware, upload.single('image'), userController.uploadPhoto);
 
 router.delete('/photos', authMiddleware, userController.deletePhoto);
+router.delete('/photos/complete', authMiddleware, userController.deletePhotoComplete);
 router.put('/photos/profile', authMiddleware, userController.setProfilePhoto);
 router.put('/consent', authMiddleware, userController.updateConsent);
 router.post('/view/:id', authMiddleware, userController.recordView);

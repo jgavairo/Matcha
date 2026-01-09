@@ -82,7 +82,7 @@ const ProfilePage: React.FC = () => {
         const formData = new FormData();
         formData.append('image', file);
         try {
-            const response = await api.post('/users/photos', formData, {
+            const response = await api.post('/users/photos', formData, { 
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             // Assuming response.data is the image object with url

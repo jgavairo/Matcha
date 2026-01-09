@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion } from '../models/userModel';
+import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion, removeImageComplete } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
 import { db } from '../utils/db';
@@ -181,6 +181,25 @@ export class UserController {
             if (error.message && error.message.includes('You must have at least')) {
                 return res.status(400).json({ error: error.message });
             }
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
+
+    public deletePhotoComplete = async (req: Request, res: Response) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+            }
+            const { url } = req.body;
+            if (!url) {
+                return res.status(400).json({ error: 'URL is required' });
+            }
+            await removeImageComplete(userId, url);
+            res.status(200).json({ message: 'Photo deleted successfully' });
+        }
+        catch (error: any) {
+            console.error('Error deleting photo:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
