@@ -46,20 +46,32 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
   }, [isOpen, user?.id]);
 
+  // Fermer le ReportModal quand le drawer se ferme
+  useEffect(() => {
+    if (!isOpen) {
+      setIsReportModalOpen(false);
+    }
+  }, [isOpen]);
+
   const handleReportSubmit = (reasons: string[]) => {
     onReport(reasons);
     setIsReportModalOpen(false);
   };
 
+  const handleDrawerClose = () => {
+    setIsReportModalOpen(false);
+    onClose();
+  };
+
   return (
     <>
-      <AppDrawer isOpen={isOpen} onClose={onClose}>
+      <AppDrawer isOpen={isOpen} onClose={handleDrawerClose}>
         {user && (
           <div className="h-full overflow-y-auto bg-white dark:bg-gray-800">
             <div className="min-h-full flex flex-col">
               <ProfileHeader 
                 user={user} 
-                onClose={onClose} 
+                onClose={handleDrawerClose} 
                 onBlock={onBlock} 
                 onReportClick={() => setIsReportModalOpen(true)} 
                 hideActions={hideActions}
