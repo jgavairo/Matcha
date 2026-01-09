@@ -256,9 +256,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                             currentUserImage={currentUserImage}
                             otherUserId={otherUserId}
                             currentUserId={currentUserId}
-                            onCopy={(content) => navigator.clipboard.writeText(content)}
-                            onReply={(msg) => setNewMessage(`Replying to: "${msg.content.substring(0, 20)}..." `)}
-                            onDelete={(id) => console.log('Delete message', id)}
                         />
                     );
                 })}

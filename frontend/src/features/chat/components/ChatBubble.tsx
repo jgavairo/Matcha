@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message } from '../services/chatService';
-import { Dropdown, DropdownItem } from 'flowbite-react';
-import { HiDotsVertical, HiDownload, HiPlay, HiPause } from 'react-icons/hi';
+import { HiDownload, HiPlay, HiPause } from 'react-icons/hi';
 
 interface ChatBubbleProps {
     message: Message;
@@ -11,9 +10,6 @@ interface ChatBubbleProps {
     currentUserImage?: string | null;
     otherUserId?: number;
     currentUserId?: number;
-    onReply?: (message: Message) => void;
-    onCopy?: (content: string) => void;
-    onDelete?: (messageId: number) => void;
 }
 
 interface ParsedContent {
@@ -31,10 +27,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     otherUserImage,
     currentUserImage,
     otherUserId,
-    currentUserId,
-    onReply,
-    onCopy,
-    onDelete
+    currentUserId
 }) => {
     const [parsedContent, setParsedContent] = useState<ParsedContent>({ type: 'text', text: message.content });
     const [isPlaying, setIsPlaying] = useState(false);
@@ -52,14 +45,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             setParsedContent({ type: 'text', text: message.content });
         }
     }, [message.content]);
-
-    const handleCopy = () => {
-        if (onCopy) {
-            onCopy(parsedContent.text || '');
-        } else {
-            navigator.clipboard.writeText(parsedContent.text || '');
-        }
-    };
 
     const toggleAudio = () => {
         if (audioRef.current) {
@@ -237,23 +222,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                         </button>
                     )}
                 </div>
-            </div>
-
-            {/* Dropdown Menu */}
-            <div className="self-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Dropdown 
-                    label="" 
-                    renderTrigger={() => (
-                        <button className="inline-flex self-center items-center p-2 text-sm font-medium text-center text-gray-900 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:focus:ring-gray-600 border border-gray-200 dark:border-gray-700" type="button">
-                            <HiDotsVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        </button>
-                    )}
-                    placement={isMe ? "bottom-end" : "bottom-start"}
-                >
-                    <DropdownItem onClick={() => onReply?.(message)}>Reply</DropdownItem>
-                    {parsedContent.type === 'text' && <DropdownItem onClick={handleCopy}>Copy</DropdownItem>}
-                    <DropdownItem onClick={() => onDelete?.(message.id)} className="text-red-600 dark:text-red-500">Delete</DropdownItem>
-                </Dropdown>
             </div>
         </div>
     );
