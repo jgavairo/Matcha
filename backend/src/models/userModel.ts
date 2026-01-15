@@ -915,26 +915,45 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
 // };
 
 export const blockUser = async (userId: number, blockedId: number) => {
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
         // Get the user who is blocking (userId)
-        const blockingUser = await db.findOne('users', { id: userId }, ['blocked_users']);
+        const blockingUser = await db.findOne('users', { id: userId }, ['blocked_users'], { client });
         if (blockingUser.blocked_users.includes(blockedId)) {
+            await client.query('ROLLBACK');
             return false; // Already blocked
         }
         
         // Get the user who is being blocked (blockedId)
-        const blockedUser = await db.findOne('users', { id: blockedId }, ['blocked_by_users']);
+        const blockedUser = await db.findOne('users', { id: blockedId }, ['blocked_by_users'], { client });
         
         // Update blocking user: add blockedId to their blocked_users list
-        await db.update('users', userId, { blocked_users: [...blockingUser.blocked_users, blockedId] });
+        await db.update('users', userId, { blocked_users: [...blockingUser.blocked_users, blockedId] }, { client });
         
         // Update blocked user: add userId to their blocked_by_users list
-        await db.update('users', blockedId, { blocked_by_users: [...(blockedUser.blocked_by_users || []), userId] });
+        await db.update('users', blockedId, { blocked_by_users: [...(blockedUser.blocked_by_users || []), userId] }, { client });
+
+        // Remove likes between users
+        await db.query(`
+            DELETE FROM likes
+            WHERE (liker_id = $1 AND liked_id = $2)
+               OR (liker_id = $2 AND liked_id = $1)
+        `, [userId, blockedId], { client });
+
+        // Deactivate match if exists
+        await deactivateMatch(userId, blockedId, client);
         
+        await client.query('COMMIT');
+
         return true;
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error blocking user:', error);
         return false;
+    } finally {
+        client.release();
     }
 };
 

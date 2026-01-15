@@ -4,6 +4,7 @@ import { HiArrowUp } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import { matchService } from '@features/matches/services/matchService';
 import { MatchFiltersState } from '@features/matches/types/match';
+import { useBlockUser } from '@features/matches/hooks/useBlockUser';
 import MatchFilters from '@features/matches/components/MatchFilters';
 import UserCard from '@features/matches/components/UserCard';
 import UserProfileDrawer from '@features/matches/components/UserProfileDrawer';
@@ -13,6 +14,7 @@ import { useNotification } from '@context/NotificationContext';
 
 const SearchPage: React.FC = () => {
   const { addToast } = useNotification();
+  const { blockUser } = useBlockUser();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -157,26 +159,15 @@ const SearchPage: React.FC = () => {
     if (selectedUser) {
       const blockedUserId = selectedUser.id;
       
-      // Optimistic update: remove from list immediately
       const previousUsers = [...users];
+      // Optimistic update
       setUsers(prev => prev.filter(u => u.id !== blockedUserId));
       setSelectedUser(null);
       
-      try {
-        const response = await api.post(`/block`, {
-          blockedId: blockedUserId
-        });
-        if (response.status === 200) {
-          addToast('User blocked successfully', 'success');
-        } else {
-          // Revert on error
-          setUsers(previousUsers);
-          addToast((response as any).response?.data?.error || 'Failed to block user', 'error');
-        }
-      } catch (error) {
+      const success = await blockUser(blockedUserId);
+      if (!success) {
         // Revert on error
         setUsers(previousUsers);
-        addToast((error as any).response?.data?.error || 'Failed to block user', 'error');
       }
     }
   };

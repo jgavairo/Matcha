@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import CardStack from '@features/matches/components/CardStack';
 import { useMatches, DEFAULT_FILTERS } from '@features/matches/hooks/useMatches';
+import { useBlockUser } from '@features/matches/hooks/useBlockUser';
 import { Spinner, Button } from 'flowbite-react';
 import UserProfileModal from '@features/matches/components/UserProfileDrawer';
 import MatchFilters from '@features/matches/components/MatchFilters';
@@ -24,6 +25,8 @@ const DiscoverPage: React.FC = () => {
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const { addToast } = useNotification();
+  const { blockUser } = useBlockUser();
+  
   const hasActiveFilters = useMemo(() => {
     const { sortBy, sortOrder, ...filterCriteria } = filters;
     const { sortBy: defaultSortBy, sortOrder: defaultSortOrder, ...defaultCriteria } = DEFAULT_FILTERS;
@@ -32,23 +35,13 @@ const DiscoverPage: React.FC = () => {
 
   const handleBlock = async () => {
     if (selectedUser) {
-      console.log('Block user:', selectedUser.id);
-      try {
-        const response = await api.post(`/block`, {
-          blockedId: selectedUser.id
-        });
-        if (response.status === 200) {
-          addToast('User blocked successfully', 'success');
-          handleDislike(selectedUser.id.toString());
-          setSelectedUser(null);
-        } else {
-          addToast((response as any).response?.data?.error || 'Failed to block user', 'error');
-        }
+      await blockUser(selectedUser.id, () => {
+        handleDislike(selectedUser.id.toString());
+        setSelectedUser(null);
+      });
     }
-    catch (error) {
-      addToast((error as any).response?.data?.error || 'Failed to block user', 'error');
-    }
-  }};
+  };
+
 
   const handleReport = async (reasons: string[]) => {
     if (selectedUser) {
