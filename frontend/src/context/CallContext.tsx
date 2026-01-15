@@ -43,6 +43,24 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [activeCallUserId, setActiveCallUserId] = useState<number | null>(null);
 
     const peerConnection = useRef<RTCPeerConnection | null>(null);
+
+    // Initial Device Check
+    useEffect(() => {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                const audioInputs = devices.filter(d => d.kind === 'audioinput');
+                const videoInputs = devices.filter(d => d.kind === 'videoinput');
+                console.log("Device Check:", { 
+                    audio: audioInputs.length, 
+                    video: videoInputs.length, 
+                    all: devices.map(d => `${d.kind}: ${d.label}`) 
+                });
+                if (audioInputs.length === 0 && videoInputs.length === 0) {
+                    console.warn("No input devices found. Browser might be blocking them due to privacy/insecure context.");
+                }
+            }).catch(e => console.error("Device enumeration failed:", e));
+        }
+    }, []);
     
     // WebRTC Config
     const rtcConfig = {
@@ -113,6 +131,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             socketService.off('call_incoming');
             socketService.off('call_accepted');
             socketService.off('call_declined');
+            socketService.off('call_busy');
             socketService.off('call_ended');
             socketService.off('ice_candidate_incoming');
         };
@@ -163,16 +182,24 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setLocalStream(stream);
             } catch (err: any) {
                 console.error("Failed to get video+audio stream:", err);
+                // Fallback 1: Try Audio Only (Camera broken/denied)
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
                     setLocalStream(stream);
                     addToast("Camera not found/allowed, starting with audio only", 'info');
                 } catch (audioErr: any) {
                     console.error("Failed to get audio stream:", audioErr);
-                    let errorMessage = "Could not access camera or microphone";
-                    if (audioErr.name === 'NotAllowedError') errorMessage = "Permission to access media devices was denied";
-                    if (audioErr.name === 'NotFoundError') errorMessage = "No camera or microphone found";
-                    addToast(errorMessage, 'error');
+                    // Fallback 2: Try Video Only (Mic broken/denied - User case)
+                    try {
+                         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                         setLocalStream(stream);
+                         addToast("Microphone not found, starting with video only", 'info');
+                    } catch (videoErr: any) {
+                         console.error("Failed to get video only stream:", videoErr);
+                         let errorMessage = "Could not access camera or microphone";
+                         if (videoErr.name === 'NotAllowedError') errorMessage = "Permission denied for media devices.";
+                         addToast(errorMessage, 'error');
+                    }
                 }
             }
         }
@@ -240,16 +267,23 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setLocalStream(stream);
             } catch (err: any) {
                 console.error("Answer: Failed to get video+audio stream:", err);
+                
+                // Fallback 1: Try Audio Only (Camera failed)
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
                     setLocalStream(stream);
                     addToast("Camera not found/allowed, answering with audio only", 'info');
                 } catch (audioErr: any) {
-                    console.error("Answer: Failed to get audio stream:", audioErr);
-                    let errorMessage = "Could not access camera or microphone";
-                    if (audioErr.name === 'NotAllowedError') errorMessage = "Permission to access media devices was denied";
-                    if (audioErr.name === 'NotFoundError') errorMessage = "No camera or microphone found";
-                    addToast(errorMessage, 'error');
+                    // Fallback 2: Try Video Only (Mic failed)
+                    try {
+                         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                         setLocalStream(stream);
+                         addToast("Microphone not found, answering with video only", 'info');
+                    } catch (videoErr: any) {
+                        console.error("Answer: Failed to get any stream:", videoErr);
+                        let errorMessage = "Could not access camera or microphone";
+                        addToast(errorMessage, 'error');
+                    }
                 }
             }
         }
