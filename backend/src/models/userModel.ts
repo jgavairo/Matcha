@@ -787,6 +787,8 @@ export const getLikedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE l.liked_id = $1
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
@@ -827,6 +829,8 @@ export const getViewedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE v.viewed_id = $1
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);

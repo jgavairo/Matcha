@@ -137,7 +137,8 @@ export const getMatchedUsers = async (userId: number) => {
         LEFT JOIN genders g ON u.gender_id = g.id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
-        WHERE m.user_id_1 = $1 OR m.user_id_2 = $1
+        WHERE (m.user_id_1 = $1 OR m.user_id_2 = $1)
+          AND m.is_active = TRUE
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
