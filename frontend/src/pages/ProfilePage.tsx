@@ -12,12 +12,14 @@ import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { api } from '@services/api';
 import { matchService } from '@features/matches/services/matchService';
 import { useNotification } from '@context/NotificationContext';
+import { useBlockUser } from '@features/matches/hooks/useBlockUser';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const { addToast } = useNotification();
+    const { blockUser } = useBlockUser();
 
     const handleTabChange = async (tabIndex: number) => {
         if (tabIndex === 3) { // Matches
@@ -362,7 +364,20 @@ const ProfilePage: React.FC = () => {
                         }
                     }
                 }}
-                onBlock={() => console.log("Block")}
+                onBlock={async () => {
+                    if (selectedUser && selectedUser.id !== user?.id) {
+                         await blockUser(selectedUser.id, () => {
+                            setSelectedUser({ ...selectedUser, isMatch: false, isLiked: false });
+                            // Optionally refresh profile or lists
+                             setUser(prev => prev ? {
+                                ...prev,
+                                matches: prev.matches.filter(m => m.id !== selectedUser.id),
+                                likedBy: prev.likedBy.filter(u => u.id !== selectedUser.id),
+                                viewedBy: prev.viewedBy.filter(u => u.id !== selectedUser.id)
+                            } : null);
+                        });
+                    }
+                }}
                 onReport={(reason) => console.log("Report", reason)}
                 hideActions={selectedUser?.id === user?.id}
             />
