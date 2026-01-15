@@ -356,7 +356,6 @@ const ProfilePage: React.FC = () => {
                     if (selectedUser && selectedUser.id !== user?.id) {
                          await blockUser(selectedUser.id, () => {
                             setSelectedUser({ ...selectedUser, isMatch: false, isLiked: false });
-                            // Optionally refresh profile or lists
                              setUser(prev => prev ? {
                                 ...prev,
                                 matches: prev.matches.filter(m => m.id !== selectedUser.id),
