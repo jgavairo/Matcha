@@ -60,7 +60,8 @@ export const activateMatch = async (userId1: number, userId2: number, client: an
     const message = await db.insert('messages', {
         conversation_id: conversationId,
         sender_id: null, // System message
-        content: systemMessage
+        content: systemMessage,
+        type: 'system'
     }, { client });
 
     return { 
