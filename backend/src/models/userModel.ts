@@ -672,11 +672,24 @@ export const likeUser = async (likerId: number, likedId: number): Promise<{ isMa
         await client.query('BEGIN');
 
         // 1. Insert like
-        await db.query(`
+        const likeRes = await db.query(`
             INSERT INTO likes (liker_id, liked_id) 
             VALUES ($1, $2) 
             ON CONFLICT (liker_id, liked_id) DO NOTHING
         `, [likerId, likedId], { client });
+
+        // If no row inserted, it means already liked
+        if (likeRes.rowCount === 0) {
+            // Check if it's already a match to return consistent data
+             const matchCheck = await db.query(`
+                SELECT 1 FROM matches 
+                WHERE ((user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1))
+                AND is_active = TRUE
+            `, [likerId, likedId], { client });
+            
+            await client.query('COMMIT');
+            return { isMatch: matchCheck.rowCount != null && matchCheck.rowCount > 0 };
+        }
 
         // 2. Check for match
         const res = await db.query(`
@@ -738,7 +751,14 @@ export const unlikeUser = async (likerId: number, likedId: number): Promise<{ me
         await client.query('BEGIN');
 
         // 1. Remove like
-        await db.delete('likes', { liker_id: likerId, liked_id: likedId }, { client });
+        const deleteRes = await db.query(`
+            DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
+        `, [likerId, likedId], { client });
+
+        if (deleteRes.rowCount === 0) {
+            await client.query('COMMIT');
+            return {};
+        }
 
         // 2. Deactivate match if exists
         const result = await deactivateMatch(likerId, likedId, client);
