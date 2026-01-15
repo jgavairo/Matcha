@@ -44,17 +44,11 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const peerConnection = useRef<RTCPeerConnection | null>(null);
 
-    // Initial Device Check
     useEffect(() => {
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
             navigator.mediaDevices.enumerateDevices().then(devices => {
                 const audioInputs = devices.filter(d => d.kind === 'audioinput');
                 const videoInputs = devices.filter(d => d.kind === 'videoinput');
-                console.log("Device Check:", { 
-                    audio: audioInputs.length, 
-                    video: videoInputs.length, 
-                    all: devices.map(d => `${d.kind}: ${d.label}`) 
-                });
                 if (audioInputs.length === 0 && videoInputs.length === 0) {
                     console.warn("No input devices found. Browser might be blocking them due to privacy/insecure context.");
                 }
