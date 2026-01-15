@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { initializeSocket } from './config/socket';
 import { AuthController } from './controllers/authController';
 import { authMiddleware } from './middlewares/authMiddleware';
+import { guestMiddleware } from './middlewares/guestMiddleware';
 import { authLimiter, registerLimiter, passwordResetLimiter } from './middlewares/rateLimiter';
 import chatRoutes from './routes/chatRoutes';
 import tagRoutes from './routes/tagRoutes';
@@ -49,9 +50,9 @@ app.use('/uploads', express.static(uploadDir));
 
 // Authentication Routes ------------------------------------------------------
 
-app.post('/auth/register', registerLimiter, validateRegister, handleValidationErrors, authController.register);
+app.post('/auth/register', guestMiddleware, registerLimiter, validateRegister, handleValidationErrors, authController.register);
 
-app.post('/auth/login', authLimiter, authController.login);
+app.post('/auth/login', guestMiddleware, authLimiter, authController.login);
 
 app.get('/auth/me', authMiddleware, authController.me);
 
