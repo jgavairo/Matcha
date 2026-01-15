@@ -373,7 +373,8 @@ const ProfilePage: React.FC = () => {
                                 ...prev,
                                 matches: prev.matches.filter(m => m.id !== selectedUser.id),
                                 likedBy: prev.likedBy.filter(u => u.id !== selectedUser.id),
-                                viewedBy: prev.viewedBy.filter(u => u.id !== selectedUser.id)
+                                viewedBy: prev.viewedBy.filter(u => u.id !== selectedUser.id),
+                                blockedUsers: [...prev.blockedUsers, selectedUser]
                             } : null);
                         });
                     }
