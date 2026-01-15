@@ -5,6 +5,7 @@ import { useAuth } from '@context/AuthContext';
 import { useNotification } from '@context/NotificationContext';
 import { api } from '@services/api';
 import { HiUpload, HiX, HiLocationMarker } from 'react-icons/hi';
+import { resolveImageUrl } from '@utils/userUtils';
 
 const AVAILABLE_TAGS = [
   'Travel', 'Music', 'Movies', 'Reading', 'Sports',
@@ -284,7 +285,7 @@ export default function CompleteProfilePage() {
               <h1 className="text-3xl font-bold mb-6">Profile Photo</h1>
               {profileData.profileImage ? (
                 <div className="relative inline-block group">
-                  <img src={profileData.profileImage} alt="Profile" className="w-48 h-48 md:w-64 md:h-64 rounded-3xl object-cover border-4 border-white shadow-2xl" />
+                  <img src={resolveImageUrl(profileData.profileImage)} alt="Profile" className="w-48 h-48 md:w-64 md:h-64 rounded-3xl object-cover border-4 border-white shadow-2xl" />
                   <button onClick={handlePhotoDelete} className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 p-2 rounded-full shadow-lg transition-colors">
                     <HiX className="w-6 h-6" />
                   </button>

@@ -13,6 +13,7 @@ import { api } from '@services/api';
 import { matchService } from '@features/matches/services/matchService';
 import { useNotification } from '@context/NotificationContext';
 import { useBlockUser } from '@features/matches/hooks/useBlockUser';
+import { resolveImageUrl } from '@utils/userUtils';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -216,7 +217,7 @@ const ProfilePage: React.FC = () => {
             <div className="flex items-center gap-6 mb-8">
                 <div className="relative">
                     <img
-                        src={user.images[0] || "https://via.placeholder.com/150"}
+                        src={resolveImageUrl(user.images[0]) || "https://via.placeholder.com/150"}
                         alt={user.username}
                         className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                     />

@@ -2,6 +2,7 @@ import React from 'react';
 import { UserSummary } from '@app-types/user';
 import { Button } from 'flowbite-react';
 import { HiLocationMarker, HiStar } from 'react-icons/hi';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface UserListProps {
     users: UserSummary[];
@@ -36,7 +37,7 @@ const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction
                             onClick={() => onUserClick && onUserClick(user)}
                         >
                             <img
-                                src={user.images[0]}
+                                src={resolveImageUrl(user.images[0])}
                                 alt={user.username}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
