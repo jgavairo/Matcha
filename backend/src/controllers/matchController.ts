@@ -59,7 +59,6 @@ export class MatchController {
 
             res.status(200).json({ message: 'User liked', isMatch: result.isMatch });
         } catch (error) {
-            console.error('Error liking user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -84,7 +83,6 @@ export class MatchController {
 
             res.status(200).json({ message: 'User disliked' });
         } catch (error) {
-            console.error('Error disliking user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -122,7 +120,6 @@ export class MatchController {
 
             res.status(200).json({ message: 'User unliked' });
         } catch (error) {
-            console.error('Error unliking user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -177,7 +174,6 @@ export class MatchController {
                 limit
             });
         } catch (error) {
-            console.error('Error searching users:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };

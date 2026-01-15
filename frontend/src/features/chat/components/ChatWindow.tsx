@@ -137,7 +137,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             const msg = await chatService.sendMessage(conversation.id, content);
             setMessages(prev => [...prev, msg]);
         } catch (error) {
-            console.error('Failed to send voice message', error);
+            // Error already handled by UI
         }
     };
 
@@ -147,7 +147,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             const msgs = await chatService.getMessages(conversation.id);
             setMessages(msgs);
         } catch (error) {
-            console.error('Failed to load messages', error);
+            // Error already handled by UI
         }
     };
 
@@ -190,7 +190,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             setSelectedFiles([]);
             setPreviewUrls([]);
         } catch (error) {
-            console.error('Failed to send message', error);
+            // Error already handled by UI
         }
     };
 

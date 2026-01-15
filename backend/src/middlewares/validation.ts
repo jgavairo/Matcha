@@ -89,7 +89,7 @@ export const completeProfileValidation: ValidationChain[] = [
         .isLength({ min: CITY_MIN, max: CITY_MAX }).withMessage(`City must be between ${CITY_MIN} and ${CITY_MAX} characters`),
 ];
 
-// Validation pour mettre à jour le profil (tous les champs optionnels mais valides si présents)
+// Validation to update profile (all fields optional but valid if present)
 export const validateUpdateProfile: ValidationChain[] = [
     body('email')
         .optional()
@@ -135,8 +135,8 @@ export const validateUpdateProfile: ValidationChain[] = [
         .optional()
         .custom((value) => {
             if (value === undefined || value === null) return true; // Optionnel
-            if (!Array.isArray(value)) return false; // Doit être un array si présent
-            if (value.length === 0) return false; // Si array, doit avoir au moins 1 élément
+            if (!Array.isArray(value)) return false; // Must be an array if present
+            if (value.length === 0) return false; // If array, must have at least 1 element
             const valid = ['male', 'female', 'other'];
             return value.every((pref: string) => valid.includes(pref));
         }).withMessage('Invalid sexual preferences'),

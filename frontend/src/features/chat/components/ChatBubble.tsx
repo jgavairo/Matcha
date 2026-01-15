@@ -71,7 +71,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
         } catch (error) {
-            console.error('Download failed', error);
             window.open(url, '_blank');
         }
     };

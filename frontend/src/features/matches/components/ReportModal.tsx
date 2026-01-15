@@ -4,12 +4,12 @@ import { Modal, ModalBody, ModalHeader, ModalFooter, Button, Checkbox, Label } f
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Changement ici : on attend désormais un tableau de strings
+  // Change here: we now expect an array of strings
   onSubmit: (reasons: string[]) => void;
 }
 
 const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSubmit }) => {
-  // L'état devient un tableau vide au départ
+  // State becomes an empty array initially
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
 
   const reportReasons = [

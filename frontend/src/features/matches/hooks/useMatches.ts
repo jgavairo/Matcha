@@ -48,7 +48,6 @@ export const useMatches = () => {
         // If we received fewer items than limit, we've reached the end
         setHasMore(data.length === 10);
       } catch (err) {
-        console.error(err);
         setError('Failed to load recommendations');
       } finally {
         setLoading(false);
@@ -89,7 +88,7 @@ export const useMatches = () => {
         nextUser();
       }
     } catch (err) {
-      console.error('Error liking user:', err);
+      // Error already handled by UI
     }
   }, [users, currentIndex, nextUser]);
 
@@ -110,7 +109,6 @@ export const useMatches = () => {
     try {
       await matchService.dislikeUser(targetId);
     } catch (err) {
-      console.error('Error disliking user:', err);
       // Revert on error
       if (isCurrentUser) {
         setCurrentIndex(prev => Math.max(0, prev - 1));

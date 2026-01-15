@@ -30,7 +30,6 @@ export const db = {
             }
             return await executor.query(text);
         } catch (error) {
-            console.error(`Error in raw query: ${text}`, error);
             throw error;
         }
     },
@@ -61,7 +60,6 @@ export const db = {
             const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
-            console.error(`Error in findOne [${table}]:`, error);
             throw error;
         }
     },
@@ -91,7 +89,6 @@ export const db = {
             const result = await executor.query(query, values);
             return result.rows;
         } catch (error) {
-            console.error(`Error in findAll [${table}]:`, error);
             throw error;
         }
     },
@@ -114,7 +111,6 @@ export const db = {
             const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
-            console.error(`Error in insert [${table}]:`, error);
             throw error;
         }
     },
@@ -144,7 +140,6 @@ export const db = {
             const result = await executor.query(query, values);
             return result.rows[0];
         } catch (error) {
-            console.error(`Error in update [${table}]:`, error);
             throw error;
         }
     },
@@ -181,7 +176,6 @@ export const db = {
             const result = await executor.query(query, values);
             return result.rows;
         } catch (error) {
-            console.error(`Error in updateBy [${table}]:`, error);
             throw error;
         }
     },
@@ -203,7 +197,6 @@ export const db = {
             const executor = options.client || pool;
             await executor.query(query, values);
         } catch (error) {
-            console.error(`Error in delete [${table}]:`, error);
             throw error;
         }
     }

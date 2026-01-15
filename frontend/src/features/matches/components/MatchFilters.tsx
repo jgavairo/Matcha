@@ -65,7 +65,7 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
             const response = await api.get('/tags');
             setAvailableTags(response.data);
         } catch (error) {
-            console.error('Failed to fetch tags:', error);
+            // Erreur non-critique, on ignore silencieusement
         }
     };
     fetchTags();
@@ -135,7 +135,6 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
             }));
             setLocationError(null);
         } catch (error) {
-            console.error('Reverse geocoding error:', error);
             // Fallback if reverse geocoding fails but we have coords
              setLocalFilters(prev => ({
                 ...prev,
@@ -145,7 +144,6 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
         }
       },
       (error) => {
-        console.error('Geolocation error:', error);
         addToast("Unable to retrieve your location", 'error');
       }
     );
@@ -170,7 +168,6 @@ const MatchFilters: React.FC<MatchFiltersProps> = ({
                 return;
             }
         } catch (error) {
-            console.error('Geocoding error:', error);
             setLocationError("Unable to validate location.");
             addToast("Unable to validate location. Please try again.", 'error');
             return;

@@ -67,11 +67,9 @@ export const chatService = {
 
     archiveConversation: async (conversationId: number): Promise<void> => {
         // await api.post(`/chat/conversations/${conversationId}/archive`);
-        console.log('Archived conversation', conversationId);
     },
 
     unarchiveConversation: async (conversationId: number): Promise<void> => {
         // await api.post(`/chat/conversations/${conversationId}/unarchive`);
-        console.log('Unarchived conversation', conversationId);
     }
 };

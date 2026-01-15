@@ -59,7 +59,7 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
                 setDate(null);
             }
         } catch (error) {
-            console.error(error);
+            // Error already handled by UI
         }
     };
 
@@ -92,7 +92,6 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
             setIsEditing(false);
             loadDate();
         } catch (error) {
-            console.error(error);
             addToast('Failed to save date', 'error');
         }
     };
@@ -110,7 +109,6 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
                 addToast(`Date ${action}`, 'success');
             }
         } catch (error) {
-            console.error(error);
             addToast(`Failed to ${action} date`, 'error');
         }
     };

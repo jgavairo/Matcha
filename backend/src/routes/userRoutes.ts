@@ -3,13 +3,13 @@ import { UserController } from '../controllers/userController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { completeProfileValidation, validateUpdateProfile } from '../middlewares/validation';
 import { handleValidationErrors } from '../middlewares/validationHandler';
-// Importe l'instance configurée au lieu de la recréer ici
+// Import the configured instance instead of recreating it here
 import { upload } from '../utils/fileUpload'; 
 
 const router = Router();
 const userController = new UserController();
 
-// Route pour compléter le profil
+// Route to complete the profile
 router.put(
     '/profile/complete',
     authMiddleware,

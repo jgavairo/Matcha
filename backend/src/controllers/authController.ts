@@ -62,10 +62,6 @@ export class AuthController {
             }
         }
 
-        console.log('Using email template from:', templatePath);
-        console.log('Template length before replacement:', htmlTemplate.length);
-        console.log('Template preview (first 200 chars):', htmlTemplate.substring(0, 200));
-
         try {
             htmlTemplate = htmlTemplate
                 .replace(/{{SUBJECT}}/g, subject)
@@ -76,16 +72,6 @@ export class AuthController {
                 .replace(/{{URL}}/g, url)
                 .replace(/{{LOGO_CID}}/g, logoCid)
                 .replace(/{{YEAR}}/g, new Date().getFullYear().toString());
-
-            console.log('Template length after replacement:', htmlTemplate.length);
-            console.log('Template contains position:relative:', htmlTemplate.includes('position:relative'));
-            console.log('Template contains LOGO_CID:', htmlTemplate.includes('{{LOGO_CID}}'));
-            
-            // Vérifier que le template a bien été lu (doit contenir du HTML)
-            if (!htmlTemplate.includes('<!DOCTYPE html>') && !htmlTemplate.includes('<html')) {
-                console.error('WARNING: Template does not appear to be valid HTML!');
-                console.error('Template content:', htmlTemplate.substring(0, 500));
-            }
 
             const mailOptions = {
                 from: 'Matcha <noreply@matcha.com>',
@@ -103,8 +89,6 @@ export class AuthController {
 
             await transporter.sendMail(mailOptions);
         } catch (error) {
-            console.error('Error reading email template:', error);
-            console.error('Template path:', templatePath);
             throw error;
         }
     }
@@ -134,7 +118,6 @@ export class AuthController {
                 res.status(400).json({ error: 'Account already exists' });
                 return;
             } 
-            console.error('Error creating user:', error);
             res.status(500).json({ error: 'Failed to create user' });
         }
     }
@@ -149,7 +132,7 @@ export class AuthController {
                 return;
             }
             if (user.status === 'not_verified') {
-                // Si le token est expiré, en générer un nouveau et l'envoyer
+                // If the token is expired, generate a new one and send it
                 if (user.tokenExpired) {
                     const { token: newToken, email } = await generateVerificationToken(user.id);
                     
@@ -190,7 +173,6 @@ export class AuthController {
             res.status(200).json({ message: 'Login successful' });
         } catch (error) {
             res.status(500).json({ error: 'Failed to login user' });
-            console.error('Error logging in user:', error);
         }   
     }
 
@@ -275,7 +257,6 @@ export class AuthController {
 
             res.status(200).json(formattedUser);
         } catch (error) {
-            console.error('Error in me:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -308,7 +289,6 @@ export class AuthController {
             res.status(200).json({ message: 'Email sent successfully' });
         }
         catch (error) {
-            console.error('Error in forgotPassword:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -341,7 +321,6 @@ export class AuthController {
             await updateUserStatus(user.id, 1);
             res.status(200).json({ message: 'Email verified successfully' });
         } catch (error) {
-            console.error('Error in verifyEmail:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -380,7 +359,6 @@ export class AuthController {
             
             res.status(200).json({ message: 'Password reset successfully' });
         } catch (error) {
-            console.error('Error in resetPassword:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -403,7 +381,6 @@ export class AuthController {
             
             res.status(200).json({ valid: true });
         } catch (error) {
-            console.error('Error in checkToken:', error);
             res.status(500).json({ valid: false, error: 'Internal server error' });
         }
     }
