@@ -5,6 +5,7 @@ import ReportModal from './ReportModal';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfo from './ProfileInfo';
 import { api } from '@services/api';
+import { useSocket } from '@context/SocketContext';
 
 interface UserProfileModalProps {
   user: UserProfile | null;
@@ -32,6 +33,32 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   hideActions = false
 }) => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const { socketService } = useSocket();
+  const [displayUser, setDisplayUser] = useState<UserProfile | null>(user);
+
+  useEffect(() => {
+    setDisplayUser(user);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const handleStatusChange = (data: { userId: number; isOnline: boolean; lastConnection?: string }) => {
+        if (data.userId === user.id) {
+            setDisplayUser(prev => prev ? {
+                ...prev,
+                isOnline: data.isOnline,
+                lastConnection: data.lastConnection || prev.lastConnection
+            } : null);
+        }
+    };
+
+    socketService.on('user_status_change', handleStatusChange);
+
+    return () => {
+        socketService.off('user_status_change', handleStatusChange);
+    };
+  }, [user, socketService]);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -66,11 +93,11 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   return (
     <>
       <AppDrawer isOpen={isOpen} onClose={handleDrawerClose}>
-        {user && (
+        {displayUser && (
           <div className="h-full overflow-y-auto bg-white dark:bg-gray-800">
             <div className="min-h-full flex flex-col">
               <ProfileHeader 
-                user={user} 
+                user={displayUser} 
                 onClose={handleDrawerClose} 
                 onBlock={onBlock} 
                 onReportClick={() => setIsReportModalOpen(true)} 
@@ -78,7 +105,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
               />
 
               <ProfileInfo 
-                user={user} 
+                user={displayUser} 
                 onLike={onLike}
                 onDislike={onDislike}
                 onUnlike={onUnlike}

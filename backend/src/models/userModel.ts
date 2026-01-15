@@ -238,7 +238,7 @@ export const getUserById = async (id: number, currentUserId?: number) => {
     const query = `
         SELECT 
             u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
-            u.latitude, u.longitude, u.city, u.geolocation_consent,
+            u.latitude, u.longitude, u.city, u.geolocation_consent, u.is_online, u.last_connection,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             (

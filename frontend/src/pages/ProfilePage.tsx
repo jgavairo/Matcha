@@ -178,8 +178,8 @@ const ProfilePage: React.FC = () => {
                 tags: data.tags || [],
                 fameRating: data.fame_rating || 0,
                 distance: summary.distance || 0,
-                isOnline: false, // Placeholder
-                lastConnection: new Date().toISOString(), // Placeholder
+                isOnline: data.is_online,
+                lastConnection: data.last_connection ? new Date(data.last_connection).toISOString() : '', // Keep standard format
                 images: data.images || [],
                 location: {
                     city: data.city || '',
