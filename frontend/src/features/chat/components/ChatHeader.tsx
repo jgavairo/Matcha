@@ -35,7 +35,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ conversation, currentUserId, is
                 {conversation.is_active && (
                     <button 
                         onClick={onToggleDatePlanner}
-                        className="p-2 text-purple-600 rounded-lg hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-200 dark:text-purple-500 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        className="p-2 text-pink-600 rounded-lg hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-200 dark:text-pink-500 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                         title="Plan a Date"
                     >
                         <HiCalendar className="w-6 h-6" />

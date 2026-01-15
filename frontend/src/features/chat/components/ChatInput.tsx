@@ -152,7 +152,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                         <textarea 
                             id="chat" 
                             rows={1} 
-                            className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none" 
+                            className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-pink-500 focus:border-pink-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-pink-500 dark:focus:border-pink-500 resize-none" 
                             placeholder={isRecording ? "Recording..." : "Your message..."}
                             value={value}
                             disabled={isRecording}
@@ -167,7 +167,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                         <button 
                             type="submit" 
                             disabled={(!value.trim() && files.length === 0) || isRecording || isSending}
-                            className="inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex justify-center p-2 text-pink-600 rounded-full cursor-pointer hover:bg-pink-100 dark:text-pink-500 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <HiPaperAirplane className="w-5 h-5 rotate-90 rtl:-rotate-90" />
                             <span className="sr-only">Send message</span>

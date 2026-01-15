@@ -442,6 +442,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             SELECT 
                 u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
                 u.latitude, u.longitude, u.city,
+                u.is_online, u.last_connection,
                 u.gender_id, -- Needed for filtering
                 u.sexual_preferences as raw_sexual_preferences, -- Needed for filtering
                 (
@@ -482,6 +483,10 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 EXISTS (
                     SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $4) OR (user_id_1 = $4 AND user_id_2 = u.id)
                 ) as is_match,
+                -- Check if I have liked the user
+                EXISTS (
+                    SELECT 1 FROM likes WHERE liker_id = $4 AND liked_id = u.id
+                ) as is_liked,
                 -- Fame rating (likes * 5 + views)
                 (
                     (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +

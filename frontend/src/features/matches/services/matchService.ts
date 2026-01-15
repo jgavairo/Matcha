@@ -53,8 +53,8 @@ export const matchService = {
               tags: user.tags || [],
               fameRating: user.fame_rating || 0,
               distance: Math.round(user.distance || 0),
-              isOnline: false, // Placeholder
-              lastConnection: new Date().toISOString(), // Placeholder
+              isOnline: user.is_online || false,
+              lastConnection: user.last_connection || new Date().toISOString(),
               images: user.profile_picture ? [user.profile_picture] : (user.images && user.images.length > 0 ? user.images : []),
               location: {
                   city: user.city || '',
@@ -63,7 +63,8 @@ export const matchService = {
               },
               sexualPreferences: user.sexual_preferences || [],
               hasLikedYou: user.has_liked_you || false,
-              isMatch: user.is_match || false
+              isMatch: user.is_match || false,
+              isLiked: user.is_liked || false
           })),
           total: response.data.total
       };
