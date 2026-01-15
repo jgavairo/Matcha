@@ -943,15 +943,15 @@ export const blockUser = async (userId: number, blockedId: number) => {
         `, [userId, blockedId], { client });
 
         // Deactivate match if exists
-        await deactivateMatch(userId, blockedId, client);
+        const matchResult = await deactivateMatch(userId, blockedId, client);
         
         await client.query('COMMIT');
 
-        return true;
+        return { success: true, ...matchResult };
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error blocking user:', error);
-        return false;
+        return { success: false };
     } finally {
         client.release();
     }

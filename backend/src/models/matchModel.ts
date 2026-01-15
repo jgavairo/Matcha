@@ -94,7 +94,8 @@ export const deactivateMatch = async (userId1: number, userId2: number, client: 
             const message = await db.insert('messages', {
                 conversation_id: conversationId,
                 sender_id: null,
-                content: systemMessage
+                content: systemMessage,
+                type: 'system'
             }, { client });
             
             return { message, conversationId };
