@@ -13,27 +13,6 @@ const Header: React.FC = () => {
   const { addToast } = useNotification();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    addToast("Are you sure you want to log out?", 'warning', 0, {
-      title: "Confirm Logout",
-      actions: [
-        { 
-          label: "Logout", 
-          onClick: () => { 
-            logout(); 
-            navigate('/'); 
-          }, 
-          color: "failure" 
-        },
-        { 
-          label: "Cancel", 
-          onClick: () => {}, 
-          color: "light" 
-        }
-      ]
-    });
-  };
-
   return (
     <nav className="bg-white border-b border-gray-200 px-4 dark:bg-gray-800 dark:border-gray-700 w-full z-header h-16 flex-none flex items-center">
         <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl w-full">
@@ -52,7 +31,7 @@ const Header: React.FC = () => {
 
             {isAuthenticated ? (
               <button 
-                onClick={handleLogout}
+                onClick={() => { logout(); navigate('/'); }}
                 type="button" 
                 className="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 mr-1"
               >

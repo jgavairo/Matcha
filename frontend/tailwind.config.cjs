@@ -44,6 +44,7 @@ module.exports = {
         'notification': '55', // Notification dropdown
         'bottom-nav': '60',   // Bottom navigation
         'modal': '70',        // Modals, Drawers, Overlays
+        'tiny-modal': '75',   // Small modals (e.g., image viewer)
         'toast': '80',        // Toast notifications (Always on top)
         'card-overlay': '10', // Gradient overlays
         'card-content': '20', // Interactive content areas

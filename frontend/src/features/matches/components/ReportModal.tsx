@@ -36,7 +36,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, onSubmit }) 
   };
 
   return (
-    <Modal show={isOpen} onClose={onClose} size="sm">
+    <Modal className="z-tiny-modal" show={isOpen} onClose={onClose} size="sm">
       <ModalHeader>Report User</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
