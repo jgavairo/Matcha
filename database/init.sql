@@ -171,6 +171,18 @@ CREATE TABLE reports (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Notifications table --------------------------------------------------------------
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    recipient_id INT REFERENCES users(id) ON DELETE CASCADE,
+    sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    message TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- SEED DATA --------------------------------------------------------------
 INSERT INTO users (email, username, password, first_name, last_name, birth_date, gender_id, sexual_preferences, latitude, longitude, city, biography, status_id) VALUES ('richardgarcia1@example.com', 'RichardGarcia1', '$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fysFdqm', 'Richard', 'Garcia', '1988-06-21', 1, '{2}', 45.774860352990636, 4.871815894551933, 'Lyon', 'Looking for a partner in crime.', 2);
 INSERT INTO user_interests (user_id, interest_id) VALUES ((SELECT id FROM users WHERE username = 'RichardGarcia1'), 6);

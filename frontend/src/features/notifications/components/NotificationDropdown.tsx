@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNotification } from '@context/NotificationContext';
-import { NotificationType } from '@app-types/notifications';
+import { NotificationType, NotificationItem as NotificationItemType } from '@app-types/notifications';
 import NotificationItem from './NotificationItem';
 import { HiX } from 'react-icons/hi';
 
@@ -10,7 +10,32 @@ interface NotificationDropdownProps {
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
-  const { notifications, clearNotifications } = useNotification();
+  const { notifications, clearNotifications, markAsRead, removeNotification } = useNotification();
+
+  const groupedNotifications = useMemo(() => {
+    const groups = new Map<string, NotificationItemType[]>();
+    
+    notifications.forEach(n => {
+       const key = n.sender 
+         ? `${n.type}-${n.sender}` 
+         : `${n.type}-${n.message || ''}`;
+       
+       if (!groups.has(key)) {
+           groups.set(key, []);
+       }
+       groups.get(key)!.push(n);
+    });
+    
+    return Array.from(groups.values()).map(group => {
+       group.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+       return {
+           latest: group[0],
+           items: group,
+           count: group.length,
+           hasUnread: group.some(n => !n.read)
+       };
+    }).sort((a, b) => new Date(b.latest.time).getTime() - new Date(a.latest.time).getTime());
+  }, [notifications]);
 
   return (
     <div 
@@ -29,13 +54,23 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
         </button>
       </div>
       <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-        {notifications.length === 0 ? (
+        {groupedNotifications.length === 0 ? (
           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
             No notifications
           </div>
         ) : (
-          notifications.map((notification) => (
-            <NotificationItem key={notification.id} notification={notification} />
+          groupedNotifications.map((group) => (
+            <NotificationItem 
+               key={group.latest.id} 
+               notification={{ ...group.latest, read: !group.hasUnread }}
+               count={group.count}
+               onMarkAsRead={() => {
+                   group.items.forEach(n => !n.read && markAsRead(n.id));
+               }}
+               onRemove={() => {
+                   group.items.forEach(n => removeNotification(n.id));
+               }}
+            />
           ))
         )}
       </div>

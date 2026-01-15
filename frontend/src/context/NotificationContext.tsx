@@ -1,13 +1,15 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { ToastType, NotificationItem, ToastMessage, ToastAction } from '@app-types/notifications';
+import { api } from '@services/api';
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   toasts: ToastMessage[];
   notifications: NotificationItem[];
   addToast: (message: string, type: ToastType, duration?: number, options?: { title?: string, actions?: ToastAction[] }) => void;
   removeToast: (id: string) => void;
-  addNotification: (notification: Omit<NotificationItem, 'id' | 'read' | 'time'>) => void;
+  addNotification: (notification: Omit<NotificationItem, 'id' | 'read' | 'time'> & { id?: string, time?: string | Date }) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
@@ -20,6 +22,28 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      api.get<any[]>('/notifications')
+        .then(res => {
+          const mapped = res.data.map(n => ({
+            id: n.id.toString(),
+            type: n.type,
+            message: n.message,
+            read: n.is_read,
+            time: new Date(n.created_at),
+            sender: n.sender_username,
+            avatar: n.sender_avatar
+          }));
+          setNotifications(mapped);
+        })
+        .catch(err => console.error('Failed to fetch notifications', err));
+    } else {
+      setNotifications([]);
+    }
+  }, [user]);
 
   const addToast = useCallback((message: string, type: ToastType, duration = 4000, options?: { title?: string, actions?: ToastAction[] }) => {
     const id = uuidv4();
@@ -36,12 +60,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const addNotification = useCallback((notification: Omit<NotificationItem, 'id' | 'read' | 'time'>) => {
+  const addNotification = useCallback((notification: Omit<NotificationItem, 'id' | 'read' | 'time'> & { id?: string, time?: string | Date }) => {
     const newNotification: NotificationItem = {
       ...notification,
-      id: uuidv4(),
+      id: notification.id || uuidv4(),
       read: false,
-      time: new Date(),
+      time: notification.time ? new Date(notification.time) : new Date(),
     };
     setNotifications((prev) => [newNotification, ...prev]);
 
@@ -63,18 +87,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    api.put(`/notifications/${id}/read`).catch(console.error);
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    api.put('/notifications/read-all').catch(console.error);
   }, []);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    api.delete(`/notifications/${id}`).catch(console.error);
   }, []);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
+    api.delete('/notifications').catch(console.error);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;

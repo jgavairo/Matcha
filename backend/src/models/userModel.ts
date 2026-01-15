@@ -642,8 +642,8 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     }
 };
 
-export const recordView = async (viewerId: number, viewedId: number) => {
-    if (viewerId === viewedId) return;
+export const recordView = async (viewerId: number, viewedId: number): Promise<boolean> => {
+    if (viewerId === viewedId) return false;
 
     // Record view only if it doesn't exist (unique view per user pair)
     const query = `
@@ -654,13 +654,15 @@ export const recordView = async (viewerId: number, viewedId: number) => {
         )
     `;
     try {
-        await db.query(query, [viewerId, viewedId]);
+        const result = await db.query(query, [viewerId, viewedId]);
+        return (result.rowCount ?? 0) > 0;
     } catch (error) {
-        // Erreur non-critique, on ignore silencieusement
+        console.error('Error recording view:', error);
+        return false;
     }
 };
 
-export const likeUser = async (likerId: number, likedId: number): Promise<{ isMatch: boolean; message?: any; conversationId?: number }> => {
+export const likeUser = async (likerId: number, likedId: number): Promise<{ isMatch: boolean; message?: any; conversationId?: number; isNewLike: boolean }> => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -682,7 +684,7 @@ export const likeUser = async (likerId: number, likedId: number): Promise<{ isMa
             `, [likerId, likedId], { client });
             
             await client.query('COMMIT');
-            return { isMatch: matchCheck.rowCount != null && matchCheck.rowCount > 0 };
+            return { isMatch: matchCheck.rowCount != null && matchCheck.rowCount > 0, isNewLike: false };
         }
 
         // 2. Check for match
@@ -695,14 +697,14 @@ export const likeUser = async (likerId: number, likedId: number): Promise<{ isMa
             const matchResult = await activateMatch(likerId, likedId, client);
             
             await client.query('COMMIT');
-            return { isMatch: true, message: matchResult.message, conversationId: matchResult.conversationId };
+            return { isMatch: true, message: matchResult.message, conversationId: matchResult.conversationId, isNewLike: true };
         }
 
         // 3. Remove from dislikes if exists (in case of change of mind)
         await db.delete('dislikes', { disliker_id: likerId, disliked_id: likedId }, { client });
 
         await client.query('COMMIT');
-        return { isMatch: false };
+        return { isMatch: false, isNewLike: true };
     } catch (error) {
         await client.query('ROLLBACK');
         throw error;

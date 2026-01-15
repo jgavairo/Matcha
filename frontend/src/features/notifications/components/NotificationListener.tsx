@@ -19,11 +19,13 @@ const NotificationListener: React.FC = () => {
             }
 
             addNotification({
+                id: data.id?.toString(),
                 type: data.type,
                 title: getTitleByType(data.type),
                 message: data.message,
                 sender: data.senderUsername,
-                avatar: data.avatar
+                avatar: data.avatar,
+                time: data.time
             });
         };
 

@@ -13,6 +13,7 @@ import tagRoutes from './routes/tagRoutes';
 import userRoutes from './routes/userRoutes';
 import matchRoutes from './routes/matchRoutes';
 import dateRoutes from './routes/dateRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { validateRegister } from './middlewares/validation';
 import { handleValidationErrors } from './middlewares/validationHandler';
 import { UserController } from './controllers/userController';    
@@ -88,6 +89,7 @@ app.use('/matches', matchRoutes);
 app.use('/tags', tagRoutes);
 app.use('/chat', chatRoutes);
 app.use('/dates', dateRoutes);
+app.use('/notifications', notificationRoutes);
 
 
 

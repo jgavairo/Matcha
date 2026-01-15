@@ -17,32 +17,42 @@ import { formatTimeAgo } from '@utils/dateUtils';
 
 interface NotificationItemProps {
   notification: NotificationItemType;
+  count?: number;
+  onMarkAsRead?: () => void;
+  onRemove?: () => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({ notification, count = 1, onMarkAsRead, onRemove }) => {
   const { markAsRead, removeNotification } = useNotification();
 
   const handleClick = () => {
-    if (!notification.read) {
+    if (onMarkAsRead) {
+      onMarkAsRead();
+    } else if (!notification.read) {
       markAsRead(notification.id);
     }
   };
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
-    removeNotification(notification.id);
+    if (onRemove) {
+        onRemove();
+    } else {
+        removeNotification(notification.id);
+    }
   };
 
   const getContent = (n: NotificationItemType) => {
     const senderName = n.sender || 'Someone';
+    const countSuffix = count > 1 ? ` (${count})` : '';
     
     switch (n.type) {
       case 'like':
-        return { title: 'New Like', message: `${senderName} liked your profile.` };
+        return { title: 'New Like', message: `${senderName} liked your profile${countSuffix}.` };
       case 'visit':
-        return { title: 'Profile Visit', message: `${senderName} visited your profile.` };
+        return { title: 'Profile Visit', message: `${senderName} visited your profile${countSuffix}.` };
       case 'message':
-        return { title: 'New Message', message: n.message || 'You received a new message.' };
+        return { title: 'New Message', message: count > 1 ? `You have ${count} new messages from ${senderName}.` : (n.message || 'You received a new message.') };
       case 'match':
         return { title: 'It\'s a Match!', message: `You and ${senderName} matched!` };
       case 'unlike':
@@ -52,7 +62,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
       case 'error':
       case 'info':
       default:
-        return { title: n.title || 'Notification', message: n.message || '' };
+        return { title: n.title || 'Notification', message: `${n.message || ''}${countSuffix}` };
     }
   };
 

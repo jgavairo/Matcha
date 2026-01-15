@@ -196,8 +196,30 @@ const SearchPage: React.FC = () => {
     if (selectedUser) {
       try {
         await matchService.likeUser(selectedUser.id);
-        // Optionally update UI to show liked status
-        setSelectedUser(null);
+        
+        // Update both the list and the selected user to reflect the new state
+        setUsers(prev => prev.map(u => 
+            u.id === selectedUser.id ? { ...u, isLiked: true } : u
+        ));
+        setSelectedUser(prev => prev ? { ...prev, isLiked: true } : null);
+        
+      } catch (error) {
+        // Error already handled by UI
+      }
+    }
+  };
+
+  const handleUnlike = async () => {
+    if (selectedUser) {
+      try {
+        await matchService.unlikeUser(selectedUser.id);
+        
+        // Update both the list and the selected user to reflect the new state
+        setUsers(prev => prev.map(u => 
+            u.id === selectedUser.id ? { ...u, isLiked: false, isMatch: false } : u
+        ));
+        setSelectedUser(prev => prev ? { ...prev, isLiked: false, isMatch: false } : null);
+
       } catch (error) {
         // Error already handled by UI
       }
@@ -281,6 +303,7 @@ const SearchPage: React.FC = () => {
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
         onLike={handleLike}
+        onUnlike={handleUnlike}
         onDislike={handleDislike}
         onBlock={handleBlock}
         onReport={handleReport}

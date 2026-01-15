@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { searchUsers, likeUser, dislikeUser, unlikeUser, getUserById } from '../models/userModel';
+import { createNotification } from '../models/notificationModel';
 import { getIO } from '../config/socket';
 
 export class MatchController {
@@ -12,6 +13,13 @@ export class MatchController {
             if (isNaN(likedId)) return res.status(400).json({ error: 'Invalid user ID' });
 
             const result = await likeUser(likerId, likedId);
+            
+            // Allow notifications if it is a new like/match. 
+            // Only skip if IS NOT new like (already liked/matched state)
+            if (!result.isNewLike) {
+                 return res.status(200).json({ message: 'User already liked', isMatch: result.isMatch });
+            }
+
             const liker = await getUserById(likerId);
 
             if (result.isMatch && result.message) {
@@ -27,32 +35,45 @@ export class MatchController {
                 // Match Notifications
                 const likedUser = await getUserById(likedId);
                 
+                const matchMsg1 = `You matched with ${likedUser.username}!`;
+                const notif1 = await createNotification(likerId, 'match', matchMsg1, likedId);
                 io.to(`user_${likerId}`).emit('notification', {
+                    id: notif1.id,
                     type: 'match',
-                    message: `You matched with ${likedUser.username}!`,
+                    message: matchMsg1,
                     senderId: likedId,
                     senderUsername: likedUser.username,
-                    avatar: likedUser.images[0]
+                    avatar: likedUser.images[0],
+                    time: notif1.created_at
                 });
 
+                const matchMsg2 = `You matched with ${liker.username}!`;
+                const notif2 = await createNotification(likedId, 'match', matchMsg2, likerId);
                 io.to(`user_${likedId}`).emit('notification', {
+                    id: notif2.id,
                     type: 'match',
-                    message: `You matched with ${liker.username}!`,
+                    message: matchMsg2,
                     senderId: likerId,
                     senderUsername: liker.username,
-                    avatar: liker.images[0]
+                    avatar: liker.images[0],
+                    time: notif2.created_at
                 });
 
             } else {
                 // Like Notification
                 if (liker) {
+                    const likeMsg = `${liker.username} liked your profile.`;
+                    const notif = await createNotification(likedId, 'like', likeMsg, likerId);
+
                     const io = getIO();
                     io.to(`user_${likedId}`).emit('notification', {
+                        id: notif.id,
                         type: 'like',
-                        message: `${liker.username} liked your profile.`,
+                        message: likeMsg,
                         senderId: likerId,
                         senderUsername: liker.username,
-                        avatar: liker.images[0]
+                        avatar: liker.images[0],
+                        time: notif.created_at
                     });
                 }
             }
@@ -108,13 +129,18 @@ export class MatchController {
 
             // Unlike Notification
             if (liker) {
+                const unlikeMsg = `${liker.username} unliked you.`;
+                const notif = await createNotification(likedId, 'unlike', unlikeMsg, likerId);
+
                 const io = getIO();
                 io.to(`user_${likedId}`).emit('notification', {
+                    id: notif.id,
                     type: 'unlike',
-                    message: `${liker.username} unliked you.`,
+                    message: unlikeMsg,
                     senderId: likerId,
                     senderUsername: liker.username,
-                    avatar: liker.images[0]
+                    avatar: liker.images[0],
+                    time: notif.created_at
                 });
             }
 

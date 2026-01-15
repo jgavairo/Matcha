@@ -3,6 +3,7 @@ import path from 'path';
 import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion, removeImageComplete } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
+import { createNotification } from '../models/notificationModel';
 import { db } from '../utils/db';
 import { EMAIL_REGEX } from '@shared/validation';
 
@@ -249,19 +250,26 @@ export class UserController {
                 return res.status(400).json({ error: 'Invalid user ID' });
             }
 
-            await recordView(viewerId, viewedId);
+            const isNewView = await recordView(viewerId, viewedId);
 
-            // Notify viewed user
-            const viewer = await getUserById(viewerId);
-            if (viewer) {
-                const io = getIO();
-                io.to(`user_${viewedId}`).emit('notification', {
-                    type: 'visit',
-                    message: `${viewer.username} visited your profile.`,
-                    senderId: viewerId,
-                    senderUsername: viewer.username,
-                    avatar: viewer.images[0]
-                });
+            if (isNewView) {
+                // Notify viewed user
+                const viewer = await getUserById(viewerId);
+                if (viewer) {
+                    const visitMsg = `${viewer.username} visited your profile.`;
+                    const newNotification = await createNotification(viewedId, 'visit', visitMsg, viewerId);
+
+                    const io = getIO();
+                    io.to(`user_${viewedId}`).emit('notification', {
+                        id: newNotification.id,
+                        type: 'visit',
+                        message: visitMsg,
+                        senderId: viewerId,
+                        senderUsername: viewer.username,
+                        avatar: viewer.images[0],
+                        time: newNotification.created_at
+                    });
+                }
             }
 
             res.status(200).json({ message: 'View recorded' });

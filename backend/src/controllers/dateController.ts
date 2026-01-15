@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as dateModel from '../models/dateModel';
 import * as chatModel from '../models/chatModel';
 import { getIO } from '../config/socket';
+import { createNotification } from '../models/notificationModel';
 
 export const proposeDate = async (req: Request, res: Response) => {
     try {
@@ -11,10 +12,16 @@ export const proposeDate = async (req: Request, res: Response) => {
         const date = await dateModel.createDate(senderId, receiverId, dateTime, location, description);
 
         const io = getIO();
+        const msg = `New date proposal`;
+        const notif = await createNotification(receiverId, 'info', msg, senderId);
+
         io.to(`user_${receiverId}`).emit('notification', {
+            id: notif.id,
             type: 'date_proposed',
-            message: `New date proposal`,
-            data: date
+            message: msg,
+            data: date,
+            senderId: senderId, 
+            time: notif.created_at
         });
         
         // System Message
@@ -66,10 +73,16 @@ export const updateDateStatus = async (req: Request, res: Response) => {
         const updated = await dateModel.updateDate(parseInt(id), { status });
         
         const io = getIO();
+        const msg = `Date proposal ${status}`;
+        const notif = await createNotification(date.sender_id, 'info', msg, userId);
+
         io.to(`user_${date.sender_id}`).emit('notification', {
+            id: notif.id,
             type: `date_${status}`,
-            message: `Date proposal ${status}`,
-            data: updated
+            message: msg,
+            data: updated,
+            senderId: userId,
+            time: notif.created_at
         });
 
         // System Message
