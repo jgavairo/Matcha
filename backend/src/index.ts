@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import https from 'https';
+import fs from 'fs';
 // Load .env from project root
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import express, { Request, Response } from 'express';
@@ -30,8 +32,22 @@ const app = express();
 const port = process.env.PORT || 5000;
 const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
 
-// Create HTTP server
-const httpServer = createServer(app);
+// Create HTTP or HTTPS server
+let httpServer;
+const certPath = '/app/certs/cert.pem';
+const keyPath = '/app/certs/key.pem';
+
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+  console.log('Valid certificates found. Starting HTTPS server.');
+  const httpsOptions = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath)
+  };
+  httpServer = https.createServer(httpsOptions, app);
+} else {
+  console.log('No certificates found. Starting HTTP server.');
+  httpServer = createServer(app);
+}
 
 // Initialize Socket.io
 const io = initializeSocket(httpServer);

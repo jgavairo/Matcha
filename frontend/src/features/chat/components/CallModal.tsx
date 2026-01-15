@@ -31,12 +31,14 @@ const CallModal: React.FC<CallModalProps> = ({
     useEffect(() => {
         if (localStream && localVideoRef.current) {
             localVideoRef.current.srcObject = localStream;
+            localVideoRef.current.play().catch(e => console.log('Local video play error:', e));
         }
     }, [localStream]);
 
     useEffect(() => {
         if (remoteStream && remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
+            remoteVideoRef.current.play().catch(e => console.log('Remote video play error:', e));
         }
     }, [remoteStream]);
 

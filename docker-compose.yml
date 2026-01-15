@@ -34,6 +34,7 @@ services:
       - postgres
     volumes:
       - ./backend:/app
+      - ./certs:/app/certs
       - ./shared:/shared
       - /app/node_modules
       - uploads_data:/app/uploads
@@ -50,6 +51,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
+      - ./certs:/app/certs
       - ./shared:/shared
       - /app/node_modules
 
