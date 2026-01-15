@@ -237,12 +237,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 onToggleDatePlanner={() => setShowDatePlanner(!showDatePlanner)}
             />
 
-            <DatePlanner
-                targetUserId={conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id}
-                targetUsername={otherUsername}
-                isOpen={showDatePlanner}
-                onToggle={setShowDatePlanner}
-            />
+            {conversation.is_active && (
+                <DatePlanner
+                    targetUserId={conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id}
+                    targetUsername={otherUsername}
+                    isOpen={showDatePlanner}
+                    onToggle={setShowDatePlanner}
+                />
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">
