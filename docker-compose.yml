@@ -26,6 +26,10 @@ services:
       PORT: ${BACKEND_PORT}
       UPLOADS_DIR: /app/uploads
       BACKEND_URL: ${BACKEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     depends_on:
       - postgres
     volumes:
