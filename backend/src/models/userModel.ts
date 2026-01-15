@@ -34,13 +34,11 @@ export const loginUser = async (user: LoginFormData) => {
         );
 
         if (!result) {
-            console.error('Invalid username');
             return null;
         }
 
         const isValidPassword = await bcrypt.compare(user.password, result.password);
         if (!isValidPassword) {
-            console.error('Invalid password');
             return null;
         }
 
@@ -56,7 +54,6 @@ export const loginUser = async (user: LoginFormData) => {
         }
         return { id: result.id };
     } catch (error) {
-        console.error('Error logging in user:', error);
         throw error;
     }
 };
@@ -108,8 +105,8 @@ export const updateUser = async (id: number, data: any) => {
     return await db.update('users', id, updateData);
 };
 
-// Spécifique au parcours "complete-profile" : ne prend que les champs
-// venant de la page CompleteProfile et les insère dans la table users.
+// Specific to the "complete-profile" flow: only takes fields
+// from the CompleteProfile page and inserts them into the users table.
 export const completeUserProfile = async (
     id: number,
     data: {
@@ -146,7 +143,7 @@ export const completeUserProfile = async (
     return await db.update('users', id, updateData);
 };
 
-// Alias utilisé par le contrôleur pour la route /profile/complete
+// Alias used by the controller for the /profile/complete route
 export const completeProfileUser = completeUserProfile;
 
 export const updateUserInterests = async (userId: number, tags: string[]) => {
@@ -295,7 +292,6 @@ export const getUserById = async (id: number, currentUserId?: number) => {
         const result = await db.query(query, values);
         return result.rows[0];
     } catch (error) {
-        console.error('Error getting user by id:', error);
         throw error;
     }
 };
@@ -366,7 +362,6 @@ export const validateProfileCompletion = async (userId: number): Promise<{ isVal
             missingFields
         };
     } catch (error) {
-        console.error('Error validating profile completion:', error);
         throw error;
     }
 };
@@ -643,7 +638,6 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
             total: result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0
         };
     } catch (error) {
-        console.error('Error searching users:', error);
         throw error;
     }
 };
@@ -662,7 +656,7 @@ export const recordView = async (viewerId: number, viewedId: number) => {
     try {
         await db.query(query, [viewerId, viewedId]);
     } catch (error) {
-        console.error('Error recording view:', error);
+        // Erreur non-critique, on ignore silencieusement
     }
 };
 
@@ -847,14 +841,13 @@ export const getUserByVerificationToken = async (token: string) => {
             return { error: 'invalid_token' };
         }
         
-        // Vérifier si le token a expiré
+        // Check if the token has expired
         const expiresAt = new Date(user.verification_token_expires);
         if (expiresAt < new Date()) {
             return { error: 'token_expired' };
         }
         return { id: user.id, email: user.email, status: user.status_id };
     } catch (error) {
-        console.error('Error getting user by verification token:', error);
         throw error;
     }
 };
@@ -867,7 +860,6 @@ export const updateUserStatus = async (userId: number, status: number) => {
         });
         return true;
     } catch (error) {
-        console.error('Error updating user status:', error);
         return false;
     }
 };
@@ -893,7 +885,6 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
         });
 
         if (existingReport) {
-            console.warn(`User ${userId} has already reported user ${reportedId}`);
             return false;
         }
 
@@ -905,11 +896,10 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
         
         return true;
     } catch (error) {
-        console.error('Error adding report:', error);
         return false;
     }
 };
-// Ancienne implémentation incomplète conservée en commentaire pour référence
+// Old incomplete implementation kept in comment for reference
 // export const completeProfileUser = async (userId: number, data: any) => {
 //     const user = await db.findOne('users', { id: userId }, ['id', 'status_id']);
 // };
@@ -950,7 +940,6 @@ export const blockUser = async (userId: number, blockedId: number) => {
         return true;
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error blocking user:', error);
         return false;
     } finally {
         client.release();
@@ -1019,7 +1008,6 @@ export const unblockUser = async (userId: number, unblockedId: number) => {
         await db.update('users', userId, { blocked_users: blockedUsers.blocked_users.filter((id: any) => id !== unblockedId) });
         return true;
     } catch (error) {
-        console.error('Error unblocking user:', error);
         return false;
     }
 };

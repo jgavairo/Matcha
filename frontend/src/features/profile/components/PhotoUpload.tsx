@@ -24,7 +24,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
 
         // Valider que c'est bien une vraie image en essayant de la charger
         try {
-            // Vérifier les types MIME valides
+            // Check valid MIME types
             const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!validMimeTypes.includes(file.type.toLowerCase())) {
                 addToast('Invalid image format. Only JPEG, PNG, GIF, and WebP are allowed.', 'error');
@@ -43,9 +43,9 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
                 img.onload = () => {
                     clearTimeout(timeout);
                     URL.revokeObjectURL(objectUrl);
-                    // Vérifier que l'image a des dimensions valides et raisonnables
+                    // Check that image has valid and reasonable dimensions
                     if (img.width > 0 && img.height > 0 && img.width <= 10000 && img.height <= 10000) {
-                        // Vérifier que l'image a vraiment été chargée (pas juste un placeholder)
+                        // Check that image was actually loaded (not just a placeholder)
                         if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
                             resolve(true);
                         } else {
@@ -67,7 +67,6 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
             setEditingFile(file);
         } catch (error) {
             addToast('Invalid image file. Please select a valid image file (JPEG, PNG, GIF, or WebP).', 'error');
-            console.error('Image validation error:', error);
         }
     };
 

@@ -17,7 +17,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(true);
     const [user, setUser] = useState<CurrentUser | null>(null);
 
-    // Vérifie l'authentification au chargement
+    // Check authentication on load
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -39,8 +39,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const userData = await authService.checkAuth();
             setUser(userData);
             setIsAuthenticated(true);
-        } catch (error) {
-            console.error("Login failed to fetch user data", error);
+        } catch {
+            setIsAuthenticated(false);
+            setUser(null);
         }
     };
 

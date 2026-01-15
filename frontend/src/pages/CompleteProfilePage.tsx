@@ -139,7 +139,6 @@ export default function CompleteProfilePage() {
     try {
       await api.delete('/users/photos/complete', { data: { url: urlToDelete } });
     } catch (error: any) {
-      console.error("Failed to delete photo", error);
       setProfileData(prev => ({ ...prev, profileImage: previousImage }));
       const errorMessage = error.response?.data?.error || "Échec de la suppression de la photo";
       addToast(errorMessage, 'error');

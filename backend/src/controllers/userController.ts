@@ -64,7 +64,6 @@ export class UserController {
 
             res.status(200).json({ message: 'Profile updated successfully' });
         } catch (error) {
-            console.error('Error updating profile:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -85,7 +84,6 @@ export class UserController {
 
             res.status(200).json({ message: 'Password updated successfully' });
         } catch (error) {
-            console.error('Error changing password:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -101,21 +99,21 @@ export class UserController {
                 return res.status(400).json({ error: 'No file uploaded' });
             }
 
-            // Traiter l'image avec Sharp pour la sécuriser
+            // Process image with Sharp for security
             if (req.file.mimetype.startsWith('image/')) {
                 const { processImage, getOptimalFormat, validateImage } = await import('../utils/imageProcessor');
                 const fs = await import('fs/promises');
                 const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
                 const originalPath = req.file.path;
                 
-                // Créer un chemin temporaire différent pour éviter le conflit input/output
+                // Create a different temporary path to avoid input/output conflict
                 const pathModule = await import('path');
                 const originalExt = pathModule.extname(originalPath);
                 const baseName = pathModule.basename(originalPath, originalExt);
                 const tempPath = pathModule.join(uploadDir, `${baseName}.tmp.jpg`);
                 const finalPath = pathModule.join(uploadDir, `${baseName}.jpg`);
 
-                // Valider que c'est bien une image valide
+                // Validate that it's a valid image
                 const isValid = await validateImage(originalPath);
                 if (!isValid) {
                     // Supprimer le fichier invalide
@@ -124,7 +122,7 @@ export class UserController {
                 }
 
                 try {
-                    // Traiter l'image (redimensionner, convertir, nettoyer) vers le fichier temporaire
+                    // Process image (resize, convert, clean) to temporary file
                     await processImage(originalPath, tempPath, {
                         maxWidth: 1920,
                         maxHeight: 1920,
@@ -132,13 +130,13 @@ export class UserController {
                         format: getOptimalFormat(req.file.mimetype)
                     });
 
-                    // Renommer le fichier temporaire vers le nom final
+                    // Rename temporary file to final name
                     await fs.rename(tempPath, finalPath);
                     
-                    // Mettre à jour le nom de fichier pour utiliser le fichier traité
+                    // Update the filename to use the processed file
                     req.file.filename = pathModule.basename(finalPath);
                 } catch (processError: any) {
-                    // Si le traitement échoue, supprimer les fichiers et rejeter
+                    // If processing fails, delete files and reject
                     await fs.unlink(originalPath).catch(() => {});
                     await fs.unlink(tempPath).catch(() => {});
                     await fs.unlink(finalPath).catch(() => {});
@@ -151,8 +149,6 @@ export class UserController {
             const image = await addImage(userId, req.file.filename);
             res.status(201).json(image);
         } catch (error: any) {
-            console.error('Error uploading photo:', error);
-            // Supprimer le fichier en cas d'erreur
             if (req.file) {
                 const fs = await import('fs/promises');
                 await fs.unlink(req.file.path).catch(() => {});
@@ -177,7 +173,6 @@ export class UserController {
             await removeImage(userId, url);
             res.status(200).json({ message: 'Photo deleted successfully' });
         } catch (error: any) {
-            console.error('Error deleting photo:', error);
             if (error.message && error.message.includes('You must have at least')) {
                 return res.status(400).json({ error: error.message });
             }
@@ -199,7 +194,6 @@ export class UserController {
             res.status(200).json({ message: 'Photo deleted successfully' });
         }
         catch (error: any) {
-            console.error('Error deleting photo:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -219,7 +213,6 @@ export class UserController {
             await setProfileImage(userId, url);
             res.status(200).json({ message: 'Profile photo updated successfully' });
         } catch (error) {
-            console.error('Error setting profile photo:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -239,7 +232,6 @@ export class UserController {
             await updateGeolocationConsent(userId, consent);
             res.status(200).json({ message: 'Consent updated successfully' });
         } catch (error) {
-            console.error('Error updating consent:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -274,7 +266,6 @@ export class UserController {
 
             res.status(200).json({ message: 'View recorded' });
         } catch (error) {
-            console.error('Error recording view:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -295,7 +286,6 @@ export class UserController {
 
             res.status(200).json(user);
         } catch (error) {
-            console.error('Error getting user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -309,7 +299,6 @@ export class UserController {
             const matches = await getMatchedUsers(userId);
             res.status(200).json(matches.map(mapUserSummary));
         } catch (error) {
-            console.error('Error fetching matches:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -323,7 +312,6 @@ export class UserController {
             const likedBy = await getLikedByUsers(userId);
             res.status(200).json(likedBy.map(mapUserSummary));
         } catch (error) {
-            console.error('Error fetching liked by users:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -337,7 +325,6 @@ export class UserController {
             const viewedBy = await getViewedByUsers(userId);
             res.status(200).json(viewedBy.map(mapUserSummary));
         } catch (error) {
-            console.error('Error fetching viewed by users:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     };
@@ -349,7 +336,6 @@ export class UserController {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            // Vérifier que le statut actuel est 1 (vérifié)
             const currentUser = await getUserById(userId);
             if (!currentUser || currentUser.status_id !== 1) {
                 return res.status(400).json({ 
@@ -359,7 +345,7 @@ export class UserController {
 
             const { gender, sexualPreferences, biography, latitude, longitude, city, geolocationConsent, tags } = req.body;
 
-            // Met à jour uniquement les champs du wizard "complete-profile"
+            // Updates only the fields from the "complete-profile" wizard
             await completeProfileUser(userId, {
                 gender,
                 sexualPreferences,
@@ -370,7 +356,6 @@ export class UserController {
                 geolocationConsent
             });
 
-            // Met à jour les centres d'intérêt si fournis
             if (tags && Array.isArray(tags) && tags.length > 0) {
                 await updateUserInterests(userId, tags);
             }
@@ -378,7 +363,6 @@ export class UserController {
             db.update('users', userId, { status_id: 2 });
             res.status(200).json({ message: 'Profile completed successfully' });
         } catch (error) {
-            console.error('Error completing profile:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -400,7 +384,6 @@ export class UserController {
                 return res.status(400).json({ error: 'User already reported' });
             }
         } catch (error) {
-            console.error('Error reporting user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -423,7 +406,6 @@ export class UserController {
             }
         }
         catch (error) {
-            console.error('Error blocking user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -446,7 +428,6 @@ export class UserController {
             }
         }
         catch (error) {
-            console.error('Error unblocking user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

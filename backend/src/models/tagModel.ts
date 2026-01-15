@@ -5,7 +5,6 @@ export const getAllTags = async () => {
         const rows = await db.findAll('interests', {}, ['name'], 'name', 'ASC');
         return rows.map((row: any) => row.name);
     } catch (error) {
-        console.error('Error getting all tags:', error);
         throw error;
     }
 };

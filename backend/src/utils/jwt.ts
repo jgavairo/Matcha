@@ -19,10 +19,7 @@ export const generateToken = (payload: JwtPayload, remember: boolean): string =>
 export const verifyToken = (token: string): JwtPayload | null => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-        // If secret is missing, we can't verify, so return null or throw.
-        // Returning null is safer for the caller who expects JwtPayload | null.
-        console.error('JWT secret is not set');
-        return null;
+        throw new Error('JWT secret is not set');
     }
     try {
         return jwt.verify(token, secret) as JwtPayload;

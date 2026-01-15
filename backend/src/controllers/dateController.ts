@@ -30,7 +30,6 @@ export const proposeDate = async (req: Request, res: Response) => {
 
         res.status(201).json(date);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Error proposing date' });
     }
 };
@@ -47,7 +46,6 @@ export const getDates = async (req: Request, res: Response) => {
         
         res.json(activeDate ? [activeDate] : []);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Error fetching dates' });
     }
 };
@@ -88,7 +86,6 @@ export const updateDateStatus = async (req: Request, res: Response) => {
 
         res.json(updated);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Error updating date status' });
     }
 };
@@ -134,7 +131,6 @@ export const modifyDate = async (req: Request, res: Response) => {
 
         res.json(updated);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Error modifying date' });
     }
 };
@@ -169,7 +165,6 @@ export const cancelDate = async (req: Request, res: Response) => {
 
         res.json(updated);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Error cancelling date' });
     }
 };

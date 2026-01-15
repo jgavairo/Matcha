@@ -2,10 +2,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Utilisation du chemin cohérent avec Docker
+// Use path consistent with Docker
 const uploadDir = process.env.UPLOADS_DIR || '/app/uploads';
 
-// Sécurité pour s'assurer que le dossier existe au démarrage
+// Security to ensure the directory exists on startup
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -15,17 +15,17 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Nettoyage du nom de fichier pour éviter les espaces/caractères spéciaux
+        // Clean filename to avoid spaces/special characters
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        // Pour les images, on utilisera .jpg après traitement Sharp
-        // Pour l'audio, on garde l'extension originale
+        // For images, we'll use .jpg after Sharp processing
+        // For audio, we keep the original extension
         const ext = file.mimetype.startsWith('image/') ? '.jpg' : path.extname(file.originalname);
         cb(null, uniqueSuffix + ext);
     }
 });
 
 const fileFilter = (req: any, file: any, cb: any) => {
-    // Accepter seulement les images et l'audio
+    // Accept only images and audio
     if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/')) {
         cb(null, true);
     } else {

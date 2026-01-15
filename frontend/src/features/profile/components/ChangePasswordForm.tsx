@@ -15,7 +15,6 @@ const ChangePasswordForm: React.FC = () => {
             addToast('Password updated successfully', 'success');
             reset();
         } catch (error: any) {
-            console.error('Failed to update password:', error);
             addToast(error.response?.data?.error || 'Failed to update password', 'error');
         }
     };

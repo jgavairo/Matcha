@@ -44,14 +44,20 @@ export const initializeSocket = (httpServer: HttpServer) => {
       return next(new Error('Authentication error'));
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return next(new Error('Authentication error'));
-    }
+    try {
+      const decoded = verifyToken(token);
+      if (!decoded) {
+        return next(new Error('Authentication error'));
+      }
 
-    // @ts-ignore
-    socket.userId = decoded.id;
-    next();
+      // @ts-ignore
+      socket.userId = decoded.id;
+      next();
+    } catch (error) {
+      // If JWT_SECRET is not defined, this is a critical configuration error
+      console.error('Critical configuration error:', error);
+      return next(new Error('Server configuration error'));
+    }
   });
 
   io.on('connection', async (socket) => {
@@ -68,7 +74,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
             io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: true });
         });
     } catch (error) {
-        console.error(`Failed to update user status for ${userId}`, error);
+        // Erreur non-critique, on ignore silencieusement
     }
 
     socket.join(`user_${userId}`);
@@ -96,7 +102,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                   io.to(`user_${partnerId}`).emit('chat_message', message);
               }
           } catch (err) {
-              console.error("Error logging call duration on disconnect", err);
+              // Erreur non-critique, on ignore silencieusement
           }
       }
 
@@ -111,7 +117,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
               io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: false, lastConnection: now });
           });
       } catch (error) {
-          console.error(`Failed to update user status for ${userId}`, error);
+          // Erreur non-critique, on ignore silencieusement
       }
     });
 
@@ -132,7 +138,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                   io.to(`user_${data.userToCall}`).emit('chat_message', message);
               }
           } catch (error) {
-              console.error("Error logging busy call", error);
+              // Erreur non-critique, on ignore silencieusement
           }
           return;
       }
@@ -172,7 +178,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                 io.to(`user_${data.to}`).emit('chat_message', message);
             }
         } catch (err) {
-             console.error("Error logging missed call (declined)", err);
+             // Erreur non-critique, on ignore silencieusement
         }
     });
 
@@ -198,7 +204,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                     io.to(`user_${data.to}`).emit('chat_message', message);
                 }
             } catch (err) {
-                 console.error("Error logging call duration", err);
+                 // Erreur non-critique, on ignore silencieusement
             }
         } else {
             // Call cancelled before answer -> Missed call
@@ -212,7 +218,7 @@ export const initializeSocket = (httpServer: HttpServer) => {
                     io.to(`user_${data.to}`).emit('chat_message', message);
                 }
             } catch (err) {
-                 console.error("Error logging missed call (cancelled)", err);
+                 // Erreur non-critique, on ignore silencieusement
             }
         }
     });

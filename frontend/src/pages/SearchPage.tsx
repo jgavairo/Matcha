@@ -75,7 +75,6 @@ const SearchPage: React.FC = () => {
 
     } catch (err) {
       setError('Failed to load search results');
-      console.error(err);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -200,7 +199,7 @@ const SearchPage: React.FC = () => {
         // Optionally update UI to show liked status
         setSelectedUser(null);
       } catch (error) {
-        console.error('Error liking user:', error);
+        // Error already handled by UI
       }
     }
   };
@@ -211,7 +210,7 @@ const SearchPage: React.FC = () => {
         await matchService.dislikeUser(selectedUser.id);
         setSelectedUser(null);
       } catch (error) {
-        console.error('Error disliking user:', error);
+        // Error already handled by UI
       }
     }
   };

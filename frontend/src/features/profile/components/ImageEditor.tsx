@@ -35,7 +35,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
             const objectUrl = URL.createObjectURL(file);
             img.src = objectUrl;
             img.onload = () => {
-                // Vérifier que l'image a des dimensions valides
+                // Check that image has valid dimensions
                 if (img.width > 0 && img.height > 0) {
                     setImage(img);
                     // Fit image to canvas initially
@@ -51,12 +51,10 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
                     setPosition({ x: 0, y: 0 });
                 } else {
                     URL.revokeObjectURL(objectUrl);
-                    console.error('Invalid image: zero dimensions');
                 }
             };
             img.onerror = () => {
                 URL.revokeObjectURL(objectUrl);
-                console.error('Failed to load image');
             };
         }
     }, [file]);
@@ -150,15 +148,15 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ file, isOpen, onClose, onSave
         const canvas = canvasRef.current;
         if (!canvas || !file) return;
         
-        // Toujours exporter en JPEG pour garantir un format sûr et valide
+        // Always export as JPEG to ensure a safe and valid format
         canvas.toBlob((blob) => {
             if (blob) {
-                // Forcer le type MIME à image/jpeg et changer l'extension
+                // Force MIME type to image/jpeg and change extension
                 const fileName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
                 const newFile = new File([blob], fileName, { type: 'image/jpeg' });
                 onSave(newFile);
             }
-        }, 'image/jpeg', 0.92); // Qualité 92% pour JPEG
+        }, 'image/jpeg', 0.92); // 92% quality for JPEG
     };
 
     return (

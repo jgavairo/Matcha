@@ -27,7 +27,6 @@ const ProfilePage: React.FC = () => {
                 const response = await api.get('/users/matches');
                 setUser(prev => prev ? { ...prev, matches: response.data } : null);
             } catch (error) {
-                console.error("Failed to fetch matches", error);
                 addToast("Failed to load matches", 'error');
             }
         } else if (tabIndex === 4) { // Activity
@@ -44,7 +43,6 @@ const ProfilePage: React.FC = () => {
                     viewedBy: viewedByRes.data 
                 } : null);
             } catch (error) {
-                console.error("Failed to fetch activity", error);
                 addToast("Failed to load activity", 'error');
             }
         }
@@ -56,7 +54,6 @@ const ProfilePage: React.FC = () => {
                 const response = await api.get('/auth/me');
                 setUser(response.data);
             } catch (error) {
-                console.error("Failed to fetch profile", error);
                 addToast("Failed to load profile", 'error');
             } finally {
                 setLoading(false);
@@ -72,7 +69,6 @@ const ProfilePage: React.FC = () => {
             setUser({ ...user, ...data });
             addToast("Profile updated successfully", 'success');
         } catch (error) {
-            console.error("Failed to update profile", error);
             addToast("Failed to update profile", 'error');
         }
     };
@@ -89,7 +85,6 @@ const ProfilePage: React.FC = () => {
             setUser({ ...user, images: [...user.images, response.data.url] });
             addToast("Photo uploaded successfully", 'success');
         } catch (error) {
-            console.error("Failed to upload photo", error);
             addToast("Failed to upload photo", 'error');
         }
     };
@@ -108,7 +103,6 @@ const ProfilePage: React.FC = () => {
             await api.delete('/users/photos', { data: { url: urlToDelete } });
             addToast("Photo deleted successfully", 'success');
         } catch (error: any) {
-            console.error("Failed to delete photo", error);
             setUser({ ...user, images: previousImages }); // Revert
             const errorMessage = error.response?.data?.error || "Failed to delete photo";
             addToast(errorMessage, 'error');
@@ -127,7 +121,6 @@ const ProfilePage: React.FC = () => {
             setUser({ ...user, images: newImages });
             addToast("Profile picture updated", 'success');
         } catch (error) {
-            console.error("Failed to set profile picture", error);
             addToast("Failed to set profile picture", 'error');
         }
     };
@@ -193,7 +186,6 @@ const ProfilePage: React.FC = () => {
 
             setSelectedUser(fullProfile);
         } catch (error) {
-            console.error("Failed to fetch user profile", error);
             addToast("Failed to load user profile", 'error');
         }
     };
@@ -204,7 +196,6 @@ const ProfilePage: React.FC = () => {
             setUser(response.data);
             setSelectedUser(response.data);
         } catch (error) {
-            console.error("Failed to fetch profile for preview", error);
             addToast("Failed to load preview", 'error');
         }
     };
@@ -333,7 +324,6 @@ const ProfilePage: React.FC = () => {
                             setSelectedUser({ ...selectedUser, isLiked: true, isMatch: result.isMatch });
                             addToast("User liked", 'success');
                         } catch (error) {
-                            console.error("Failed to like user", error);
                             addToast("Failed to like user", 'error');
                         }
                     }
@@ -345,7 +335,6 @@ const ProfilePage: React.FC = () => {
                             setSelectedUser(null); // Close modal on pass
                             addToast("User passed", 'success');
                         } catch (error) {
-                            console.error("Failed to dislike user", error);
                             addToast("Failed to dislike user", 'error');
                         }
                     }
@@ -357,13 +346,12 @@ const ProfilePage: React.FC = () => {
                             setSelectedUser({ ...selectedUser, isLiked: false, isMatch: false });
                             addToast("User unliked", 'success');
                         } catch (error) {
-                            console.error("Failed to unlike user", error);
                             addToast("Failed to unlike user", 'error');
                         }
                     }
                 }}
-                onBlock={() => console.log("Block")}
-                onReport={(reason) => console.log("Report", reason)}
+                onBlock={() => {}}
+                onReport={() => {}}
                 hideActions={selectedUser?.id === user?.id}
             />
         </div>

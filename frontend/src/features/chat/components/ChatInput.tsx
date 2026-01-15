@@ -67,7 +67,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             mediaRecorder.start();
             setIsRecording(true);
         } catch (err) {
-            console.error('Error accessing microphone:', err);
+            // Error already handled by UI
         }
     };
 

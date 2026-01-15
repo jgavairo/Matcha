@@ -21,7 +21,7 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
         });
     }
     
-    // Pas d'erreurs, continuer vers le prochain middleware/contrôleur
+    // No errors, continue to next middleware/controller
     next();
 };
 

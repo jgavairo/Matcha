@@ -61,7 +61,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const save = handleSubmit(async (data) => {
         await onFormSubmit(data);
     }, (errors) => {
-        console.log("Form validation failed:", errors);
     });
 
     const watchedSexualPreferences = watch('sexualPreferences');
@@ -93,7 +92,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 const response = await api.get('/tags');
                 setAvailableTags(response.data);
             } catch (error) {
-                console.error('Failed to fetch tags:', error);
+                // Erreur non-critique, on ignore silencieusement
             }
         };
         fetchTags();
@@ -167,7 +166,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
                 setLocationError("Location not found. Please check the spelling.");
             }
         } catch (error) {
-            console.error("Geocoding error:", error);
             setLocationError("Unable to validate location.");
         } finally {
             setIsGeocoding(false);

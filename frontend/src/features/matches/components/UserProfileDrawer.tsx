@@ -39,7 +39,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         try {
           await api.post(`/users/view/${user.id}`);
         } catch (error) {
-          console.error("Failed to record view", error);
+          // Erreur non-critique, on ignore silencieusement
         }
       };
       recordView();

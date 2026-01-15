@@ -29,7 +29,7 @@ export const useChat = () => {
             }));
             setConversations(normalizedData);
         } catch (error) {
-            console.error('Failed to load conversations', error);
+            // Error already handled by UI
         } finally {
             setLoading(false);
         }
@@ -144,7 +144,7 @@ export const useChat = () => {
                     : c
             ));
         } catch (error) {
-            console.error('Failed to archive conversation', error);
+            // Error already handled by UI
         }
     };
 

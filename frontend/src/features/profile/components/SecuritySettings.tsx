@@ -17,7 +17,6 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ consent, onConsentC
             onConsentChange(checked);
             addToast(`Geolocation consent ${checked ? 'granted' : 'revoked'}`, 'success');
         } catch (error) {
-            console.error('Failed to update consent:', error);
             addToast('Failed to update consent', 'error');
         }
     };

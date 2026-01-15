@@ -68,7 +68,6 @@ export const matchService = {
           total: response.data.total
       };
     } catch (error) {
-      console.error('Error searching users:', error);
       throw error;
     }
   }

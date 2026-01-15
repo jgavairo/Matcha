@@ -54,7 +54,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         socketService.on('call_incoming', (data: any) => {
-            console.log("Incoming call from", data.name);
             setIsReceivingCall(true);
             setCaller(data);
             setActiveCallUserId(data.from);
@@ -62,19 +61,17 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         socketService.on('call_accepted', async (signal: any) => {
-            console.log("Call accepted");
             setCallAccepted(true);
             if (peerConnection.current) {
                 try {
                     await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
                 } catch(e) { 
-                    console.error("Error setting remote description", e);
+                    // Error already handled by UI
                 }
             }
         });
 
         socketService.on('call_declined', () => {
-            console.log("Call declined by remote user");
             addToast("Call declined", 'info');
             setIsCallActive(false);
             setCallEnded(true);
@@ -86,7 +83,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         socketService.on('call_busy', () => {
-            console.log("User is busy");
             addToast("User is busy", 'warning');
             setIsCallActive(false);
             setCallEnded(true);
@@ -98,7 +94,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         socketService.on('call_ended', () => {
-             console.log("Call ended by remote user/connection lost");
              addToast("Call ended", 'info');
              endCallLocalCleanup();
         });
@@ -108,7 +103,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 try {
                     await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
                 } catch (e) {
-                    console.error("Error adding ice candidate", e);
+                    // Error already handled by UI
                 }
             }
         });
@@ -136,7 +131,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         pc.ontrack = (event) => {
-            console.log("Received remote track");
             setRemoteStream(event.streams[0]);
         };
 
@@ -162,13 +156,11 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
         } catch (err) {
-            console.error("Error accessing media devices, trying video-only fallback:", err);
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 setLocalStream(stream);
                 addToast("Microphone not found, starting with video only", 'info');
             } catch (videoErr) {
-                 console.error("Error accessing video-only:", videoErr);
                  addToast("Could not access camera or microphone", 'error');
             }
         }
@@ -195,7 +187,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             };
 
             pc.onconnectionstatechange = () => {
-                console.log("Connection state change:", pc.connectionState);
                 setConnectionState(pc.connectionState);
             };
 
@@ -217,7 +208,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
 
         } catch (err) {
-            console.error("Error starting call connection:", err);
             setIsCallActive(false);
         }
     };
@@ -232,13 +222,11 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
         } catch (err) {
-            console.warn("Could not access audio+video, trying video-only:", err);
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 setLocalStream(stream);
                 addToast("Microphone not found, answering with video only", 'info');
             } catch (videoErr) {
-                 console.error("Error accessing video-only:", videoErr);
                  addToast("Could not access camera or microphone", 'error');
             }
         }
@@ -263,7 +251,6 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             };
 
             pc.onconnectionstatechange = () => {
-                console.log("Connection state change:", pc.connectionState);
                 setConnectionState(pc.connectionState);
             };
 
@@ -281,7 +268,7 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
         } catch (err) {
-            console.error("Error answering call:", err);
+            // Error already handled by UI
         }
     };
 
