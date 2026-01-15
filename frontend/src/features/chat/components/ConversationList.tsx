@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Conversation } from '../services/chatService';
 import { Badge, Tooltip } from 'flowbite-react';
 import { HiArchive, HiInbox } from 'react-icons/hi';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface ConversationListProps {
     conversations: Conversation[];
@@ -88,7 +89,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                             const otherUsername = conversation.user1_id === currentUserId ? conversation.user2_username : conversation.user1_username;
                             // Use profile photo if available, otherwise fallback to generated avatar
                             const otherUserImage = conversation.user1_id === currentUserId ? conversation.user2_image : conversation.user1_image;
-                            const avatarUrl = otherUserImage || `https://ui-avatars.com/api/?name=${otherUsername}&background=random`;
+                            const avatarUrl = resolveImageUrl(otherUserImage) || `https://ui-avatars.com/api/?name=${otherUsername}&background=random`;
 
                             return (
                                 <li 

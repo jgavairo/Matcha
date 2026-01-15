@@ -34,7 +34,7 @@ const httpServer = createServer(app);
 const io = initializeSocket(httpServer);
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));

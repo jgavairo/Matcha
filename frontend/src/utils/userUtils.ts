@@ -1,3 +1,18 @@
+import { API_URL } from '../services/api';
+
+export const resolveImageUrl = (url: string | undefined | null): string => {
+    if (!url) return '';
+    
+    // Fix legacy localhost URLs explicitly to allow remote access
+    if (url.includes('localhost:5000/uploads/')) {
+        const relative = url.split('localhost:5000')[1];
+        return `${API_URL}${relative}`;
+    }
+
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${API_URL}${url}`;
+};
+
 export const getSexualOrientationLabel = (gender: string, preferences: string[]): string => {
   if (!preferences || preferences.length === 0) return 'Unknown';
 

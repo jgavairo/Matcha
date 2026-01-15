@@ -1,6 +1,7 @@
 import { UserProfile } from '../../../types/user';
 import { MatchFiltersState } from '../types/match';
 import { api } from '@services/api';
+import { resolveImageUrl } from '@utils/userUtils';
 
 // Simulating API calls
 export const matchService = {
@@ -55,7 +56,9 @@ export const matchService = {
               distance: Math.round(user.distance || 0),
               isOnline: user.is_online || false,
               lastConnection: user.last_connection || new Date().toISOString(),
-              images: user.profile_picture ? [user.profile_picture] : (user.images && user.images.length > 0 ? user.images : []),
+              images: user.profile_picture 
+                  ? [resolveImageUrl(user.profile_picture)] 
+                  : (user.images && user.images.length > 0 ? user.images.map(resolveImageUrl) : []),
               location: {
                   city: user.city || '',
                   latitude: user.latitude || 0,

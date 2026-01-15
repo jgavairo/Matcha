@@ -12,6 +12,7 @@ import ChatBubble from './ChatBubble';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
 import DatePlanner from './DatePlanner';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface ChatWindowProps {
     conversation: Conversation | null;
@@ -210,8 +211,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     }
 
     const otherUsername = conversation.user1_id === currentUserId ? conversation.user2_username : conversation.user1_username;
-    const otherUserImage = conversation.user1_id === currentUserId ? conversation.user2_image : conversation.user1_image;
-    const currentUserImage = user?.images?.[0] || null;
+    // Resolve images
+    const activeImage = conversation.user1_id === currentUserId ? conversation.user2_image : conversation.user1_image;
+    const otherUserImage = resolveImageUrl(activeImage);
+    const currentUserImage = resolveImageUrl(user?.images?.[0] || null);
     const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
 
     return (

@@ -22,7 +22,7 @@ const formatDuration = (ms: number) => {
 export const initializeSocket = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: true,
       methods: ["GET", "POST"],
       credentials: true
     }
