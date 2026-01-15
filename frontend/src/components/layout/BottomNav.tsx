@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { HiSparkles, HiChat, HiSearch, HiBell, HiUser } from 'react-icons/hi';
 import { useNotification } from '@context/NotificationContext';
+import { useChatContext } from '@context/ChatContext';
 import NotificationDropdown from '@features/notifications/components/NotificationDropdown';
 
 const BottomNav: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
-  const { unreadCount } = useNotification();
+  const { unreadCount: unreadNotifCount } = useNotification();
+  const { unreadCount: unreadChatCount } = useChatContext();
   const location = useLocation();
 
   const toggleNotifications = () => {
@@ -62,15 +64,20 @@ const BottomNav: React.FC = () => {
           >
             <div className="relative inline-flex items-center">
               <HiBell className={getIconClass(isNotificationsOpen)} />
-              {unreadCount > 0 && (
-                <div className="absolute block w-3 h-3 bg-red-500 border-2 border-white rounded-full top-0 start-4 dark:border-gray-900"></div>
+              {unreadNotifCount > 0 && (
+                <div className="absolute block w-3 h-3 bg-red-500 border-2 border-white rounded-full top-0 start-4 dark:border-gray-700"></div>
               )}
             </div>
           </button>
 
           {/* Chat */}
           <Link to="/chat" className={getItemClass(isActive('/chat'))}>
-            <HiChat className={getIconClass(isActive('/chat'))} />
+            <div className="relative inline-flex items-center">
+              <HiChat className={getIconClass(isActive('/chat'))} />
+              {unreadChatCount > 0 && (
+                <div className="absolute block w-3 h-3 bg-red-500 border-2 border-white rounded-full top-0 start-4 dark:border-gray-700"></div>
+              )}
+            </div>
           </Link>
 
           {/* Search */}
