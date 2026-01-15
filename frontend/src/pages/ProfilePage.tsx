@@ -12,12 +12,14 @@ import { CurrentUser, UserProfile, UserSummary } from '@app-types/user';
 import { api } from '@services/api';
 import { matchService } from '@features/matches/services/matchService';
 import { useNotification } from '@context/NotificationContext';
+import { useBlockUser } from '@features/matches/hooks/useBlockUser';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const { addToast } = useNotification();
+    const { blockUser } = useBlockUser();
 
     const handleTabChange = async (tabIndex: number) => {
         if (tabIndex === 3) { // Matches
@@ -169,8 +171,8 @@ const ProfilePage: React.FC = () => {
                 tags: data.tags || [],
                 fameRating: data.fame_rating || 0,
                 distance: summary.distance || 0,
-                isOnline: false, // Placeholder
-                lastConnection: new Date().toISOString(), // Placeholder
+                isOnline: data.is_online,
+                lastConnection: data.last_connection ? new Date(data.last_connection).toISOString() : '', // Keep standard format
                 images: data.images || [],
                 location: {
                     city: data.city || '',
@@ -350,8 +352,22 @@ const ProfilePage: React.FC = () => {
                         }
                     }
                 }}
-                onBlock={() => {}}
-                onReport={() => {}}
+                onBlock={async () => {
+                    if (selectedUser && selectedUser.id !== user?.id) {
+                         await blockUser(selectedUser.id, () => {
+                            setSelectedUser({ ...selectedUser, isMatch: false, isLiked: false });
+                            // Optionally refresh profile or lists
+                             setUser(prev => prev ? {
+                                ...prev,
+                                matches: prev.matches.filter(m => m.id !== selectedUser.id),
+                                likedBy: prev.likedBy.filter(u => u.id !== selectedUser.id),
+                                viewedBy: prev.viewedBy.filter(u => u.id !== selectedUser.id),
+                                blockedUsers: [...prev.blockedUsers, selectedUser]
+                            } : null);
+                        });
+                    }
+                }}
+                onReport={(reason) => console.log("Report", reason)}
                 hideActions={selectedUser?.id === user?.id}
             />
         </div>

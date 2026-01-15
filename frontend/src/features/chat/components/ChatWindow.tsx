@@ -6,6 +6,7 @@ import { useCall } from '@context/CallContext';
 import { useAuth } from '@context/AuthContext';
 import { HiCloudUpload } from 'react-icons/hi';
 import { useNotification } from '@context/NotificationContext';
+import { useChatContext } from '@context/ChatContext';
 
 import ChatBubble from './ChatBubble';
 import ChatHeader from './ChatHeader';
@@ -31,6 +32,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     const { callUser } = useCall();
     const { user } = useAuth();
     const { addToast } = useNotification();
+    const { refreshUnreadCount } = useChatContext();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { socketService } = useSocket();
 
@@ -42,7 +44,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
     useEffect(() => {
         if (conversation) {
             loadMessages();
-            chatService.markAsRead(conversation.id);
+            chatService.markAsRead(conversation.id).then(refreshUnreadCount);
             
             // Set initial status
             const isUser1 = conversation.user1_id === currentUserId;
@@ -64,7 +66,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             if (msg.conversation_id === conversation.id) {
                 setMessages((prev) => [...prev, msg]);
                 if (msg.sender_id !== currentUserId) {
-                    chatService.markAsRead(conversation.id);
+                    chatService.markAsRead(conversation.id).then(refreshUnreadCount);
                 }
             }
         };
@@ -237,12 +239,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 onToggleDatePlanner={() => setShowDatePlanner(!showDatePlanner)}
             />
 
-            <DatePlanner
-                targetUserId={conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id}
-                targetUsername={otherUsername}
-                isOpen={showDatePlanner}
-                onToggle={setShowDatePlanner}
-            />
+            {conversation.is_active && (
+                <DatePlanner
+                    targetUserId={conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id}
+                    targetUsername={otherUsername}
+                    isOpen={showDatePlanner}
+                    onToggle={setShowDatePlanner}
+                />
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white dark:bg-gray-900">

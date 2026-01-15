@@ -235,7 +235,7 @@ export const getUserById = async (id: number, currentUserId?: number) => {
     const query = `
         SELECT 
             u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
-            u.latitude, u.longitude, u.city, u.geolocation_consent,
+            u.latitude, u.longitude, u.city, u.geolocation_consent, u.is_online, u.last_connection,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             (
@@ -666,11 +666,24 @@ export const likeUser = async (likerId: number, likedId: number): Promise<{ isMa
         await client.query('BEGIN');
 
         // 1. Insert like
-        await db.query(`
+        const likeRes = await db.query(`
             INSERT INTO likes (liker_id, liked_id) 
             VALUES ($1, $2) 
             ON CONFLICT (liker_id, liked_id) DO NOTHING
         `, [likerId, likedId], { client });
+
+        // If no row inserted, it means already liked
+        if (likeRes.rowCount === 0) {
+            // Check if it's already a match to return consistent data
+             const matchCheck = await db.query(`
+                SELECT 1 FROM matches 
+                WHERE ((user_id_1 = $1 AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = $1))
+                AND is_active = TRUE
+            `, [likerId, likedId], { client });
+            
+            await client.query('COMMIT');
+            return { isMatch: matchCheck.rowCount != null && matchCheck.rowCount > 0 };
+        }
 
         // 2. Check for match
         const res = await db.query(`
@@ -732,7 +745,14 @@ export const unlikeUser = async (likerId: number, likedId: number): Promise<{ me
         await client.query('BEGIN');
 
         // 1. Remove like
-        await db.delete('likes', { liker_id: likerId, liked_id: likedId }, { client });
+        const deleteRes = await db.query(`
+            DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2
+        `, [likerId, likedId], { client });
+
+        if (deleteRes.rowCount === 0) {
+            await client.query('COMMIT');
+            return {};
+        }
 
         // 2. Deactivate match if exists
         const result = await deactivateMatch(likerId, likedId, client);
@@ -781,6 +801,8 @@ export const getLikedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE l.liked_id = $1
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
@@ -821,6 +843,8 @@ export const getViewedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE v.viewed_id = $1
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
+        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
@@ -933,11 +957,11 @@ export const blockUser = async (userId: number, blockedId: number) => {
         `, [userId, blockedId], { client });
 
         // Deactivate match if exists
-        await deactivateMatch(userId, blockedId, client);
+        const matchResult = await deactivateMatch(userId, blockedId, client);
         
         await client.query('COMMIT');
 
-        return true;
+        return { success: true, ...matchResult };
     } catch (error) {
         await client.query('ROLLBACK');
         return false;

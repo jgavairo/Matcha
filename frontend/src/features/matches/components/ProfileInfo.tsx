@@ -85,7 +85,13 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onLike, onDislike, onUn
               {!user.isOnline && (
                 <div className="flex items-center text-gray-400 text-sm mt-1">
                   <HiClock className="w-4 h-4 mr-1" />
-                  Last seen: {user.lastConnection}
+                  Last seen: {user.lastConnection ? new Date(user.lastConnection).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : 'Unknown'}
                 </div>
               )}
             </div>

@@ -398,8 +398,29 @@ export class UserController {
             if (!blockedId) {
                 return res.status(400).json({ error: 'Blocked ID is required' });
             }
-            const result = await blockUser(userId, blockedId);
-            if (result) {
+            const result: any = await blockUser(userId, blockedId);
+            
+            if (result && result.success) {
+                if (result.conversationId) {
+                    const io = getIO();
+                    
+                    // Emit system message to both users
+                    if (result.message) {
+                        io.to(`user_${userId}`).emit('chat_message', result.message);
+                        io.to(`user_${blockedId}`).emit('chat_message', result.message);
+                    }
+
+                    // Update conversation status for both users
+                    io.to(`user_${userId}`).emit('conversation_status_update', { 
+                        conversationId: result.conversationId, 
+                        is_active: false 
+                    });
+                    io.to(`user_${blockedId}`).emit('conversation_status_update', { 
+                        conversationId: result.conversationId, 
+                        is_active: false 
+                    });
+                }
+
                 return res.status(200).json({ message: 'User blocked successfully' });
             } else {
                 return res.status(400).json({ error: 'User already blocked' });

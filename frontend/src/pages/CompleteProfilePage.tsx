@@ -307,6 +307,9 @@ export default function CompleteProfilePage() {
           {step === 6 && (
             <div className="text-white">
               <h1 className="text-3xl font-bold mb-6 text-center">Where are you?</h1>
+              <p className="text-white/80 text-center mb-4 text-sm px-2">
+                By using your location, you explicitly consent to share your geolocation data with Matcha to find people near you.
+              </p>
               <button onClick={getCurrentLocation} disabled={isGettingLocation || isValidatingCity} className="w-full p-4 mb-6 rounded-2xl bg-white text-pink-600 font-bold flex items-center justify-center gap-2 disabled:opacity-50">
                 <HiLocationMarker className="w-5 h-5" />
                 {isGettingLocation ? 'Finding you...' : 'Use My Current Location'}
@@ -317,6 +320,9 @@ export default function CompleteProfilePage() {
                 <div className="flex-grow border-t border-white/30"></div>
               </div>
               <div className="relative">
+              <p className="text-white/60 text-center mt-2 mb-2 text-xs px-2">
+                By manually entering your city, you agree that your approximate location will be used for matchmaking.
+              </p>
                 <TextInput
                   placeholder="Enter your city (e.g. Paris)"
                   value={profileData.city}

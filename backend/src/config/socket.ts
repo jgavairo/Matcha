@@ -68,11 +68,8 @@ export const initializeSocket = (httpServer: HttpServer) => {
     try {
         await db.query('UPDATE users SET is_online = true WHERE id = $1', [userId]);
         
-        // Notify only engaged users
-        const friendIds = await matchModel.getMatchedUserIds(userId);
-        friendIds.forEach(friendId => {
-            io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: true });
-        });
+        // Notify all connected users
+        io.emit('user_status_change', { userId, isOnline: true });
     } catch (error) {
         // Erreur non-critique, on ignore silencieusement
     }
@@ -111,11 +108,8 @@ export const initializeSocket = (httpServer: HttpServer) => {
           const now = new Date();
           await db.query('UPDATE users SET is_online = false, last_connection = $1 WHERE id = $2', [now, userId]);
           
-          // Notify only engaged users
-          const friendIds = await matchModel.getMatchedUserIds(userId);
-          friendIds.forEach(friendId => {
-              io.to(`user_${friendId}`).emit('user_status_change', { userId, isOnline: false, lastConnection: now });
-          });
+          // Notify all connected users
+          io.emit('user_status_change', { userId, isOnline: false, lastConnection: now });
       } catch (error) {
           // Erreur non-critique, on ignore silencieusement
       }
