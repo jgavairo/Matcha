@@ -232,10 +232,10 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
                     <div className="flex gap-2 justify-end pt-2 border-t dark:border-gray-700">
                         {date.status === 'pending' && date.sender_id !== user?.id && (
                             <>
-                                <Button size="xs" gradientDuoTone="greenToTeal" onClick={() => handleAction('accepted')}>
+                                <Button size="xs" className="!bg-gradient-to-r !from-green-400 !to-teal-500 !text-white !border-none hover:opacity-90" onClick={() => handleAction('accepted')}>
                                     <HiCheck className="mr-1 h-3 w-3" /> Accept
                                 </Button>
-                                <Button size="xs" gradientDuoTone="pinkToOrange" onClick={() => handleAction('declined')}>
+                                <Button size="xs" className="!bg-gradient-to-r !from-pink-500 !to-orange-400 !text-white !border-none hover:opacity-90" onClick={() => handleAction('declined')}>
                                     <HiX className="mr-1 h-3 w-3" /> Decline
                                 </Button>
                             </>
