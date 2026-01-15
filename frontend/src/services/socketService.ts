@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import Cookies from 'js-cookie';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
 
 class SocketService {
     public socket: Socket;

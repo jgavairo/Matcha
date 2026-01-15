@@ -3,6 +3,7 @@ import { HiTrash, HiUpload, HiStar } from 'react-icons/hi';
 import ImageEditor from './ImageEditor';
 import { useNotification } from '@context/NotificationContext';
 import { PHOTOS_MIN } from '@shared/validation';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface PhotoUploadProps {
     images: string[];
@@ -112,7 +113,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {images.map((img, index) => (
                     <div key={index} className={`relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 ${index === 0 ? 'ring-4 ring-green-500' : ''}`}>
-                        <img src={img} alt={`Profile ${index + 1}`} className="w-full h-full object-cover" />
+                        <img src={resolveImageUrl(img)} alt={`Profile ${index + 1}`} className="w-full h-full object-cover" />
 
                         {/* Actions Overlay */}
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">

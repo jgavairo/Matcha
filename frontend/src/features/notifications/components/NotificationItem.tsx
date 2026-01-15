@@ -14,6 +14,7 @@ import {
 import { useNotification } from '@context/NotificationContext';
 import { NotificationItem as NotificationItemType } from '@app-types/notifications';
 import { formatTimeAgo } from '@utils/dateUtils';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface NotificationItemProps {
   notification: NotificationItemType;
@@ -100,7 +101,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, count
       <div className="shrink-0 relative">
         <img 
           className="rounded-full w-11 h-11 object-cover" 
-          src={notification.avatar || `https://ui-avatars.com/api/?name=${notification.sender || 'User'}&background=random`} 
+          src={resolveImageUrl(notification.avatar) || `https://ui-avatars.com/api/?name=${notification.sender || 'User'}&background=random`} 
           alt="avatar" 
         />
         {getIcon(notification.type)}

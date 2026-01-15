@@ -3,6 +3,7 @@ import { HiX, HiHeart } from 'react-icons/hi';
 import { UserProfile } from '@app-types/user';
 import ActionButton from '@ui/ActionButton';
 import { UserDistance, UserFame } from './UserMeta';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface UserCardProps {
   user: UserProfile;
@@ -27,7 +28,7 @@ const UserCard: React.FC<UserCardProps> = ({
         onClick={onOpenProfile}
       >
         <img
-          src={user.images[0]}
+          src={resolveImageUrl(user.images[0])}
           alt={user.username}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />

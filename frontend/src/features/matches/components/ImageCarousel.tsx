@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface ImageCarouselProps {
   images: string[];
@@ -24,7 +25,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt }) => {
     <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700">
       {/* Image */}
       <img 
-        src={images[currentIndex]} 
+        src={resolveImageUrl(images[currentIndex])} 
         alt={`${alt} - ${currentIndex + 1}`} 
         className="h-full w-full object-cover" 
       />
