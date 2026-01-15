@@ -2,29 +2,15 @@ import React from 'react';
 import { useNotification } from '@context/NotificationContext';
 import { NotificationType } from '@app-types/notifications';
 import NotificationItem from './NotificationItem';
-import { HiPlus } from 'react-icons/hi';
+import { HiX } from 'react-icons/hi';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
+  onClose: () => void;
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen }) => {
-  const { notifications, clearNotifications, addNotification } = useNotification();
-
-  const handleAddTestNotification = () => {
-    const types: NotificationType[] = ['like', 'visit', 'message', 'match', 'unlike', 'success', 'error', 'warning', 'info'];
-    const randomType = types[Math.floor(Math.random() * types.length)];
-    const names = ['Sarah Connor', 'Mike Ross', 'Jessica Pearson', 'Harvey Specter', 'Louis Litt'];
-    const randomName = names[Math.floor(Math.random() * names.length)];
-
-    addNotification({
-      type: randomType,
-      sender: randomName,
-      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
-      message: `This is a test notification of type ${randomType}`,
-      title: 'Test Notification'
-    });
-  };
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
+  const { notifications, clearNotifications } = useNotification();
 
   return (
     <div 
@@ -35,11 +21,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen }) =
       <div className="flex-none flex items-center justify-between px-4 py-2 font-medium text-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white sm:rounded-t-lg">
         <span>Notifications</span>
         <button 
-          onClick={handleAddTestNotification}
+          onClick={onClose}
           className="p-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-          title="Add test notification"
+          title="Close notifications"
         >
-          <HiPlus className="w-4 h-4" />
+          <HiX className="w-4 h-4" />
         </button>
       </div>
       <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">

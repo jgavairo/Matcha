@@ -193,7 +193,7 @@ export default function CompleteProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-400 via-pink-500 to-rose-600 flex flex-col relative overflow-y-auto">
+    <div className="h-full bg-gradient-to-br from-pink-400 via-pink-500 to-rose-600 flex flex-col relative overflow-y-auto">
       {/* Barre de progression fixe */}
       <div className="sticky top-0 left-0 right-0 h-1.5 bg-white/20 z-30">
         <div 
