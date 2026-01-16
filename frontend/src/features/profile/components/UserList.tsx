@@ -43,6 +43,15 @@ const UserList: React.FC<UserListProps> = ({ users, title, actionLabel, onAction
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
 
+                            {user.isOnline && (
+                                <div className="absolute top-2 right-2">
+                                    <span className="flex h-3 w-3 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                    </span>
+                                </div>
+                            )}
+
                             <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
                                 <div className="font-bold text-lg leading-tight">{user.username}, {user.age}</div>
                                 <div className="flex items-center text-xs text-gray-300 mt-1">

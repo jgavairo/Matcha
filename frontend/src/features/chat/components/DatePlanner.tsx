@@ -66,13 +66,21 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Combine date and time into datetime string
-            const dateTime = formData.date && formData.time 
-                ? `${formData.date}T${formData.time}:00`
-                : formData.date || '';
+            // Create a date object from the local inputs
+            let dateTimeToSend = '';
+            
+            if (formData.date && formData.time) {
+                // Construct "YYYY-MM-DDTHH:mm:00" which Date() parses as local time
+                const localDate = new Date(`${formData.date}T${formData.time}:00`);
+                // Convert to UTC ISO string to send to backend
+                dateTimeToSend = localDate.toISOString();
+            } else if (formData.date) {
+               // Fallback if only date
+               dateTimeToSend = new Date(formData.date).toISOString();
+            }
             
             const submitData = {
-                dateTime,
+                dateTime: dateTimeToSend,
                 location: formData.location,
                 description: formData.description
             };
@@ -116,8 +124,18 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
     const startEdit = () => {
         if (date) {
             const d = new Date(date.date_time);
-            const dateStr = d.toISOString().split('T')[0];
-            const timeStr = d.toTimeString().slice(0, 5);
+            
+            // Get local date string YYYY-MM-DD safely
+            // Trick: subtracting timezone offset allows toISOString() to display local time values
+            const offset = d.getTimezoneOffset();
+            const adjustedDate = new Date(d.getTime() - offset * 60 * 1000);
+            const dateStr = adjustedDate.toISOString().split('T')[0];
+            
+            // Get local time HH:MM safely
+            const hours = ('0' + d.getHours()).slice(-2);
+            const minutes = ('0' + d.getMinutes()).slice(-2);
+            const timeStr = `${hours}:${minutes}`;
+
             setFormData({
                 date: dateStr,
                 time: timeStr,
@@ -168,7 +186,10 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
                                     value={formData.date ? new Date(formData.date) : undefined}
                                     onChange={(selectedDate: Date | null) => {
                                         if (selectedDate) {
-                                            const dateStr = selectedDate.toISOString().split('T')[0];
+                                            // Compensate for timezone to get the correct YYYY-MM-DD from the picker
+                                            const offset = selectedDate.getTimezoneOffset();
+                                            const adjusted = new Date(selectedDate.getTime() - offset * 60 * 1000);
+                                            const dateStr = adjusted.toISOString().split('T')[0];
                                             setFormData({...formData, date: dateStr});
                                         } else {
                                             setFormData({...formData, date: ''});

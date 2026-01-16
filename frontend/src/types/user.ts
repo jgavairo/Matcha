@@ -14,6 +14,8 @@ export interface UserSummary {
   tags: string[];
   images: string[];
   fameRating: number;
+  isOnline?: boolean;
+  lastConnection?: string;
 }
 
 // Detailed version for Profile Page

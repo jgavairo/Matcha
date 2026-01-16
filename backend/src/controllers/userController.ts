@@ -20,7 +20,9 @@ const mapUserSummary = (u: any) => ({
     },
     tags: u.tags || [],
     images: u.images || [],
-    fameRating: u.fame_rating || 0
+    fameRating: u.fame_rating || 0,
+    isOnline: u.is_online || false,
+    lastConnection: u.last_connection || undefined
 });
 
 export class UserController {

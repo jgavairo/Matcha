@@ -14,6 +14,7 @@ import { matchService } from '@features/matches/services/matchService';
 import { useNotification } from '@context/NotificationContext';
 import { useBlockUser } from '@features/matches/hooks/useBlockUser';
 import { resolveImageUrl } from '@utils/userUtils';
+import { useSocket } from '@context/SocketContext';
 
 const ProfilePage: React.FC = () => {
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -21,6 +22,37 @@ const ProfilePage: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const { addToast } = useNotification();
     const { blockUser } = useBlockUser();
+    const { socketService } = useSocket();
+
+    useEffect(() => {
+        const handleStatusChange = (data: { userId: number; isOnline: boolean; lastConnection?: string }) => {
+            setUser(current => {
+                if (!current) return null;
+
+                const updateList = (list: UserSummary[]) => list.map(u => 
+                    u.id === data.userId ? { 
+                        ...u, 
+                        isOnline: data.isOnline, 
+                        lastConnection: data.lastConnection 
+                    } : u
+                );
+
+                return {
+                    ...current,
+                    matches: updateList(current.matches),
+                    likedBy: updateList(current.likedBy),
+                    viewedBy: updateList(current.viewedBy),
+                    blockedUsers: updateList(current.blockedUsers)
+                };
+            });
+        };
+
+        socketService.on('user_status_change', handleStatusChange);
+
+        return () => {
+            socketService.off('user_status_change', handleStatusChange);
+        };
+    }, [socketService]);
 
     const handleTabChange = async (tabIndex: number) => {
         if (tabIndex === 3) { // Matches

@@ -109,7 +109,7 @@ export const getMatchedUsers = async (userId: number) => {
     const query = `
         SELECT 
             u.id, u.username, u.first_name, u.last_name, u.birth_date, u.biography,
-            u.latitude, u.longitude, u.city,
+            u.latitude, u.longitude, u.city, u.is_online, u.last_connection,
             EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
             g.gender,
             (
