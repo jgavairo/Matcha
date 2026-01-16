@@ -9,7 +9,8 @@ import {
   HiCheckCircle, 
   HiXCircle, 
   HiExclamation,
-  HiX
+  HiX,
+  HiCalendar
 } from 'react-icons/hi';
 import { useNotification } from '@context/NotificationContext';
 import { NotificationItem as NotificationItemType } from '@app-types/notifications';
@@ -87,6 +88,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, count
         return <div className="absolute flex items-center justify-center w-5 h-5 ms-6 -mt-5 bg-red-500 border border-white rounded-full dark:border-gray-800"><HiXCircle className="w-3 h-3 text-white" /></div>;
       case 'warning':
         return <div className="absolute flex items-center justify-center w-5 h-5 ms-6 -mt-5 bg-orange-500 border border-white rounded-full dark:border-gray-800"><HiExclamation className="w-3 h-3 text-white" /></div>;
+      case 'date_proposed':
+      case 'date_modified':
+      case 'date_accepted':
+      case 'date_declined':
+        return <div className="absolute flex items-center justify-center w-5 h-5 ms-6 -mt-5 bg-pink-500 border border-white rounded-full dark:border-gray-800"><HiCalendar className="w-3 h-3 text-white" /></div>;
       case 'info':
       default:
         return <div className="absolute flex items-center justify-center w-5 h-5 ms-6 -mt-5 bg-blue-400 border border-white rounded-full dark:border-gray-800"><HiInformationCircle className="w-3 h-3 text-white" /></div>;

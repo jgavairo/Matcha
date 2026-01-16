@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as dateModel from '../models/dateModel';
 import * as chatModel from '../models/chatModel';
+import { getUserById } from '../models/userModel';
 import { getIO } from '../config/socket';
 import { createNotification } from '../models/notificationModel';
 
@@ -14,13 +15,16 @@ export const proposeDate = async (req: Request, res: Response) => {
         const io = getIO();
         const msg = `New date proposal`;
         const notif = await createNotification(receiverId, 'info', msg, senderId);
+        const sender = await getUserById(senderId);
 
         io.to(`user_${receiverId}`).emit('notification', {
             id: notif.id,
             type: 'date_proposed',
             message: msg,
             data: date,
-            senderId: senderId, 
+            senderId: senderId,
+            senderUsername: sender.username,
+            avatar: sender.images[0],
             time: notif.created_at
         });
         
@@ -75,6 +79,7 @@ export const updateDateStatus = async (req: Request, res: Response) => {
         const io = getIO();
         const msg = `Date proposal ${status}`;
         const notif = await createNotification(date.sender_id, 'info', msg, userId);
+        const responder = await getUserById(userId);
 
         io.to(`user_${date.sender_id}`).emit('notification', {
             id: notif.id,
@@ -82,6 +87,8 @@ export const updateDateStatus = async (req: Request, res: Response) => {
             message: msg,
             data: updated,
             senderId: userId,
+            senderUsername: responder.username,
+            avatar: responder.images[0],
             time: notif.created_at
         });
 
@@ -125,10 +132,19 @@ export const modifyDate = async (req: Request, res: Response) => {
         });
 
         const io = getIO();
+        const msg = 'Date proposal modified';
+        const notif = await createNotification(newReceiverId, 'info', msg, userId);
+        const sender = await getUserById(userId);
+
         io.to(`user_${newReceiverId}`).emit('notification', {
+            id: notif.id,
             type: 'date_modified',
-            message: `Date proposal modified`,
-            data: updated
+            message: msg,
+            data: updated,
+            senderId: userId,
+            senderUsername: sender.username,
+            avatar: sender.images[0],
+            time: notif.created_at
         });
 
         // System Message

@@ -46,6 +46,10 @@ const getTitleByType = (type: string) => {
         case 'visit': return 'Profile Visitor';
         case 'message': return 'New Message';
         case 'unlike': return 'Match Update';
+        case 'date_proposed': return 'Date Proposal';
+        case 'date_modified': return 'Date Updated';
+        case 'date_accepted': return 'Date Accepted';
+        case 'date_declined': return 'Date Declined';
         default: return 'Notification';
     }
 };
