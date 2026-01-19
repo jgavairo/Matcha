@@ -1,8 +1,8 @@
 all: install build up
 
 install:
-	cd backend && npm install
-	cd frontend && npm install
+	docker run --rm -v $(PWD)/backend:/app -w /app -e NPM_CONFIG_CACHE=/tmp/.npm node:20-alpine npm install
+	docker run --rm -v $(PWD)/frontend:/app -w /app -e NPM_CONFIG_CACHE=/tmp/.npm node:20-alpine npm install
 
 build:
 	docker compose build
@@ -14,11 +14,11 @@ down:
 	docker compose down
 
 clean: down
-	docker system prune -f
+	docker system prune -a
 
 fclean: clean
-	rm -rf backend/node_modules frontend/node_modules
-	rm -rf backend/dist frontend/dist
+	docker run --rm -v $(PWD)/backend:/app -w /app node:20-alpine rm -rf node_modules dist
+	docker run --rm -v $(PWD)/frontend:/app -w /app node:20-alpine rm -rf node_modules dist
 
 re: fclean all
 
