@@ -53,7 +53,14 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
         const errorMessages = Object.values(details).join(', ');
         addToast(`Validation errors: ${errorMessages}`, 'error');
       } else {
-        const errorMessage = error.response?.data?.error || 'Error registering user';
+        let errorMessage = 'Error registering user';
+
+        if (error.response?.status === 429) {
+          errorMessage = 'Too many registration attempts. Please try again later.';
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        }
+
         addToast(errorMessage, 'error');
       }
     } finally {

@@ -37,7 +37,14 @@ export const ForgotPasswordForm = ({ onLoadingChange }: ForgotPasswordFormProps)
       addToast('Email sent successfully', 'success');
       navigate('/login');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Error sending email';
+      let errorMessage = 'Error sending email';
+
+      if (error.response?.status === 429) {
+        errorMessage = 'Too many attempts. Please try again later.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+
       addToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);

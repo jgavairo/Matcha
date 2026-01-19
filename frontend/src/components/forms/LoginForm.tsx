@@ -35,7 +35,14 @@ const LoginForm = () => {
         navigate('/');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Wrong username or password';
+      let errorMessage = 'Wrong username or password';
+
+      if (error.response?.status === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
       addToast(errorMessage, 'error');
     }
   };
