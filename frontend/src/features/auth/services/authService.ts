@@ -1,5 +1,6 @@
 import { api } from "@services/api";
 import { ForgotPasswordFormData, LoginFormData, RegisterFormData } from "@app-types/forms";
+import Cookies from 'js-cookie';
 
 const authService = {
     async login(formData: LoginFormData) {
@@ -27,6 +28,9 @@ const authService = {
         }
     },
     async checkAuth() {
+        if (!Cookies.get('token')) {
+            throw new Error('No token found');
+        }
         try {
             const response = await api.get('/auth/me');
             return response.data;
