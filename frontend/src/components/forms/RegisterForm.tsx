@@ -80,6 +80,7 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
         label="Username"
         placeholder="johndoe"
         maxLength={USERNAME_MAX}
+        autoComplete="username"
         disabled={isLoading}
         {...register("username", { 
           required: "Username is required",
@@ -142,6 +143,7 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
           id="password"
           label="Password"
           type="password"
+          autoComplete="new-password"
           disabled={isLoading}
           {...register("password", { 
             required: "Password is required",
@@ -154,6 +156,7 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
           id="confirmPassword"
           label="Confirm Password"
           type="password"
+          autoComplete="new-password"
           disabled={isLoading}
           {...register("confirmPassword", { 
             required: "Please confirm your password",
