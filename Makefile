@@ -32,6 +32,6 @@ logs:
 	docker compose logs -f
 
 seed:
-	python3 generate_seed.py
+	python3 scripts/generate_seed.py
 
 .PHONY: all install build up down clean fclean re stop start logs seed
