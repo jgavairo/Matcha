@@ -35,7 +35,8 @@ const SearchPage: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hasSearched, setHasSearched] = useState(() => {
     // If we have saved filters, we want to search immediately
-    return !!localStorage.getItem('matcha_search_filters');
+      return !!localStorage.getItem('matcha_search_filters');
+    //   TODO : free this into the logout flow
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const observerTarget = useRef(null);

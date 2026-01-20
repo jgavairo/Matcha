@@ -3,6 +3,8 @@ import { searchUsers, likeUser, dislikeUser, unlikeUser, getUserById } from '../
 import { createNotification } from '../models/notificationModel';
 import { getIO } from '../config/socket';
 
+// TODO: empecher d'intéragur avec soi et les utilisateurs bloqués
+
 export class MatchController {
     public like = async (req: Request, res: Response) => {
         try {
