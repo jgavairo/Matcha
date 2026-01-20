@@ -31,6 +31,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 }) => {
     const [parsedContent, setParsedContent] = useState<ParsedContent>({ type: 'text', text: message.content });
     const [isPlaying, setIsPlaying] = useState(false);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
@@ -54,6 +56,33 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 audioRef.current.play();
             }
             setIsPlaying(!isPlaying);
+        }
+    };
+
+    const formatTime = (time: number) => {
+        if (!time) return "0:00";
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+        }
+    };
+
+    const handleAudioEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
         }
     };
 
@@ -95,31 +124,57 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     const renderContent = () => {
         switch (parsedContent.type) {
             case 'audio':
+                // Generate simple visualization bars
+                // Using a predefined pattern of heights to mimic a waveform
+                const barHeights = [6, 9, 27, 27, 34, 34, 29, 20, 13, 8, 15, 34, 34, 39, 39, 36, 27, 22, 17, 36, 36, 26, 22, 22, 13, 8, 5];
+                
                 return (
-                    <div className={`flex items-center space-x-1.5 rtl:space-x-reverse`}>
-                       <button onClick={toggleAudio} className="inline-flex self-center items-center text-gray-900 dark:text-white hover:text-gray-600" type="button">
+                    <div className="flex items-center space-x-2">
+                       <button 
+                            onClick={toggleAudio} 
+                            className="inline-flex self-center items-center p-2 rounded-full text-gray-900 bg-white/20 hover:bg-white/30 dark:text-white dark:bg-gray-600/50 dark:hover:bg-gray-600 transition-colors focus:outline-none" 
+                            type="button"
+                        >
                           {isPlaying ? (
-                              <HiPause className="w-6 h-6" />
+                              <HiPause className="w-5 h-5" />
                           ) : (
-                              <HiPlay className="w-6 h-6" />
+                              <HiPlay className="w-5 h-5 pl-0.5" />
                           )}
                        </button>
+                       
+                       <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1 h-10 px-2 min-w-[150px]">
+                                {barHeights.map((height, i) => {
+                                    const progress = currentTime / (duration || 1);
+                                    const barProgress = i / barHeights.length;
+                                    const isPlayed = barProgress < progress;
+                                    
+                                    return (
+                                        <div 
+                                            key={i} 
+                                            className={`w-1 rounded-full transition-colors duration-200 ${
+                                                isPlayed 
+                                                    ? (isMe ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-800 dark:bg-gray-200')
+                                                    : (isMe ? 'bg-blue-300 dark:bg-blue-800' : 'bg-gray-400 dark:bg-gray-500')
+                                            }`}
+                                            style={{ height: `${height}px` }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            <span className={`text-xs font-medium px-1 ${isMe ? 'text-blue-700 dark:text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                {isPlaying ? formatTime(currentTime) : (duration ? formatTime(duration) : "Loading...")}
+                            </span>
+                       </div>
+
                        <audio 
                            ref={audioRef} 
                            src={parsedContent.url} 
-                           onEnded={() => setIsPlaying(false)}
+                           onLoadedMetadata={handleLoadedMetadata}
+                           onTimeUpdate={handleTimeUpdate}
+                           onEnded={handleAudioEnded}
                            className="hidden" 
                        />
-                       {/* Simplified Waveform Visual */}
-                       <div className="flex items-center gap-0.5 h-8">
-                            {[...Array(20)].map((_, i) => (
-                                <div key={i} className={`w-1 bg-gray-500 dark:bg-gray-400 rounded-full ${i % 2 === 0 ? 'h-3' : 'h-5'}`}></div>
-                            ))}
-                       </div>
-                       <span className="inline-flex self-center items-center text-sm font-medium text-gray-900 dark:text-white">
-                           {/* Add duration if available, else just placeholder */}
-                           Voice
-                       </span>
                     </div>
                 );
 
