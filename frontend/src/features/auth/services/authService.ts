@@ -28,11 +28,9 @@ const authService = {
         }
     },
     async checkAuth() {
-        if (!Cookies.get('token')) {
-            throw new Error('No token found');
-        }
         try {
             const response = await api.get('/auth/me');
+            console.log('Token found', response.data);
             return response.data;
         } catch (error) {
             throw error;
