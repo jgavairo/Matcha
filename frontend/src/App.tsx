@@ -52,10 +52,14 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<div className="text-center py-10">404 Not Found</div>} />
             </Route>
+        </Route>
+
+        {/* Public Route (Accessible both logged in and logged out) */}
+        <Route element={<MainLayout />}>
+           <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
 
         <Route path="/" element={

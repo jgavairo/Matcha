@@ -99,13 +99,9 @@ const ProfilePage: React.FC = () => {
 
     const handleProfileUpdate = async (data: Partial<CurrentUser>) => {
         if (!user) return;
-        try {
-            await api.put('/users/profile', data);
-            setUser({ ...user, ...data });
-            addToast("Profile updated successfully", 'success');
-        } catch (error) {
-            addToast("Failed to update profile", 'error');
-        }
+        await api.put('/users/profile', data);
+        setUser({ ...user, ...data });
+        addToast("Profile updated successfully", 'success');
     };
 
     const handlePhotoUpload = async (file: File) => {

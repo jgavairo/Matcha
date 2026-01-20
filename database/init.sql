@@ -46,6 +46,8 @@ CREATE TABLE users (
     status_id INT REFERENCES status(id) DEFAULT 0,
     verification_token VARCHAR(255),
     verification_token_expires TIMESTAMP,
+    new_email VARCHAR(255),
+    new_email_token VARCHAR(255),
     latitude FLOAT,
     longitude FLOAT,
     city VARCHAR(100),

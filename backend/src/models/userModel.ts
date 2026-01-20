@@ -7,6 +7,18 @@ import { activateMatch, deactivateMatch } from './matchModel';
 import { PHOTOS_MIN } from '@shared/validation';
 
 export const createUser = async (user: RegisterFormData) => {
+    // Check if email already exists
+    const existingEmail = await db.findOne('users', { email: user.email }, ['id']);
+    if (existingEmail) {
+        throw new Error('Email already in use');
+    }
+
+    // Check if username already exists
+    const existingUsername = await db.findOne('users', { username: user.username }, ['id']);
+    if (existingUsername) {
+        throw new Error('Username already taken');
+    }
+
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const verificationToken = uuidv4();
     const verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
@@ -63,6 +75,22 @@ const genderMap: { [key: string]: number } = { male: 1, female: 2, other: 3 };
 export const updateUser = async (id: number, data: any) => {
     const { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = data;
     
+    // Check if email already exists for another user
+    if (email) {
+        const existingEmailUser = await db.findOne('users', { email }, ['id']);
+        if (existingEmailUser && existingEmailUser.id !== id) {
+            throw new Error('Email already in use');
+        }
+    }
+
+    // Check if username already exists for another user
+    if (username) {
+        const existingUsernameUser = await db.findOne('users', { username }, ['id']);
+        if (existingUsernameUser && existingUsernameUser.id !== id) {
+            throw new Error('Username already taken');
+        }
+    }
+
     // Map gender string to ID
     const genderId = gender ? (genderMap[gender] || null) : null;
 
@@ -1032,4 +1060,36 @@ export const unblockUser = async (userId: number, unblockedId: number) => {
     } catch (error) {
         return false;
     }
+};
+export const getUserByNewEmailToken = async (token: string) => {
+    try {
+        const user = await db.findOne(
+            'users', 
+            { new_email_token: token },
+            ['id', 'new_email']
+        );
+        
+        if (!user) {
+            return { error: 'invalid_token' };
+        }
+        
+        return { id: user.id, newEmail: user.new_email };
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const verifyUserNewEmail = async (userId: number, newEmail: string) => {
+    return await db.update('users', userId, {
+        email: newEmail,
+        new_email: null,
+        new_email_token: null
+    });
+};
+
+export const savePendingEmail = async (userId: number, newEmail: string, token: string) => {
+    return await db.update('users', userId, {
+        new_email: newEmail,
+        new_email_token: token
+    });
 };

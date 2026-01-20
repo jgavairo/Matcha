@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion, removeImageComplete } from '../models/userModel';
+import { blockUser, unblockUser, addReport, updateUser, completeProfileUser, updateUserInterests, updatePassword, addImage, removeImage, setProfileImage, updateGeolocationConsent, recordView, getUserById, getLikedByUsers, getViewedByUsers, updateUserStatus, validateProfileCompletion, removeImageComplete, savePendingEmail, getUserByEmail } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
 import { createNotification } from '../models/notificationModel';
 import { db } from '../utils/db';
 import { EMAIL_REGEX, PASSWORD_REGEX } from '@shared/validation';
+import { generateToken } from '../utils/jwt';
+import { AuthController } from './authController';
+import nodemailer from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -35,16 +39,55 @@ export class UserController {
 
             const { tags, username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, statusId, geolocationConsent } = req.body;
 
+            let updateMessage = 'Profile updated successfully';
+
             if (email) {
                 const emailRegex = EMAIL_REGEX.source;
                 if (!email.match(emailRegex)) {
                     return res.status(400).json({ error: 'Invalid email format' });
                 }
+
+                // Check if email is different from current
+                const currentUser = await getUserById(userId);
+                if (currentUser && currentUser.email !== email) {
+                    
+                    // Check if email is already taken by another user
+                    const existingUser = await getUserByEmail(email);
+                    if (existingUser) {
+                        return res.status(400).json({ error: 'Email already in use' });
+                    }
+
+                    // Handle email change with verification
+                    const token = uuidv4();
+                    await savePendingEmail(userId, email, token);
+                    
+                    // Send verification email
+                    const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${token}&type=email_change`;
+                    
+                    await AuthController.sendEmail({
+                        to: email,
+                        subject: 'Verify your new email address',
+                        title: 'Verify your new email',
+                        subtitle: 'Confirm your new email address',
+                        message: 'You have requested to change your email address. Please click the button below to verify this new address.',
+                        buttonText: 'Verify my email',
+                        url: verificationLink,
+                        logoCid: 'matcha-logo'
+                    });
+                    
+                    updateMessage = 'Profile updated. Please check your new email to verify the change.';
+                    // Remove email from data to update so it doesn't get updated immediately
+                    // But we still update other fields
+                }
             }
 
-            // Update basic user info (only if fields are provided)
+            // Update basic user info (exclude email if handled separately above, actually we pass 'email' but updateUser ignores it if we don't handle it right? 
+            // Wait, updateUser extracts email from data. We should pass data without email if email changed.)
+            
+            const dataToUpdate = { username, firstName, lastName, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, geolocationConsent };
+            
             // Note: We don't update statusId here yet, we'll validate first
-            await updateUser(userId, { username, firstName, lastName, email, gender, sexualPreferences, biography, latitude, longitude, city, birthDate, geolocationConsent });
+            await updateUser(userId, dataToUpdate);
 
             // Update interests if provided
             if (tags && tags.length > 0) {
@@ -65,8 +108,11 @@ export class UserController {
                 await updateUser(userId, { statusId });
             }
 
-            res.status(200).json({ message: 'Profile updated successfully' });
-        } catch (error) {
+            res.status(200).json({ message: updateMessage });
+        } catch (error: any) {
+            if (error.message === 'Email already in use' || error.message === 'Username already taken') {
+                return res.status(400).json({ error: error.message });
+            }
             res.status(500).json({ error: 'Internal server error' });
         }
     };

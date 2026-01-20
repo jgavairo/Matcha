@@ -8,10 +8,12 @@ import {
     getLikedByUsers,
     getViewedByUsers,
     getUserByVerificationToken,
+    getUserByNewEmailToken,
     updateUserStatus,
     generateVerificationToken,
     updatePassword,
-    getBlockedUsers
+    getBlockedUsers,
+    verifyUserNewEmail
 } from '../models/userModel';
 import { getMatchedUsers } from '../models/matchModel';
 import { generateToken } from '../utils/jwt';
@@ -23,7 +25,7 @@ import { PASSWORD_REGEX } from '@shared/validation';
 
 export class AuthController {
 
-    private getTransporter(): Transporter {
+    public static getTransporter(): Transporter {
         return nodemailer.createTransport({
             service: 'gmail',
             from: 'matcha@noreply.com',
@@ -34,7 +36,7 @@ export class AuthController {
         });
     }
 
-    private async sendEmail(params: {
+    public static async sendEmail(params: {
         to: string;
         subject: string;
         title: string;
@@ -45,7 +47,7 @@ export class AuthController {
         logoCid: string;
     }): Promise<void> {
         const { to, subject, title, subtitle, message, buttonText, url, logoCid } = params;
-        const transporter = this.getTransporter();
+        const transporter = AuthController.getTransporter();
         const logoPath = path.resolve(__dirname, '../../assets/logo.png');
         
         let templatePath = path.resolve(__dirname, '../templates/email.html');
@@ -102,7 +104,7 @@ export class AuthController {
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
             const verifyUrl = `${frontendUrl}/verify-email?token=${user.verificationToken}`;
 
-            await this.sendEmail({
+            await AuthController.sendEmail({
                 to: user.email,
                 subject: 'Welcome to Matcha – Verify your account',
                 title: `Bienvenue sur Matcha, ${user.username} !`,
@@ -140,7 +142,7 @@ export class AuthController {
                     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
                     const verifyUrl = `${frontendUrl}/verify-email?token=${newToken}`;
 
-                    await this.sendEmail({
+                    await AuthController.sendEmail({
                         to: email,
                         subject: 'New verification link – Matcha',
                         title: 'New verification link',
@@ -278,7 +280,7 @@ export class AuthController {
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
             const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
-            await this.sendEmail({
+            await AuthController.sendEmail({
                 to: email,
                 subject: 'Reset your password – Matcha',
                 title: 'Reset your password',
@@ -297,12 +299,32 @@ export class AuthController {
     }
 
     verifyEmail = async (req: Request, res: Response) => {
-        const { token } = req.query;
+        const { token, type } = req.query;
         if (!token || typeof token !== 'string') {
             res.status(400).json({ error: 'Token is required' });
             return;
         }
+
         try {
+            // Handle email change verification
+            if (type === 'email_change') {
+                const result = await getUserByNewEmailToken(token as string);
+                
+                if ('error' in result) {
+                    res.status(400).json({ error: 'Invalid or expired verification token' });
+                    return;
+                }
+                
+                if (result.newEmail) {
+                    await verifyUserNewEmail(result.id, result.newEmail);
+                    res.status(200).json({ message: 'Email address updated successfully' });
+                } else {
+                    res.status(400).json({ error: 'Invalid verification request' });
+                }
+                return;
+            }
+
+            // Normal account verification
             const user = await getUserByVerificationToken(token as string);
             
             if ('error' in user) {
@@ -317,7 +339,7 @@ export class AuthController {
             }
             
             if (user.status === 1) {
-                res.status(400).json({ error: 'Email already verified' });
+                res.status(200).json({ message: 'Email already verified' });
                 return;
             }
             

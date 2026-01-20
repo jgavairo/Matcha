@@ -25,7 +25,7 @@ import {
 
 interface EditProfileFormProps {
     user: CurrentUser;
-    onSubmit: (data: Partial<CurrentUser>) => void;
+    onSubmit: (data: Partial<CurrentUser>) => Promise<void>;
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => {
@@ -44,7 +44,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
     const [isGeocoding, setIsGeocoding] = useState(false);
     const { addToast } = useNotification();
 
-    const { register, handleSubmit, formState: { errors }, watch, getValues, control, setValue } = useForm({
+    const { register, handleSubmit, formState: { errors }, watch, getValues, control, setValue, setError } = useForm({
         mode: "onChange",
         defaultValues: {
             username: user.username,
@@ -200,7 +200,22 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, onSubmit }) => 
             tags: selectedTags,
             ...finalLocation
         };
-        onSubmit(processedData);
+
+        try {
+            await onSubmit(processedData);
+            
+            if (processedData.email !== user.email) {
+                addToast('Email verification link has been sent to your new address. Please verify to update.', 'success');
+            }
+        } catch (error: any) {
+            if (error.response?.data?.error === 'Email already in use') {
+                setError('email', { type: 'manual', message: 'Email already in use' });
+            } else if (error.response?.data?.error === 'Username already taken') {
+                setError('username', { type: 'manual', message: 'Username already taken' });
+            } else {
+                addToast(error.response?.data?.error || "Failed to update profile", 'error');
+            }
+        }
     };
 
     const filteredTags = availableTags.filter(tag => 
