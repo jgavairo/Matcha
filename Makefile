@@ -15,6 +15,7 @@ down:
 
 clean: down
 	docker system prune -a
+	docker volume prune -a
 
 fclean: clean
 	docker run --rm -v $(PWD)/backend:/app -w /app node:20-alpine rm -rf node_modules dist

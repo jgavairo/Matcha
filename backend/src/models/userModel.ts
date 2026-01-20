@@ -232,6 +232,16 @@ export const setProfileImage = async (userId: number, url: string) => {
 };
 
 export const getUserById = async (id: number, currentUserId?: number) => {
+    if (currentUserId) {
+        const blockCheck = await db.query(
+            'SELECT 1 FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
+            [currentUserId, id]
+        );
+        if (blockCheck.rowCount > 0) {
+            return null;
+        }
+    }
+
     const query = `
         SELECT 
             u.id, u.email, u.username, u.first_name, u.last_name, u.birth_date, u.biography, u.status_id,
@@ -265,7 +275,7 @@ export const getUserById = async (id: number, currentUserId?: number) => {
                 SELECT 1 FROM likes WHERE liker_id = $2 AND liked_id = u.id
             ) as is_liked,
             EXISTS (
-                SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = u.id)
+                SELECT 1 FROM matches WHERE ((user_id_1 = u.id AND user_id_2 = $2) OR (user_id_1 = $2 AND user_id_2 = u.id)) AND is_active = TRUE
             ) as is_match,
             -- Calculate distance (in km)
             (
@@ -388,15 +398,13 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     } = filters;
     const offset = (page - 1) * limit;
 
-    // Get current user location, tags, blocked users, and users who blocked us
+    // Get current user location and tags
     const currentUserResult = await db.query(
         `SELECT 
             u.latitude, 
             u.longitude, 
             u.gender_id, 
             u.sexual_preferences,
-            u.blocked_users,
-            u.blocked_by_users,
             COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags
         FROM users u
         LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -408,12 +416,14 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
     const currentUser = currentUserResult.rows[0];
     if (!currentUser) throw new Error('User not found');
     
-    // Get blocked users array (users I blocked) - default to empty array if null
-    const blockedUserIds = currentUser.blocked_users || [];
+    // Get blocked users (I blocked them)
+    const blockedRes = await db.query('SELECT blocked_id FROM blocks WHERE blocker_id = $1', [currentUserId]);
+    const blockedUserIds = blockedRes.rows.map((r: any) => r.blocked_id);
     
-    // Get users who blocked me - default to empty array if null
-    const blockedByUserIds = currentUser.blocked_by_users || [];
-    
+    // Get users who blocked me
+    const blockedByRes = await db.query('SELECT blocker_id FROM blocks WHERE blocked_id = $1', [currentUserId]);
+    const blockedByUserIds = blockedByRes.rows.map((r: any) => r.blocker_id);
+
     // Combine both lists to exclude from results
     const allBlockedIds = [...new Set([...blockedUserIds, ...blockedByUserIds])];
 
@@ -481,7 +491,7 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 ) as has_liked_you,
                 -- Check if they are a match
                 EXISTS (
-                    SELECT 1 FROM matches WHERE (user_id_1 = u.id AND user_id_2 = $4) OR (user_id_1 = $4 AND user_id_2 = u.id)
+                    SELECT 1 FROM matches WHERE ((user_id_1 = u.id AND user_id_2 = $4) OR (user_id_1 = $4 AND user_id_2 = u.id)) AND is_active = TRUE
                 ) as is_match,
                 -- Check if I have liked the user
                 EXISTS (
@@ -808,8 +818,8 @@ export const getLikedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE l.liked_id = $1
-        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
-        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
+        AND NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $1 AND blocked_id = u.id)
+        AND NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = u.id AND blocked_id = $1)
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
@@ -850,8 +860,8 @@ export const getViewedByUsers = async (userId: number) => {
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
         WHERE v.viewed_id = $1
-        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_users, '{}')) FROM users WHERE id = $1))
-        AND NOT (u.id = ANY(SELECT UNNEST(COALESCE(blocked_by_users, '{}')) FROM users WHERE id = $1))
+        AND NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $1 AND blocked_id = u.id)
+        AND NOT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = u.id AND blocked_id = $1)
         GROUP BY u.id, g.gender
     `;
     const result = await db.query(query, [userId]);
@@ -936,25 +946,22 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
 // };
 
 export const blockUser = async (userId: number, blockedId: number) => {
+    if (userId === blockedId) return false;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // Get the user who is blocking (userId)
-        const blockingUser = await db.findOne('users', { id: userId }, ['blocked_users'], { client });
-        if (blockingUser.blocked_users.includes(blockedId)) {
-            await client.query('ROLLBACK');
-            return false; // Already blocked
+        // Insert into blocks table
+        const blockRes = await db.query(`
+            INSERT INTO blocks (blocker_id, blocked_id)
+            VALUES ($1, $2)
+            ON CONFLICT (blocker_id, blocked_id) DO NOTHING
+        `, [userId, blockedId], { client });
+
+        if (blockRes.rowCount === 0) {
+             await client.query('ROLLBACK');
+             return false;
         }
-        
-        // Get the user who is being blocked (blockedId)
-        const blockedUser = await db.findOne('users', { id: blockedId }, ['blocked_by_users'], { client });
-        
-        // Update blocking user: add blockedId to their blocked_users list
-        await db.update('users', userId, { blocked_users: [...blockingUser.blocked_users, blockedId] }, { client });
-        
-        // Update blocked user: add userId to their blocked_by_users list
-        await db.update('users', blockedId, { blocked_by_users: [...(blockedUser.blocked_by_users || []), userId] }, { client });
 
         // Remove likes between users
         await db.query(`
@@ -979,18 +986,6 @@ export const blockUser = async (userId: number, blockedId: number) => {
 
 
 export const getBlockedUsers = async (userId: number) => {
-    // First get the array of blocked user IDs
-    const userQuery = `
-        SELECT blocked_users FROM users WHERE id = $1
-    `;
-    const userResult = await db.query(userQuery, [userId]);
-    const blockedUserIds = userResult.rows[0]?.blocked_users || [];
-    
-    // If no blocked users, return empty array
-    if (!blockedUserIds || blockedUserIds.length === 0) {
-        return [];
-    }
-    
     // Fetch full user data for each blocked user
     const query = `
         SELECT 
@@ -1019,25 +1014,22 @@ export const getBlockedUsers = async (userId: number) => {
                 (SELECT COUNT(*) FROM likes WHERE liked_id = u.id) * 5 +
                 (SELECT COUNT(*) FROM views WHERE viewed_id = u.id)
             ) as fame_rating
-        FROM users u
+        FROM blocks b
+        JOIN users u ON b.blocked_id = u.id
         LEFT JOIN genders g ON u.gender_id = g.id
         LEFT JOIN user_interests ui ON u.id = ui.user_id
         LEFT JOIN interests t ON ui.interest_id = t.id
-        WHERE u.id = ANY($2::int[])
+        WHERE b.blocker_id = $1
         GROUP BY u.id, g.gender
     `;
-    const result = await db.query(query, [userId, blockedUserIds]);
+    const result = await db.query(query, [userId]);
     return result.rows;
 };
 
 export const unblockUser = async (userId: number, unblockedId: number) => {
     try {
-        const blockedUsers = await db.findOne('users', { id: userId }, ['blocked_users']);
-        if (!blockedUsers.blocked_users.includes(unblockedId)) {
-            return false;
-        }
-        await db.update('users', userId, { blocked_users: blockedUsers.blocked_users.filter((id: any) => id !== unblockedId) });
-        return true;
+        const result = await db.query('DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2', [userId, unblockedId]);
+        return result.rowCount ? result.rowCount > 0 : false;
     } catch (error) {
         return false;
     }

@@ -50,8 +50,6 @@ CREATE TABLE users (
     longitude FLOAT,
     city VARCHAR(100),
     geolocation_consent BOOLEAN DEFAULT FALSE,
-    blocked_users INT[] DEFAULT '{}',
-    blocked_by_users INT[] DEFAULT '{}',
     is_online BOOLEAN DEFAULT FALSE,
     last_connection TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
@@ -115,6 +113,17 @@ CREATE TABLE dislikes (
     disliked_id INT REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(disliker_id, disliked_id)
+);
+
+
+-- Blocks table --------------------------------------------------------------
+
+CREATE TABLE blocks (
+    id SERIAL PRIMARY KEY,
+    blocker_id INT REFERENCES users(id) ON DELETE CASCADE,
+    blocked_id INT REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(blocker_id, blocked_id)
 );
 
 
