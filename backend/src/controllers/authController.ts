@@ -18,6 +18,7 @@ import { generateToken } from '../utils/jwt';
 import nodemailer, { Transporter } from 'nodemailer';
 import path from 'path';
 import fs from 'fs/promises';
+import { PASSWORD_REGEX } from '@shared/validation';
 
 
 export class AuthController {
@@ -332,6 +333,11 @@ export class AuthController {
         
         if (!token || !newPassword) {
             res.status(400).json({ error: 'Token and new password are required' });
+            return;
+        }
+
+        if (!newPassword.match(PASSWORD_REGEX)) {
+            res.status(400).json({ error: 'Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char' });
             return;
         }
 

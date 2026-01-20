@@ -5,7 +5,7 @@ import { getMatchedUsers } from '../models/matchModel';
 import { getIO } from '../config/socket';
 import { createNotification } from '../models/notificationModel';
 import { db } from '../utils/db';
-import { EMAIL_REGEX } from '@shared/validation';
+import { EMAIL_REGEX, PASSWORD_REGEX } from '@shared/validation';
 
 const mapUserSummary = (u: any) => ({
     id: u.id,
@@ -79,8 +79,8 @@ export class UserController {
             }
 
             const { newPassword } = req.body;
-            if (!newPassword || newPassword.length < 6) {
-                return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+            if (!newPassword || !newPassword.match(PASSWORD_REGEX)) {
+                return res.status(400).json({ error: 'Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char' });
             }
 
             await updatePassword(userId, newPassword);

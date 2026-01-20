@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Label, TextInput, Button } from 'flowbite-react';
 import { api } from '@services/api';
 import { useNotification } from '@context/NotificationContext';
+import { PASSWORD_REGEX } from '@shared/validation';
 
 const ChangePasswordForm: React.FC = () => {
     const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
@@ -33,7 +34,7 @@ const ChangePasswordForm: React.FC = () => {
                         autoComplete="new-password"
                         {...register("newPassword", { 
                             required: "New password is required",
-                            minLength: { value: 6, message: "Password must be at least 6 characters" }
+                            pattern: { value: PASSWORD_REGEX, message: "Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char" }
                         })} 
                         color={errors.newPassword ? "failure" : "gray"}
                     />

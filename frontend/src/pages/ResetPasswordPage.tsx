@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { api } from "@services/api";
 import { Button, Label, TextInput, Spinner } from "flowbite-react";
 import { useNotification } from "@context/NotificationContext";
+import { PASSWORD_REGEX } from "@shared/validation";
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -48,6 +49,11 @@ const ResetPasswordPage = () => {
             return;
         }
 
+        if (!PASSWORD_REGEX.test(password)) {
+            addToast('Password must contain at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char', 'error');
+            return;
+        }
+
         setStatus('loading');
 
         try {
@@ -80,12 +86,15 @@ const ResetPasswordPage = () => {
                         Reset Your Password
                     </h1>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        {/* Hidden username field for accessibility/password managers */}
+                        <input type="text" autoComplete="username" className="hidden" aria-hidden="true" readOnly />
                         <div>
                             <Label htmlFor="password" className="mb-2 block">New Password</Label>
                             <TextInput
                                 id="password"
                                 type="password"
                                 placeholder="Enter new password"
+                                autoComplete="new-password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -97,6 +106,7 @@ const ResetPasswordPage = () => {
                                 id="confirmPassword"
                                 type="password"
                                 placeholder="Confirm new password"
+                                autoComplete="new-password"
                                 required
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
