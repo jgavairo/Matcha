@@ -36,7 +36,8 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
     handleSubmit, 
     formState: { errors }, 
     watch, 
-    control
+    control,
+    setError
   } = useForm<RegisterFormData>({
     mode: "onChange"
   });
@@ -48,6 +49,16 @@ const RegisterForm = ({ onLoadingChange }: RegisterFormProps) => {
       addToast('Register successful, please check your email for verification', 'success');
       navigate('/login');
     } catch (error: any) {
+      if (error.response?.data?.error === 'Email already in use') {
+        setError('email', { type: 'manual', message: 'Email already in use' });
+        return; 
+      }
+      
+      if (error.response?.data?.error === 'Username already taken') {
+        setError('username', { type: 'manual', message: 'Username already taken' });
+        return;
+      }
+
       if (error.response?.data?.details) {
         const details = error.response.data.details;
         const errorMessages = Object.values(details).join(', ');

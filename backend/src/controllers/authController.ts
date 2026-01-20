@@ -117,10 +117,15 @@ export class AuthController {
 
             res.status(201).json({ message: 'User created successfully, please check your email for verification' });
         } catch (error: any) {
+            if (error.message === 'Email already in use' || error.message === 'Username already taken') {
+                res.status(400).json({ error: error.message });
+                return;
+            }
             if (error.code === '23505') {
                 res.status(400).json({ error: 'Account already exists' });
                 return;
             } 
+            console.error('Registration error:', error);
             res.status(500).json({ error: 'Failed to create user' });
         }
     }
