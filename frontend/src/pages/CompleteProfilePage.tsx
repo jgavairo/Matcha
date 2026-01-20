@@ -121,10 +121,12 @@ export default function CompleteProfilePage() {
         });
         const imageUrl = response.data.url || response.data;
         setProfileData(prev => ({ ...prev, profileImage: imageUrl }));
-        addToast('Photo uploadée !', 'success');
+        addToast("Photo uploaded successfully", 'success');
       } catch (error) {
-        addToast('Échec de l\'upload', 'error');
+        addToast('Failed to upload photo', 'error');
       }
+    } else {
+      addToast('Please upload an image file', 'error');
     }
   };
 

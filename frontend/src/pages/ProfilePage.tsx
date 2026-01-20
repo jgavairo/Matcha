@@ -110,17 +110,22 @@ const ProfilePage: React.FC = () => {
 
     const handlePhotoUpload = async (file: File) => {
         if (!user) return;
-        const formData = new FormData();
-        formData.append('image', file);
-        try {
-            const response = await api.post('/users/photos', formData, { 
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            // Assuming response.data is the image object with url
-            setUser({ ...user, images: [...user.images, response.data.url] });
-            addToast("Photo uploaded successfully", 'success');
-        } catch (error) {
-            addToast("Failed to upload photo", 'error');
+
+        if (file && file.type.startsWith('image/')) {
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const response = await api.post('/users/photos', formData, { 
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                // Assuming response.data is the image object with url
+                setUser({ ...user, images: [...user.images, response.data.url] });
+                addToast("Photo uploaded successfully", 'success');
+            } catch (error) {
+                addToast("Failed to upload photo", 'error');
+            }
+        } else {
+            addToast('Please upload an image file', 'error');
         }
     };
 

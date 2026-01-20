@@ -30,7 +30,6 @@ const authService = {
     async checkAuth() {
         try {
             const response = await api.get('/auth/me');
-            console.log('Token found', response.data);
             return response.data;
         } catch (error) {
             throw error;
