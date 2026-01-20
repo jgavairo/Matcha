@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { HiPhotograph, HiMicrophone, HiPaperAirplane, HiX } from 'react-icons/hi';
+import { useNotification } from '@context/NotificationContext';
 
 interface ChatInputProps {
     value: string;
@@ -28,6 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const { addToast } = useNotification();
     
     // Voice Recording State
     const [isRecording, setIsRecording] = useState(false);
@@ -36,7 +38,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
     const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            onFilesSelected(Array.from(e.target.files));
+            const selectedFiles = Array.from(e.target.files);
+            const validImages = selectedFiles.filter(file => file.type.startsWith('image/'));
+
+            if (validImages.length !== selectedFiles.length) {
+                addToast('Only image files are allowed', 'error');
+            }
+            
+            if (validImages.length > 0) {
+                onFilesSelected(validImages);
+            }
         }
         // Reset input so same file selection works if needed
         if (fileInputRef.current) fileInputRef.current.value = '';
