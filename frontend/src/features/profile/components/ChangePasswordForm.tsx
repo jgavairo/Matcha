@@ -21,6 +21,7 @@ const ChangePasswordForm: React.FC = () => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <input type="text" autoComplete="username" className="hidden" aria-hidden="true" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <div className="mb-2 block">
@@ -29,6 +30,7 @@ const ChangePasswordForm: React.FC = () => {
                     <TextInput 
                         id="newPassword" 
                         type="password" 
+                        autoComplete="new-password"
                         {...register("newPassword", { 
                             required: "New password is required",
                             minLength: { value: 6, message: "Password must be at least 6 characters" }
@@ -49,6 +51,7 @@ const ChangePasswordForm: React.FC = () => {
                     <TextInput 
                         id="confirmPassword" 
                         type="password" 
+                        autoComplete="new-password"
                         {...register("confirmPassword", { 
                             required: "Please confirm your password",
                             validate: value => value === newPassword || "Passwords do not match"
