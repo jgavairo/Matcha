@@ -39,6 +39,25 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
         return date.toLocaleDateString();
     };
 
+    const formatMessagePreview = (message: string) => {
+        if (!message) return 'Start a conversation';
+
+        // Check if message is a JSON string (likely an image or file object)
+        if (message.trim().startsWith('{') || message.trim().startsWith('[')) {
+            try {
+                const parsed = JSON.parse(message);
+                if (parsed.type === 'audio') {
+                    return 'Sent a voice message';
+                }
+                return 'Sent a photo';
+            } catch (e) {
+                // Not valid JSON, treat as text
+            }
+        }
+
+        return message;
+    };
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-gray-800 shadow-sm">
             {/* Tabs */}
@@ -125,7 +144,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ conversations, curr
                                                 </div>
                                             </div>
                                             <p className="text-sm text-gray-500 truncate dark:text-gray-400 pr-8">
-                                                {conversation.last_message || 'Start a conversation'}
+                                                {formatMessagePreview(conversation.last_message)}
                                             </p>
                                         </div>
                                     </div>

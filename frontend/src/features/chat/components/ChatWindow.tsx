@@ -65,7 +65,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
 
         const handleMessage = (msg: Message) => {
             if (msg.conversation_id === conversation.id) {
-                setMessages((prev) => [...prev, msg]);
+                setMessages((prev) => {
+                    if (prev.some(m => m.id === msg.id)) return prev;
+                    return [...prev, msg];
+                });
                 if (msg.sender_id !== currentUserId) {
                     chatService.markAsRead(conversation.id).then(refreshUnreadCount);
                 }
@@ -136,7 +139,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
                 url: uploadedUrls[0]
             });
             const msg = await chatService.sendMessage(conversation.id, content);
-            setMessages(prev => [...prev, msg]);
+            setMessages(prev => {
+                if (prev.some(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+            });
         } catch (error) {
             // Error already handled by UI
         }
@@ -181,7 +187,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, currentUserId, on
             }
 
             const msg = await chatService.sendMessage(conversation.id, msgContent);
-            setMessages([...messages, msg]);
+            setMessages(prev => {
+                if (prev.some(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+            });
             
             // Clean up preview URLs
             previewUrls.forEach(url => URL.revokeObjectURL(url));

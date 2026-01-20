@@ -78,7 +78,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             mediaRecorder.start();
             setIsRecording(true);
         } catch (err) {
-            // Error already handled by UI
+            addToast("Microphone not accessible or permission denied", 'error');
         }
     };
 
