@@ -29,6 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { addToast } = useNotification();
     
     // Voice Recording State
@@ -77,12 +78,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
             mediaRecorder.start();
             setIsRecording(true);
+
+            // Auto stop after 60 seconds
+            recordingTimeoutRef.current = setTimeout(() => {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    setIsRecording(false);
+                    addToast("Maximum recording duration reached (60s)", 'info');
+                }
+            }, 60000);
+
         } catch (err) {
             addToast("Microphone not accessible or permission denied", 'error');
         }
     };
 
     const stopRecording = () => {
+        if (recordingTimeoutRef.current) {
+            clearTimeout(recordingTimeoutRef.current);
+            recordingTimeoutRef.current = null;
+        }
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
