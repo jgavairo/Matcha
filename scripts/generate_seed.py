@@ -17,6 +17,75 @@ CITIES = [
     {"name": "Montpellier", "lat": 43.6108, "lng": 3.8767},
 ]
 
+PRAVATAR_MALE_IDS = [
+    1,
+    3,
+    6,
+    7,
+    8,
+    11,
+    12,
+    13,
+    14,
+    15,
+    17,
+    18,
+    33,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+]
+PRAVATAR_FEMALE_IDS = [
+    49,
+    48,
+    47,
+    45,
+    44,
+    43,
+    41,
+    40,
+    39,
+    38,
+    35,
+    34,
+    32,
+    31,
+    30,
+    29,
+    28,
+    27,
+    26,
+    25,
+    24,
+    23,
+    22,
+    21,
+    20,
+    19,
+    16,
+    9,
+    10,
+    5,
+]
+
 # Generate SQL
 sql_statements = []
 
@@ -25,7 +94,7 @@ DEFAULT_PASSWORD_HASH = "$2b$12$OrnPKRP9p2krMO.oHbOfqedcP40cWYCfT39FaIuQrKD3M4fy
 
 print("Generating seed data...")
 
-for i in range(1, 201):
+for i in range(1, 501):
     # Determine Gender (1: Male, 2: Female, 3: Other)
     gender_roll = random.random()
     if gender_roll < 0.45:
@@ -109,23 +178,59 @@ for i in range(1, 201):
         )
 
     # Images
-    # Using xsgames for better quality (0-75)
-    gender_str = "male" if is_male else "female"
-    img_id = random.randint(0, 75)
-    profile_pic_url = (
-        f"https://xsgames.co/randomusers/assets/avatars/{gender_str}/{img_id}.jpg"
-    )
+    # Using xsgames (0-78), randomuser.me (0-99), and pravatar.cc (specific lists)
+    provider_choice = random.choice(["xsgames", "randomuser", "pravatar"])
+
+    if provider_choice == "xsgames":
+        gender_str = "male" if is_male else "female"
+        img_id = random.randint(0, 78)
+        profile_pic_url = (
+            f"https://xsgames.co/randomusers/assets/avatars/{gender_str}/{img_id}.jpg"
+        )
+    elif provider_choice == "randomuser":
+        gender_str = "men" if is_male else "women"
+        img_id = random.randint(0, 99)
+        profile_pic_url = (
+            f"https://randomuser.me/api/portraits/{gender_str}/{img_id}.jpg"
+        )
+    else:
+        # Pravatar
+        if is_male:
+            img_id = random.choice(PRAVATAR_MALE_IDS)
+        else:
+            img_id = random.choice(PRAVATAR_FEMALE_IDS)
+        profile_pic_url = f"https://i.pravatar.cc/400?img={img_id}"
 
     sql_statements.append(
         f"INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = '{username}'), '{profile_pic_url}', TRUE);"
     )
 
     for _ in range(random.randint(1, 3)):
-        other_img_id = random.randint(0, 75)
-        while other_img_id == img_id:
-            other_img_id = random.randint(0, 75)
+        # Mix providers for other photos
+        other_provider_choice = random.choice(["xsgames", "randomuser", "pravatar"])
 
-        other_url = f"https://xsgames.co/randomusers/assets/avatars/{gender_str}/{other_img_id}.jpg"
+        if other_provider_choice == "xsgames":
+            other_gender_str = "male" if is_male else "female"
+            other_img_id = random.randint(0, 78)
+            other_url = f"https://xsgames.co/randomusers/assets/avatars/{other_gender_str}/{other_img_id}.jpg"
+        elif other_provider_choice == "randomuser":
+            other_gender_str = "men" if is_male else "women"
+            other_img_id = random.randint(0, 99)
+            other_url = f"https://randomuser.me/api/portraits/{other_gender_str}/{other_img_id}.jpg"
+        else:
+            if is_male:
+                other_img_id = random.choice(PRAVATAR_MALE_IDS)
+            else:
+                other_img_id = random.choice(PRAVATAR_FEMALE_IDS)
+            other_url = f"https://i.pravatar.cc/400?img={other_img_id}"
+
+        # Simple duplicate check if same provider and same ID (basic check)
+        if profile_pic_url == other_url:
+            # Just change provider to xsgames fallback involving a slight ID shift to ensure difference
+            fallback_id = (img_id + 1) % 79
+            fallback_gender = "male" if is_male else "female"
+            other_url = f"https://xsgames.co/randomusers/assets/avatars/{fallback_gender}/{fallback_id}.jpg"
+
         sql_statements.append(
             f"INSERT INTO images (user_id, url, is_profile_picture) VALUES ((SELECT id FROM users WHERE username = '{username}'), '{other_url}', FALSE);"
         )
