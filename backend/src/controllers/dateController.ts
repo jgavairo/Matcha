@@ -10,6 +10,28 @@ export const proposeDate = async (req: Request, res: Response) => {
         const senderId = (req as any).user.id;
         const { receiverId, dateTime, location, description } = req.body;
 
+        if (!receiverId) {
+            return res.status(400).json({ message: 'Receiver ID is required' });
+        }
+        if (!dateTime) {
+            return res.status(400).json({ message: 'Date and time are required' });
+        }
+        if (!location || location.trim().length === 0) {
+            return res.status(400).json({ message: 'Location is required' });
+        }
+        if (!description || description.trim().length === 0) {
+            return res.status(400).json({ message: 'Description is required' });
+        }
+
+        if (isNaN(new Date(dateTime).getTime())) {
+            return res.status(400).json({ message: 'Invalid date format' });
+        }
+
+        if (new Date(dateTime) < new Date()) {
+             return res.status(400).json({ message: 'Date cannot be in the past' });
+        }
+
+
         const date = await dateModel.createDate(senderId, receiverId, dateTime, location, description);
 
         const io = getIO();

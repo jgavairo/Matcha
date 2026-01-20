@@ -23,7 +23,7 @@ export default defineConfig({
       "@forms": path.resolve(__dirname, "./src/components/forms"),
       "@layout": path.resolve(__dirname, "./src/components/layout"),
       "@data": path.resolve(__dirname, "./src/data"),
-          "@shared": path.resolve(__dirname, "../shared"),
+      "@shared": path.resolve(__dirname, "../shared"),
     },
   },
   server: {
@@ -38,5 +38,19 @@ export default defineConfig({
       cert: fs.readFileSync(path.resolve(__dirname, 'certs/cert.pem')),
     } : undefined,
     allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'https://backend:5000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      '/socket.io': {
+        target: 'https://backend:5000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    }
   }
 })

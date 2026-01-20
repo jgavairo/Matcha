@@ -29,7 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const recordingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { addToast } = useNotification();
     
     // Voice Recording State

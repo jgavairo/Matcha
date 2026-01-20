@@ -1,14 +1,18 @@
 import { io, Socket } from 'socket.io-client';
 import Cookies from 'js-cookie';
 
-const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
+// Use relative path for socket.io to leverage Vite proxy
+const SOCKET_URL = import.meta.env.PROD 
+    ? `${window.location.protocol}//${window.location.hostname}:5000`
+    : '/'; // Connect to the same origin (Vite dev server) which proxies to backend
 
 class SocketService {
     public socket: Socket;
 
     constructor() {
         this.socket = io(SOCKET_URL, {
-            transports: ['websocket'],
+            path: '/socket.io', // Standard socket.io path
+            transports: ['websocket', 'polling'], // Enable polling as fallback
             autoConnect: false,
             withCredentials: true
         });

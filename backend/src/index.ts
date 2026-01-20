@@ -53,10 +53,14 @@ if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
 const io = initializeSocket(httpServer);
 
 app.use(cors({
-  origin: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: true, // Reflects the request origin
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
 }));
+
+// Explicitly handle OPTIONS for complex preflight situations
+app.options('*', cors());
 
 app.use(express.json());
 app.use(cookieParser());

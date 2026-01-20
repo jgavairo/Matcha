@@ -65,19 +65,37 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Frontend Validation
+        if (!formData.date || !formData.time) {
+            addToast('Please select both date and time', 'error');
+            return;
+        }
+
+        if (!formData.location.trim()) {
+            addToast('Please enter a location', 'error');
+            return;
+        }
+
+        if (!formData.description.trim()) {
+            addToast('Please enter a description', 'error');
+            return;
+        }
+
+        const localDate = new Date(`${formData.date}T${formData.time}:00`);
+
+        if (isNaN(localDate.getTime())) {
+            addToast('Invalid date format', 'error');
+            return;
+        }
+
+        if (localDate < new Date()) {
+            addToast('Date cannot be in the past', 'error');
+            return;
+        }
+
         try {
-            // Create a date object from the local inputs
-            let dateTimeToSend = '';
-            
-            if (formData.date && formData.time) {
-                // Construct "YYYY-MM-DDTHH:mm:00" which Date() parses as local time
-                const localDate = new Date(`${formData.date}T${formData.time}:00`);
-                // Convert to UTC ISO string to send to backend
-                dateTimeToSend = localDate.toISOString();
-            } else if (formData.date) {
-               // Fallback if only date
-               dateTimeToSend = new Date(formData.date).toISOString();
-            }
+            const dateTimeToSend = localDate.toISOString();
             
             const submitData = {
                 dateTime: dateTimeToSend,
@@ -99,8 +117,9 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
             }
             setIsEditing(false);
             loadDate();
-        } catch (error) {
-            addToast('Failed to save date', 'error');
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to save date';
+            addToast(errorMessage, 'error');
         }
     };
 
@@ -215,7 +234,7 @@ const DatePlanner: React.FC<DatePlannerProps> = ({ targetUserId, targetUsername,
                     </div>
                     <div>
                          <div className="mb-1 block"><Label htmlFor="dp-desc">What?</Label></div>
-                        <Textarea id="dp-desc" placeholder="Let's grab coffee..." rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                        <Textarea id="dp-desc" placeholder="Let's grab coffee..." rows={2} required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                     </div>
                     <div className="flex justify-end gap-2">
                          <Button size="sm" color="gray" onClick={() => setIsEditing(false)}>Cancel</Button>
