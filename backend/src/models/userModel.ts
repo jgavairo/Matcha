@@ -463,11 +463,10 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                 EXTRACT(YEAR FROM AGE(u.birth_date)) as age,
                 g.gender,
                 (
-                    SELECT url 
+                    SELECT COALESCE(array_agg(url ORDER BY is_profile_picture DESC, created_at ASC), '{}')
                     FROM images 
-                    WHERE user_id = u.id AND is_profile_picture = TRUE 
-                    LIMIT 1
-                ) as profile_picture,
+                    WHERE user_id = u.id
+                ) as images,
                 COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}') as tags,
                 -- Calculate distance (Haversine formula)
                 (
