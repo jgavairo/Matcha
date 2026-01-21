@@ -35,8 +35,8 @@ const DiscoverPage: React.FC = () => {
 
   const handleBlock = async () => {
     if (selectedUser) {
+      await handleDislike(selectedUser.id.toString());
       await blockUser(selectedUser.id, () => {
-        handleDislike(selectedUser.id.toString());
         setSelectedUser(null);
       });
     }
