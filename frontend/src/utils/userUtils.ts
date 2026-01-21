@@ -10,6 +10,7 @@ export const resolveImageUrl = (url: string | undefined | null): string => {
     }
 
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (API_URL && url.startsWith(API_URL)) return url;
     return `${API_URL}${url}`;
 };
 

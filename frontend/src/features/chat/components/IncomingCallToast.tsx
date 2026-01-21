@@ -1,6 +1,7 @@
 import React from 'react';
 import { Toast, ToastToggle } from "flowbite-react";
 import { HiPhoneIncoming, HiPhone, HiX } from "react-icons/hi";
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface IncomingCallToastProps {
     callerName: string;
@@ -21,7 +22,7 @@ export const IncomingCallToast: React.FC<IncomingCallToastProps> = ({
         <div className="flex items-start gap-3">
             <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white ring-4 ring-green-200 dark:ring-green-800 animate-pulse">
             {callerAvatar ? (
-                 <img src={callerAvatar} alt={callerName} className="h-12 w-12 rounded-full object-cover ring-2 ring-white" />
+                 <img src={resolveImageUrl(callerAvatar)} alt={callerName} className="h-12 w-12 rounded-full object-cover ring-2 ring-white" />
             ) : (
                 <HiPhoneIncoming className="h-6 w-6" />
             )}

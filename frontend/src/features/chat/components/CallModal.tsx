@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaPhoneSlash } from 'react-icons/fa';
+import { resolveImageUrl } from '@utils/userUtils';
 
 interface CallModalProps {
     isOpen: boolean;
@@ -80,7 +81,7 @@ const CallModal: React.FC<CallModalProps> = ({
                         />
                     ) : (
                         <div className="flex flex-col items-center animate-pulse">
-                            <img src={avatarUrl || "https://via.placeholder.com/150"} alt={otherUsername} className="w-32 h-32 rounded-full mb-4 border-4 border-gray-600 object-cover" />
+                            <img src={resolveImageUrl(avatarUrl) || "https://via.placeholder.com/150"} alt={otherUsername} className="w-32 h-32 rounded-full mb-4 border-4 border-gray-600 object-cover" />
                             <h3 className="text-2xl text-white font-semibold">
                                 {connectionState === 'connected' ? 'Connected (No Video)' : `Connecting to ${otherUsername}...`}
                             </h3>

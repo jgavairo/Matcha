@@ -1,27 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 
-const FIFTEEN_MINUTES = 15 * 60 * 1000;
-const THIRTY_MINUTES = 30 * 60 * 1000;
-const ONE_HOUR = 60 * 60 * 1000;
+const FIVE_MINUTES = 5 * 60 * 1000;
+const TWO_MINUTES = 2 * 60 * 1000;
+const ONE_MINUTE = 1 * 60 * 1000;
 
 
 export const authLimiter = rateLimit({
-    windowMs: FIFTEEN_MINUTES, // 15 minutes
+    windowMs: ONE_MINUTE,
     max: 5, // limit each IP to 5 requests per windowMs
     message: 'Too many requests, please try again later.',
     headers: true,
 });
 
 export const registerLimiter = rateLimit({
-    windowMs: ONE_HOUR, // 1 hour
+    windowMs: FIVE_MINUTES,
     max: 5, // limit each IP to 5 requests per windowMs
     message: 'Too many requests, please try again later.',
     headers: true,
 });
 
 export const passwordResetLimiter = rateLimit({
-    windowMs: THIRTY_MINUTES, // 30 minutes
+    windowMs: TWO_MINUTES,
     max: 5, // limit each IP to 5 requests per windowMs
     message: 'Too many requests, please try again later.',
     headers: true,
