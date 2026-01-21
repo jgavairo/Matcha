@@ -166,3 +166,30 @@ export const createMatch = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const archiveConversation = async (req: Request, res: Response) => {
+    try {
+        // @ts-ignore
+        const userId = req.user.id;
+        const conversationId = parseInt(req.params.id);
+        await chatModel.archiveConversation(conversationId, userId);
+        res.json({ success: true });
+    } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const unarchiveConversation = async (req: Request, res: Response) => {
+    try {
+        // @ts-ignore
+        const userId = req.user.id;
+        const conversationId = parseInt(req.params.id);
+        await chatModel.unarchiveConversation(conversationId, userId);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

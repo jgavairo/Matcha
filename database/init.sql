@@ -141,6 +141,15 @@ CREATE TABLE conversations (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Conversation Archived table (per-user archive status) -------------------------
+
+CREATE TABLE conversation_archived (
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    conversation_id INT REFERENCES conversations(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (user_id, conversation_id)
+);
+
 -- Messages table --------------------------------------------------------------
 
 CREATE TABLE messages (

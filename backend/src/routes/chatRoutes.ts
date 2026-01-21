@@ -14,6 +14,8 @@ router.get('/conversations', chatController.getConversations);
 router.get('/conversations/:id/messages', chatController.getMessages);
 router.post('/conversations/:id/messages', chatController.sendMessage);
 router.post('/conversations/:id/read', chatController.markAsRead);
+router.post('/conversations/:id/archive', chatController.archiveConversation);
+router.post('/conversations/:id/unarchive', chatController.unarchiveConversation);
 
 // Test route to create a match
 router.post('/matches', chatController.createMatch);

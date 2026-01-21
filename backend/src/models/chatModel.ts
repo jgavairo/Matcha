@@ -79,7 +79,8 @@ export const getConversations = async (userId: number) => {
             (SELECT url FROM images WHERE user_id = u2.id ORDER BY is_profile_picture DESC, created_at ASC LIMIT 1) as user2_image,
             (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
             (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_date,
-            (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND (sender_id != $1 OR sender_id IS NULL) AND is_read = FALSE) as unread_count
+            (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND (sender_id != $1 OR sender_id IS NULL) AND is_read = FALSE) as unread_count,
+            (EXISTS (SELECT 1 FROM conversation_archived ca WHERE ca.conversation_id = c.id AND ca.user_id = $1)) as is_archived
         FROM conversations c
         JOIN matches m ON c.match_id = m.id
         JOIN users u1 ON m.user_id_1 = u1.id
@@ -136,4 +137,44 @@ export const getConversationIdByUsers = async (userId1: number, userId2: number)
     `;
     const result = await db.query(query, [userId1, userId2]);
     return result.rows[0]?.id;
+};
+
+export const archiveConversation = async (conversationId: number, userId: number) => {
+    // Verify user is part of the conversation
+    const authQuery = `
+        SELECT 1 
+        FROM conversations c
+        JOIN matches m ON c.match_id = m.id
+        WHERE c.id = $1 AND (m.user_id_1 = $2 OR m.user_id_2 = $2)
+    `;
+    const authResult = await db.query(authQuery, [conversationId, userId]);
+    if (authResult.rows.length === 0) {
+        throw new Error('Unauthorized');
+    }
+
+    // Insert into conversation_archived (ignore if already exists)
+    const query = `
+        INSERT INTO conversation_archived (user_id, conversation_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, conversation_id) DO NOTHING
+    `;
+    await db.query(query, [userId, conversationId]);
+};
+
+export const unarchiveConversation = async (conversationId: number, userId: number) => {
+    // Remove from conversation_archived
+    const query = `
+        DELETE FROM conversation_archived
+        WHERE user_id = $1 AND conversation_id = $2
+    `;
+    await db.query(query, [userId, conversationId]);
+};
+
+export const isConversationArchived = async (conversationId: number, userId: number): Promise<boolean> => {
+    const query = `
+        SELECT 1 FROM conversation_archived
+        WHERE user_id = $1 AND conversation_id = $2
+    `;
+    const result = await db.query(query, [userId, conversationId]);
+    return result.rows.length > 0;
 };
