@@ -50,6 +50,9 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         ws: true,
+        configure: (proxy) => {
+            proxy.on("error", () => {});
+        },
       }
     }
   }
