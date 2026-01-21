@@ -1061,6 +1061,15 @@ export const unblockUser = async (userId: number, unblockedId: number) => {
         return false;
     }
 };
+
+export const isUserBlocked = async (user1Id: number, user2Id: number): Promise<boolean> => {
+    const res = await db.query(
+        'SELECT 1 FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1)',
+        [user1Id, user2Id]
+    );
+    return (res.rowCount ?? 0) > 0;
+};
+
 export const getUserByNewEmailToken = async (token: string) => {
     try {
         const user = await db.findOne(
