@@ -25,7 +25,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const count = conversations.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
             setUnreadCount(count);
         } catch (error) {
-            console.error("Failed to fetch unread chat count", error);
         }
     }, [isAuthenticated]);
 

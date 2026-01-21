@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const JWT_EXPIRATION_REMEMBERED = '30d';
-const JWT_EXPIRATION_DEFAULT = '1h';
+const JWT_EXPIRATION_DEFAULT = '12h';
 
 export interface JwtPayload {
     id: number;

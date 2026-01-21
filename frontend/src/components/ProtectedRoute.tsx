@@ -1,7 +1,7 @@
-import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Spinner } from 'flowbite-react';
+import React from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Spinner } from "flowbite-react";
+import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -16,14 +16,14 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace state={{ from: location }} />;
   }
 
-  if (user && user.statusId !== 2 && location.pathname !== '/complete-profile') {
+  if (user && user.statusId !== 2 && location.pathname !== "/complete-profile") {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  if (user && user.statusId === 2 && location.pathname === '/complete-profile') {
+  if (user && user.statusId === 2 && location.pathname === "/complete-profile") {
     return <Navigate to="/" replace />;
   }
 
