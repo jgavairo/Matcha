@@ -41,6 +41,12 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [otherUser, setOtherUser] = useState<{name: string, avatar: string} | null>(null);
 
     const [activeCallUserId, setActiveCallUserId] = useState<number | null>(null);
+    const activeCallUserIdRef = useRef<number | null>(null);
+
+    // Sync Ref with State
+    useEffect(() => {
+        activeCallUserIdRef.current = activeCallUserId;
+    }, [activeCallUserId]);
 
     const peerConnection = useRef<RTCPeerConnection | null>(null);
 
@@ -228,6 +234,17 @@ export const CallProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 offerToReceiveVideo: true
             });
             await pc.setLocalDescription(offer);
+
+            // Check if call was cancelled during async setup
+            if (activeCallUserIdRef.current !== userId) {
+                pc.close();
+                peerConnection.current = null;
+                if (stream) {
+                     stream.getTracks().forEach(track => track.stop());
+                     setLocalStream(null);
+                }
+                return;
+            }
 
             socketService.emit('call_user', {
                 userToCall: userId,
