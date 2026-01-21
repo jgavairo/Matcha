@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { HiTrash, HiUpload, HiStar } from 'react-icons/hi';
 import ImageEditor from './ImageEditor';
 import { useNotification } from '@context/NotificationContext';
@@ -16,10 +16,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
     const [editingFile, setEditingFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const { addToast } = useNotification();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileSelect = async (file: File) => {
         if (!file || !file.type.startsWith('image/')) {
             addToast('Please select a valid image file', 'error');
+            resetFileInput();
             return;
         }
 
@@ -29,6 +31,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
             const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!validMimeTypes.includes(file.type.toLowerCase())) {
                 addToast('Invalid image format. Only JPEG, PNG, GIF, and WebP are allowed.', 'error');
+                resetFileInput();
                 return;
             }
 
@@ -68,6 +71,13 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
             setEditingFile(file);
         } catch (error) {
             addToast('Invalid image file. Please select a valid image file (JPEG, PNG, GIF, or WebP).', 'error');
+            resetFileInput();
+        }
+    };
+
+    const resetFileInput = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -98,6 +108,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
     const handleSaveEdited = (file: File) => {
         onUpload(file);
         setEditingFile(null);
+        resetFileInput();
+    };
+
+    const handleEditorClose = () => {
+        setEditingFile(null);
+        resetFileInput();
     };
 
     const handleDelete = (index: number) => {
@@ -155,6 +171,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
                         onDragLeave={handleDragLeave}
                     >
                         <input
+                            ref={fileInputRef}
                             type="file"
                             accept="image/*"
                             onChange={handleFileChange}
@@ -172,7 +189,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ images, onUpload, onDelete, o
             <ImageEditor 
                 file={editingFile} 
                 isOpen={!!editingFile} 
-                onClose={() => setEditingFile(null)} 
+                onClose={handleEditorClose} 
                 onSave={handleSaveEdited} 
             />
         </>
