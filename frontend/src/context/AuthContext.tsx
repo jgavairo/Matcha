@@ -48,6 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logout = async () => {
         try {
             await authService.logout();
+            localStorage.removeItem('matcha_search_filters');
         } finally {
             setIsAuthenticated(false);
             setUser(null);
