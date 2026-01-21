@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { searchUsers, likeUser, dislikeUser, unlikeUser, getUserById } from '../models/userModel';
+import { searchUsers, likeUser, dislikeUser, unlikeUser, getUserById, isUserBlocked } from '../models/userModel';
 import { createNotification } from '../models/notificationModel';
 import { getIO } from '../config/socket';
-
-// TODO: empecher d'intéragur avec soi et les utilisateurs bloqués
 
 export class MatchController {
     public like = async (req: Request, res: Response) => {
@@ -13,6 +11,14 @@ export class MatchController {
 
             if (!likerId) return res.status(401).json({ error: 'Unauthorized' });
             if (isNaN(likedId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+            if (likerId === likedId) {
+                return res.status(400).json({ error: 'Cannot interact with yourself' });
+            }
+
+            if (await isUserBlocked(likerId, likedId)) {
+                return res.status(403).json({ error: 'Interaction not allowed with blocked user' });
+            }
 
             const result = await likeUser(likerId, likedId);
             
@@ -94,6 +100,14 @@ export class MatchController {
             if (!dislikerId) return res.status(401).json({ error: 'Unauthorized' });
             if (isNaN(dislikedId)) return res.status(400).json({ error: 'Invalid user ID' });
 
+            if (dislikerId === dislikedId) {
+                return res.status(400).json({ error: 'Cannot interact with yourself' });
+            }
+
+            if (await isUserBlocked(dislikerId, dislikedId)) {
+                return res.status(403).json({ error: 'Interaction not allowed with blocked user' });
+            }
+
             const result = await dislikeUser(dislikerId, dislikedId);
 
             if (result.message && result.conversationId) {
@@ -117,6 +131,14 @@ export class MatchController {
 
             if (!likerId) return res.status(401).json({ error: 'Unauthorized' });
             if (isNaN(likedId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+            if (likerId === likedId) {
+                return res.status(400).json({ error: 'Cannot interact with yourself' });
+            }
+
+            if (await isUserBlocked(likerId, likedId)) {
+                return res.status(403).json({ error: 'Interaction not allowed with blocked user' });
+            }
 
             const result = await unlikeUser(likerId, likedId);
             const liker = await getUserById(likerId);
