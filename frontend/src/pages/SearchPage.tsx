@@ -30,7 +30,8 @@ const SearchPage: React.FC = () => {
   });
 
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [page, setPage] = useState(1);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hasSearched, setHasSearched] = useState(() => {
@@ -46,7 +47,7 @@ const SearchPage: React.FC = () => {
     localStorage.setItem('matcha_search_filters', JSON.stringify(filters));
   }, [filters]);
 
-  const fetchUsers = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
+  const fetchUsers = useCallback(async (currentCursor: string | null, isNewFilter: boolean = false) => {
     if (isNewFilter) {
       setLoading(true);
     } else {
@@ -57,22 +58,19 @@ const SearchPage: React.FC = () => {
     try {
         const ITEMS_PER_PAGE = 12;
       const filtersToSend = { ...filters, mode: 'search' };
-      const { data, total } = await matchService.searchUsers(filtersToSend, pageNum, ITEMS_PER_PAGE);
+      const { data, total, cursor: newNextCursor } = await matchService.searchUsers(filtersToSend, currentCursor, ITEMS_PER_PAGE);
       
       if (isNewFilter) {
         setUsers(data);
       } else {
-        setUsers(prev => [...prev, ...data]);
+        setUsers(prev => {
+          const newUsers = data.filter(d => !prev.some(p => p.id === d.id));
+          return [...prev, ...newUsers];
+        });
       }
       
-      setHasMore(users.length + data.length < total);
-      // Correction: The above check is slightly wrong because 'users' is stale in the closure if not careful, 
-      // but since we use functional update for setUsers, we are good for the state update.
-      // However, for hasMore, we need the updated count.
-      // A safer check for hasMore:
-      // If we received fewer items than the limit (12), we are done.
-      // Or if (pageNum * 12) >= total.
-      setHasMore((pageNum * ITEMS_PER_PAGE) < total);
+      setNextCursor(newNextCursor);
+      setHasMore(!!newNextCursor);
 
     } catch (err) {
       setError('Failed to load search results');
@@ -93,15 +91,17 @@ const SearchPage: React.FC = () => {
     setUsers([]);
     setHasSearched(false);
     setHasMore(true);
-    setPage(1);
+    setCursor(null);
+    setNextCursor(null);
   };
 
   // Reset and fetch when filters change
   useEffect(() => {
     if (!hasSearched) return;
-    setPage(1);
+    setCursor(null);
+    setNextCursor(null);
     setHasMore(true);
-    fetchUsers(1, true);
+    fetchUsers(null, true);
   }, [filters, hasSearched]); // Added hasSearched to dependency array to trigger initial search if true
 
   // Infinite scroll observer
@@ -110,12 +110,9 @@ const SearchPage: React.FC = () => {
     
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-          setPage(prev => {
-            const nextPage = prev + 1;
-            fetchUsers(nextPage, false);
-            return nextPage;
-          });
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore && nextCursor) {
+            setCursor(nextCursor);
+            fetchUsers(nextCursor, false);
         }
       },
       { 
@@ -133,7 +130,7 @@ const SearchPage: React.FC = () => {
         observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasMore, loading, loadingMore, fetchUsers]);
+  }, [hasMore, loading, loadingMore, nextCursor, fetchUsers]);
 
   // Scroll to top logic
   useEffect(() => {

@@ -23,19 +23,20 @@ export const useMatches = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<MatchFiltersState>(DEFAULT_FILTERS);
-  const [page, setPage] = useState(1);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  // Fetch users when page or filters change
+  // Fetch users when cursor or filters change
   useEffect(() => {
     const fetchUsers = async () => {
       setIsFetching(true);
-      if (page === 1) setLoading(true); // Only show full loading on first page
+      if (!cursor) setLoading(true); // Only show full loading on first page
       
       try {
-        const { data } = await matchService.searchUsers(filters, page, 10);
+        const { data, cursor: newNextCursor } = await matchService.searchUsers(filters, cursor, 10);
         
-        if (page === 1) {
+        if (!cursor) {
           setUsers(data);
         } else {
           setUsers(prev => {
@@ -45,8 +46,8 @@ export const useMatches = () => {
           });
         }
         
-        // If we received fewer items than limit, we've reached the end
-        setHasMore(data.length === 10);
+        setNextCursor(newNextCursor);
+        setHasMore(!!newNextCursor);
       } catch (err) {
         setError('Failed to load recommendations');
       } finally {
@@ -56,18 +57,21 @@ export const useMatches = () => {
     };
 
     fetchUsers();
-  }, [page, filters]);
+  }, [cursor, filters]);
 
   // Infinite scroll trigger
   useEffect(() => {
     if (!isFetching && hasMore && users.length > 0 && currentIndex >= users.length - 3) {
-      setPage(prev => prev + 1);
+      if (nextCursor && nextCursor !== cursor) {
+          setCursor(nextCursor);
+      }
     }
-  }, [currentIndex, users.length, isFetching, hasMore]);
+  }, [currentIndex, users.length, isFetching, hasMore, nextCursor, cursor]);
 
   const updateFilters = (newFilters: MatchFiltersState) => {
     setFilters(newFilters);
-    setPage(1);
+    setCursor(null);
+    setNextCursor(null);
     setCurrentIndex(0);
     setHasMore(true);
     setUsers([]); // Clear users to show loading state

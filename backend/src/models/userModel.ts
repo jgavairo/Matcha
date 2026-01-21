@@ -408,7 +408,7 @@ export const updateGeolocationConsent = async (userId: number, consent: boolean)
     await db.update('users', userId, { geolocation_consent: consent });
 };
 
-export const searchUsers = async (currentUserId: number, filters: any, page: number, limit: number) => {
+export const searchUsers = async (currentUserId: number, filters: any, cursor: string | null, limit: number) => {
     const { 
         ageRange, 
         distanceRange, 
@@ -424,7 +424,20 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
         includeInteracted,
         mode = 'discover'
     } = filters;
-    const offset = (page - 1) * limit;
+
+    // Decode cursor
+    let lastId = 0;
+    let lastValue: any = null;
+
+    if (cursor) {
+        try {
+            const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
+            lastId = decoded.id;
+            lastValue = decoded.value;
+        } catch (e) {
+            // invalid cursor
+        }
+    }
 
     // Get current user location and tags
     const currentUserResult = await db.query(
@@ -665,19 +678,40 @@ export const searchUsers = async (currentUserId: number, filters: any, page: num
                      sortBy === 'fameRating' ? 'fame_rating' : 
                      sortBy === 'commonTags' ? 'common_tags_count' : 'distance';
     }
+
+    // Apply cursor filter
+    if (lastId && lastValue !== null) {
+        const op = sortDirection === 'DESC' ? '<' : '>';
+
+        query += ` AND (${sortColumn} ${op} $${paramIndex} OR (${sortColumn} = $${paramIndex} AND id > $${paramIndex + 1}))`;
+        values.push(lastValue, lastId);
+        paramIndex += 2;
+    }
     
-    query += ` ORDER BY ${sortColumn} ${sortDirection}`;
+    query += ` ORDER BY ${sortColumn} ${sortDirection}, id ASC`;
 
     // Pagination
-    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    values.push(limit, offset);
+    query += ` LIMIT $${paramIndex}`;
+    values.push(limit);
 
     try {
         const result = await db.query(query, values);
+        const users = result.rows;
+        
+        // Construct next cursor
+        let nextCursor = null;
+        if (users.length === limit) {
+            const lastUser = users[users.length - 1];
+            // Get the value of the sort column from the result
+            const val = lastUser[sortColumn];
+            const id = lastUser.id;
+            nextCursor = Buffer.from(JSON.stringify({ id, value: val })).toString('base64');
+        }
         
         return {
-            users: result.rows,
-            total: result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0
+            users,
+            total: users.length > 0 ? parseInt(users[0].total_count) : 0,
+            nextCursor
         };
     } catch (error) {
         throw error;
@@ -967,10 +1001,6 @@ export const addReport = async (userId: number, reportedId: number, reasons: str
         return false;
     }
 };
-// Old incomplete implementation kept in comment for reference
-// export const completeProfileUser = async (userId: number, data: any) => {
-//     const user = await db.findOne('users', { id: userId }, ['id', 'status_id']);
-// };
 
 export const blockUser = async (userId: number, blockedId: number) => {
     if (userId === blockedId) return false;

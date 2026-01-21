@@ -194,7 +194,7 @@ export class MatchController {
                 sortBy, 
                 sortOrder,
                 includeInteracted = false,
-                page = 1,
+                cursor = null,
                 limit = 12,
                 mode = 'discover'
             } = req.body;
@@ -215,12 +215,12 @@ export class MatchController {
                 mode
             };
 
-            const result = await searchUsers(userId, filters, page, limit);
+            const result = await searchUsers(userId, filters, cursor, limit);
             
             res.status(200).json({
                 data: result.users,
                 total: result.total,
-                page,
+                cursor: result.nextCursor,
                 limit
             });
         } catch (error) {

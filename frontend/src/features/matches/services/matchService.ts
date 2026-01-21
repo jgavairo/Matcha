@@ -17,7 +17,7 @@ export const matchService = {
         location: '',
         sortBy: 'distance',
         sortOrder: 'asc'
-    }, 1, 20);
+    }, null, 20);
     return data;
   },
 
@@ -34,11 +34,11 @@ export const matchService = {
     await api.delete(`/matches/${userId}/like`);
   },
 
-  searchUsers: async (filters: MatchFiltersState, page: number, limit: number): Promise<{ data: UserProfile[], total: number }> => {
+  searchUsers: async (filters: MatchFiltersState, cursor: string | null = null, limit: number): Promise<{ data: UserProfile[], total: number, cursor: string | null }> => {
     try {
       const response = await api.post('/matches/search', {
           ...filters,
-          page,
+          cursor,
           limit
       });
       
@@ -69,7 +69,8 @@ export const matchService = {
               isMatch: user.is_match || false,
               isLiked: user.is_liked || false
           })),
-          total: response.data.total
+          total: response.data.total,
+          cursor: response.data.cursor
       };
     } catch (error) {
       throw error;
